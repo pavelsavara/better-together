@@ -52,6 +52,9 @@ jobs:
       # Publish only from pushes to main — not from pull requests.
       - name: Publish components to GHCR (OCI)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # Force bash: the container's default shell is dash, which lacks the
+        # `${VAR::N}` substring expansion used below.
+        shell: bash
         env:
           WKG_OCI_USERNAME: ${{ github.actor }}
           WKG_OCI_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
