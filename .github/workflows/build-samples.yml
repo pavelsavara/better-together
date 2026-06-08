@@ -1,0 +1,67 @@
+# Builds every Better Together sample into a WebAssembly component using the
+# pinned `better-together-tools` image, then (on pushes to main) publishes each
+# component to the GitHub Container Registry as an OCI artifact via `wkg`.
+#
+# Distributing components over OCI registries:
+#   https://opensource.microsoft.com/blog/2024/09/25/distributing-webassembly-components-using-oci-registries/
+#   https://component-model.bytecodealliance.org/composing-and-distributing/distributing.html
+name: build-samples
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # The toolchain image produced by the `build-tools-image` workflow.
+  TOOLS_IMAGE: ghcr.io/${{ github.repository_owner }}/better-together-tools:latest
+  # OCI namespace the components are published under: ghcr.io/<owner>/better-together/<sample>.
+  COMPONENT_NAMESPACE: ${{ github.repository_owner }}/better-together
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    # Run every step inside the pinned toolchain image so CI compiles the
+    # samples with exactly the tools validated in `build-tools-image`.
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/better-together-tools:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build all samples
+        env:
+          REPO_ROOT: ${{ github.workspace }}
+        run: bash scripts/build-all.sh
+
+      - name: Upload components
+        uses: actions/upload-artifact@v7
+        with:
+          name: components
+          path: dist/*.wasm
+          if-no-files-found: error
+
+      # Publish only from pushes to main — not from pull requests.
+      - name: Publish components to GHCR (OCI)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          WKG_OCI_USERNAME: ${{ github.actor }}
+          WKG_OCI_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          namespace="$(echo "${COMPONENT_NAMESPACE}" | tr '[:upper:]' '[:lower:]')"
+          sha_tag="sha-${GITHUB_SHA::12}"
+          for sample in ferris corro khaos gopher; do
+            ref="${REGISTRY}/${namespace}/${sample}"
+            echo "==> publishing ${ref} (tags: latest, ${sha_tag})"
+            wkg oci push "${ref}:${sha_tag}" "dist/${sample}.wasm"
+            wkg oci push "${ref}:latest"    "dist/${sample}.wasm"
+          done
