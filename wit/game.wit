@@ -1,0 +1,27 @@
+// Better Together — the tournament engine (host) side of the contract.
+//
+
+package better-together:game@0.1.0;
+
+/// The tournament engine. Discovers how many players are seated from the
+/// multiplexer registry, constructs one gardener per seat through the
+/// virtualized player interface, runs the match(es), and reports results.
+world engine {
+    // How many players the host has seated. The engine creates one gardener
+    // per returned provider-ref via the virtualized `player.create` below.
+    import jsco:multiplex/registry@0.1.0;
+
+    // The multiplexed data plane: `create()` plus the `gardener` resource and
+    // its methods. Backed by jsco's multiplexer host, which routes each handle
+    // to a distinct gardener component instance.
+    import better-together:gardener/player;
+
+    // Engine logging / results output. No filesystem, sockets, or HTTP.
+    import wasi:cli/stdout@0.2.3;
+    import wasi:cli/stderr@0.2.3;
+    import wasi:io/error@0.2.3;
+    import wasi:io/streams@0.2.3;
+
+    /// Run the configured match(es) to completion.
+    export run: func();
+}
