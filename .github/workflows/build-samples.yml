@@ -62,9 +62,28 @@ jobs:
           set -euo pipefail
           namespace="$(echo "${COMPONENT_NAMESPACE}" | tr '[:upper:]' '[:lower:]')"
           sha_tag="sha-${GITHUB_SHA::12}"
+          source_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          failed=()
           for sample in ferris corro khaos gopher; do
             ref="${REGISTRY}/${namespace}/${sample}"
+            # GHCR renders the `description` annotation as the package page
+            # README, so use each sample's own README.md from its folder.
+            annotations=(
+              --annotation "org.opencontainers.image.title=${sample}"
+              --annotation "org.opencontainers.image.source=${source_url}"
+              --annotation "org.opencontainers.image.revision=${GITHUB_SHA}"
+              --annotation "org.opencontainers.image.description=$(cat "samples/${sample}/README.md")"
+            )
             echo "==> publishing ${ref} (tags: latest, ${sha_tag})"
-            wkg oci push "${ref}:${sha_tag}" "dist/${sample}.wasm"
-            wkg oci push "${ref}:latest"    "dist/${sample}.wasm"
+            if wkg oci push "${annotations[@]}" "${ref}:${sha_tag}" "dist/${sample}.wasm" \
+              && wkg oci push "${annotations[@]}" "${ref}:latest" "dist/${sample}.wasm"; then
+              echo "    ${sample}: OK"
+            else
+              echo "::error::failed to publish ${sample} to ${ref}"
+              failed+=("${sample}")
+            fi
           done
+          if [ "${#failed[@]}" -ne 0 ]; then
+            echo "::error::OCI publish failed for: ${failed[*]}"
+            exit 1
+          fi
