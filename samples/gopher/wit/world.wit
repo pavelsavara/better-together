@@ -1,0 +1,15 @@
+// The world the `gopher` sample actually builds against.
+//
+// It exports the player data plane and includes `wasi:cli/imports`, the standard
+// WASI 0.2 import set the TinyGo runtime needs (stdout/stderr for banter, plus
+// environment, clocks, etc.). TinyGo's `-target=wasip2` backend emits a module
+// that imports these directly, so the world has to declare them for the
+// component encoder to resolve.
+package better-together:gopher@0.1.0;
+
+/// A single Gopher player component: a WASI 0.2 reactor that exports the
+/// Better Together player interface.
+world gopher {
+    include wasi:cli/imports@0.2.0;
+    export better-together:gardener/player@0.1.0;
+}
