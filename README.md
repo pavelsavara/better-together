@@ -57,6 +57,7 @@ Polyglot by design — every bot is just a component, regardless of source langu
 | **Ferris** | Rust (`wasm32-wasip2`) | Reputation-aware, naively collaborative | [samples/ferris](samples/ferris) |
 | **Corro**  | Rust (`wasm32-wasip1`) | Deceptive free-rider — the enemy of Ferris | [samples/corro](samples/corro) |
 | **Khaos**  | JavaScript (`jco`) | Coin-flip god — friend or foe forever, words at random | [samples/khaos](samples/khaos) |
+| **Gopher** | Go (TinyGo `wasip2`) | Pavlov forager — win-stay, lose-shift out of pure habit | [samples/gopher](samples/gopher) |
 
 Inspect a built component's interface with [`wasm-tools`](https://github.com/bytecodealliance/wasm-tools):
 
@@ -72,7 +73,7 @@ wasm-tools component wit samples/corro/target/wasm32-wasip1/release/corro.wasm
 better-together/
 ├── docs/           Player Rules, Engine Rules & Architecture
 ├── wit/            The game, gardener, and multiplexer contracts
-├── samples/        Reference bots (Ferris, Corro, Khaos)
+├── samples/        Reference bots (Ferris, Corro, Khaos, Gopher)
 ├── game/           Tournament host implementation
 └── README.md       You are here
 ```
