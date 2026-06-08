@@ -1,0 +1,32 @@
+[package]
+name = "corro"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Corro, the enemy of Ferris — a deceptive free-riding Better Together gardener (WASI 0.2.3 reactor)."
+
+[dependencies]
+wit-bindgen-rt = { version = "0.44.0", features = ["bitflags"] }
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "better-together:corro"
+
+# Build against the `corro` world; the `better-together:gardener` data-plane
+# contract is vendored locally under `wit/deps/gardener`. cargo-component
+# resolves a target world's dependencies from this table (not by scanning
+# wit/deps), so it must be declared explicitly.
+[package.metadata.component.target]
+path = "wit"
+world = "corro"
+
+[package.metadata.component.target.dependencies]
+"better-together:gardener" = { path = "wit/deps/gardener" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

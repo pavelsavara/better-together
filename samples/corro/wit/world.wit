@@ -1,0 +1,13 @@
+// The world the `corro` sample builds against.
+//
+// Corro exports nothing but the player data plane. cargo-component resolves the
+// `better-together:gardener` dependency from `wit/deps/gardener`, and the WASI
+// console imports that `std` (println!/eprintln!) needs are injected by the
+// build's preview1 adapter — so they don't appear here.
+package better-together:corro@0.1.0;
+
+/// Corro — the enemy of Ferris. A WASI 0.2.3 reactor that exports the Better
+/// Together player interface.
+world corro {
+    export better-together:gardener/player@0.1.0;
+}

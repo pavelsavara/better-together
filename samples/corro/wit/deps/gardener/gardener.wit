@@ -1,0 +1,144 @@
+// Vendored data-plane contract for the `corro` sample.
+//
+// This is a trimmed copy of ../../../../wit/gardener.wit containing ONLY the
+// `types` and `player` interfaces — the part a player component actually
+// implements. The full `world gardener` (which imports the wasi:* interfaces)
+// is omitted on purpose: the sample's own `world corro` (see ../../world.wit)
+// just re-exports `better-together:gardener/player`, and the console is reached
+// through Rust `std`. cargo-component discovers this dependency automatically
+// from the `wit/deps` directory.
+package better-together:gardener@0.1.0;
+
+/// Shared value types used by both the player and the engine.
+interface types {
+    /// A persistent, globally unique player identity (e.g. a component name).
+    type player-id = string;
+
+    /// A player component's self-description: who wrote it and where it lives.
+    /// Returned by `gardener.metadata` so the engine can build a registry /
+    /// leaderboard without constructing or running the player.
+    record metadata {
+        /// Human-readable name of this player (often used as the player-id).
+        name: string,
+        /// Semantic version of this player, e.g. "1.0.0".
+        version: string,
+        /// Author or team that wrote this player.
+        author: string,
+        /// Project / source repository URL.
+        repo: string,
+        /// A short, in-character backstory for this gardener. Flavor only — the
+        /// engine never parses it; it exists so leaderboards and match logs can
+        /// show who this bot *is*.
+        lore: string,
+    }
+
+    /// The public broadcast a player emits each round. Cheap talk — it carries
+    /// no enforced meaning and may be honest or deceptive.
+    enum signal {
+        /// "I intend to plant generously this round."
+        bloom,
+        /// "I intend to keep most/all of my seeds."
+        hold,
+        /// "I'm deciding based on what others do."
+        watch,
+    }
+
+    /// What a single player did in a given round, revealed to everyone.
+    record player-action {
+        id: player-id,
+        /// Seeds placed in the shared garden this round, 0-10.
+        plant: u8,
+        signal: signal,
+    }
+
+    /// The fully resolved outcome of one round, broadcast to all players.
+    record round-result {
+        /// One entry per player in the match.
+        actions: list<player-action>,
+        /// Sum of every player's `plant` this round.
+        garden-total: u16,
+        /// Diversity multiplier: 1.0 + 0.5 * distinct-contributors.
+        multiplier: f32,
+        /// (garden-total * multiplier) / group-size, paid to every player.
+        garden-payout: f32,
+    }
+
+    /// Delivered once at the start of a match, before any rounds.
+    record match-context {
+        /// Identifier for this match.
+        match-id: string,
+        /// Every player in this match, including yourself.
+        players: list<player-id>,
+        /// Your own identity within `players`.
+        self-id: player-id,
+        /// Group size K (4-6). The number of rounds R is intentionally hidden.
+        group-size: u8,
+    }
+
+    /// One player's broadcast for the CURRENT round, revealed to everyone during
+    /// the talk phase before anyone plants.
+    record signal-broadcast {
+        id: player-id,
+        signal: signal,
+    }
+
+    /// Delivered to both `talk` and `plant` each round. The number of remaining
+    /// rounds is never revealed.
+    record round-state {
+        /// 1-based index of the round you are about to play.
+        round: u8,
+        /// Every previous round of this match, oldest first.
+        history: list<round-result>,
+        /// This round's broadcasts. Empty when passed to `talk` (no one has
+        /// spoken yet); when passed to `plant` it holds the signal every player
+        /// — including you — broadcast this round, so plants can react to talk.
+        signals: list<signal-broadcast>,
+    }
+
+    /// Delivered once when the match ends.
+    record match-summary {
+        /// How many rounds the match actually ran (R, 8-12).
+        rounds-played: u8,
+        /// Final match score for every player.
+        final-scores: list<tuple<player-id, f32>>,
+        /// Your own final match score.
+        your-score: f32,
+    }
+}
+
+/// The contract every player component implements. The router host constructs
+/// one `gardener` per seat, then drives it in order across a match: match-start,
+/// then `talk` + `plant` per round, then match-end.
+interface player {
+    use types.{metadata, signal, match-context, round-state, match-summary};
+
+    /// Static factory: create a new player instance. The router host calls this
+    /// once per seat to spin up a gardener, which loads any persisted memory
+    /// from the virtual filesystem and prepares to play.
+    create: func() -> result<gardener>;
+
+    /// A single seated player. The router host creates one of these per
+    /// gardener component and forwards the engine's calls to it.
+    resource gardener {
+        /// Describe this player: name, version, author, repository URL, and lore.
+        metadata: func() -> result<metadata>;
+
+        /// Begin a new match.
+        match-start: func(context: match-context) -> result;
+
+        /// Talk phase: broadcast this round's signal BEFORE anyone plants.
+        /// `state.signals` is empty here. Cheap talk — it may be honest or a
+        /// lie. Must respect the 10 ms / 16 MB budget.
+        talk: func(state: round-state) -> result<signal>;
+
+        /// Plant phase: decide how many of your 10 seeds to plant, 0-10 (the
+        /// engine clamps out-of-range values). `state.signals` now holds every
+        /// player's talk from this round, so you can react to what was promised.
+        /// Must respect the 10 ms / 16 MB budget.
+        plant: func(state: round-state) -> result<u8>;
+
+        /// The match has ended. Persist any updated memory to the virtual
+        /// filesystem here (there is no return blob).
+        match-end: func(summary: match-summary) -> result;
+    }
+}
