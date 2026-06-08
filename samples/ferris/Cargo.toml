@@ -1,0 +1,25 @@
+[package]
+name = "ferris"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "A reputation-aware, naively collaborative Better Together gardener (WASI 0.2.3 reactor)."
+
+# A WASI 0.2.3 *reactor* component: a cdylib with no `main`, exporting
+# `better-together:gardener/player`. Built with the wasm32-wasip2 target, which
+# emits a component directly; `std` provides the console + virtual filesystem.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Generates the guest bindings for the exported `player` interface.
+wit-bindgen = "0.41"
+# Cross-match reputation is persisted as JSON on the virtual filesystem.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
