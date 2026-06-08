@@ -1,0 +1,16 @@
+{
+    "name": "khaos",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Khaos — a JavaScript Better Together gardener built with jco / ComponentizeJS.",
+    "scripts": {
+        "fetch-wit": "wkg get wasi:filesystem@0.2.3 --format wit -o wit/deps/ --overwrite && wkg get wasi:io@0.2.3 --format wit -o wit/deps/ --overwrite && wkg get wasi:clocks@0.2.3 --format wit -o wit/deps/ --overwrite",
+        "build": "jco componentize component.js --wit wit --world-name khaos --disable http --disable fetch-event --out khaos.wasm",
+        "inspect": "wasm-tools component wit khaos.wasm"
+    },
+    "devDependencies": {
+        "@bytecodealliance/componentize-js": "^0.18.4",
+        "@bytecodealliance/jco": "^1.20.0"
+    }
+}
