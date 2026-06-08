@@ -66,13 +66,26 @@ jobs:
           failed=()
           for sample in ferris corro khaos gopher; do
             ref="${REGISTRY}/${namespace}/${sample}"
-            # GHCR renders the `description` annotation as the package page
-            # README, so use each sample's own README.md from its folder.
+            readme="samples/${sample}/README.md"
+            # OCI annotation values cannot contain newlines/tabs/CR (registries
+            # reject the manifest), and GHCR shows `description` as a single
+            # line of plain text. So derive a one-line summary from the
+            # sample's own README: flatten its leading blockquote tagline,
+            # falling back to the first H1 heading. Strip CR first because the
+            # README files use CRLF line endings.
+            content="$(tr -d '\r' < "${readme}")"
+            title="$(printf '%s\n' "${content}" | sed -n 's/^# *//p' | head -n1)"
+            description="$(printf '%s\n' "${content}" | awk '
+              /^>/  { f=1; line=$0; sub(/^> ?/, "", line);
+                      buf = buf (buf=="" ? "" : " ") line; next }
+              f && !/^>/ { exit }
+              END { print buf }')"
+            [ -n "${description}" ] || description="${title}"
             annotations=(
-              --annotation "org.opencontainers.image.title=${sample}"
+              --annotation "org.opencontainers.image.title=${title}"
               --annotation "org.opencontainers.image.source=${source_url}"
               --annotation "org.opencontainers.image.revision=${GITHUB_SHA}"
-              --annotation "org.opencontainers.image.description=$(cat "samples/${sample}/README.md")"
+              --annotation "org.opencontainers.image.description=${description}"
             )
             echo "==> publishing ${ref} (tags: latest, ${sha_tag})"
             if wkg oci push "${annotations[@]}" "${ref}:${sha_tag}" "dist/${sample}.wasm" \
