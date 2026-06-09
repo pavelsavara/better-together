@@ -1,0 +1,22 @@
+[package]
+name = "attacker"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "A malicious Better Together gardener that probes for forbidden host capabilities (network + oversized filesystem writes)."
+
+# A WASI 0.2.3 *reactor* component (like ferris): a cdylib with no `main`,
+# exporting `better-together:gardener/player`. Built with wasm32-wasip2, which
+# emits a component directly and maps std::net / std::fs onto the wasi:* imports.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Generates the guest bindings for the exported `player` interface.
+wit-bindgen = "0.41"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

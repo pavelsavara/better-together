@@ -36,9 +36,43 @@ echo "==> gopher  (Go / TinyGo / wit-bindgen-go)"
 )
 cp "${ROOT}/samples/gopher/gopher.wasm" "${DIST}/gopher.wasm"
 
+echo "==> micro   (hand-written WebAssembly text / wasm-tools)"
+( cd "${ROOT}/samples/micro" && wasm-tools parse src/micro.wat -o micro.wasm )
+cp "${ROOT}/samples/micro/micro.wasm" "${DIST}/micro.wasm"
+
+echo "==> keith   (C++ / wit-bindgen cpp / wasm32-wasip2)"
+( cd "${ROOT}/samples/keith" && ./build.sh )
+cp "${ROOT}/samples/keith/keith.wasm" "${DIST}/keith.wasm"
+
+echo "==> andy    (C# / componentize-dotnet / NativeAOT-LLVM / wasi-wasm)"
+(
+  cd "${ROOT}/samples/andy"
+  # Restore + build the WASI 0.2 component. componentize-dotnet downloads and
+  # caches a compatible WASI SDK + LLVM into the home dir on the first build.
+  dotnet build -c Release
+)
+cp "${ROOT}/samples/andy/bin/Release/net10.0/wasi-wasm/native/andy.wasm" "${DIST}/andy.wasm"
+
+echo "==> dusty   (Grain / hand-written canonical ABI / preview1 -> preview2 adapt)"
+(
+  cd "${ROOT}/samples/dusty"
+  # The reactor adapter is baked into the tools image; fall back to its default
+  # path so the script also works in a hand-set-up environment.
+  adapter="${WASI_REACTOR_ADAPTER:-/opt/wasi-adapters/wasi_snapshot_preview1.reactor.wasm}"
+  # 1. Grain -> core wasm (reactor: init runs from the wasm start section).
+  grain compile --release --use-start-section src/dusty.gr -o dusty.core.wasm
+  # 2. Embed the component-type info from the vendored ./wit.
+  wasm-tools component embed wit dusty.core.wasm -o dusty.embed.wasm --world dusty
+  # 3. Wrap into a component, adapting WASI preview1 -> preview2.
+  wasm-tools component new dusty.embed.wasm \
+    --adapt "wasi_snapshot_preview1=${adapter}" \
+    -o dusty.wasm
+)
+cp "${ROOT}/samples/dusty/dusty.wasm" "${DIST}/dusty.wasm"
+
 echo
 echo "==> validating components"
-for sample in ferris corro khaos gopher; do
+for sample in ferris corro khaos gopher micro keith andy dusty; do
   echo "--- ${sample}.wasm ---"
   wasm-tools validate "${DIST}/${sample}.wasm"
   wasm-tools component wit "${DIST}/${sample}.wasm" | grep -E 'better-together:gardener/player' || true

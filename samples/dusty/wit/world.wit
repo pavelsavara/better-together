@@ -1,0 +1,32 @@
+// The world Dusty builds against: it exports the gardener player contract and
+// imports the WASI 0.2.3 interfaces the WASI preview1 reactor adapter needs to
+// satisfy Grain's runtime (stdio for banter, the virtual filesystem for Dusty's
+// cross-match memory, plus their io/clocks dependencies).
+//
+// Grain compiles to a core wasm module that imports `wasi_snapshot_preview1`;
+// `wasm-tools component new --adapt` rewrites those preview1 calls onto these
+// preview2 imports, and tree-shakes away everything Dusty never touches.
+package better-together:dusty@0.1.0;
+
+world dusty {
+    // Console (Grain's `print` / runtime diagnostics go through fd_write).
+    import wasi:cli/stdin@0.2.3;
+    import wasi:cli/stdout@0.2.3;
+    import wasi:cli/stderr@0.2.3;
+    import wasi:cli/environment@0.2.3;
+    import wasi:cli/exit@0.2.3;
+
+    // Virtual filesystem — Dusty's cross-match memory notebook.
+    import wasi:filesystem/types@0.2.3;
+    import wasi:filesystem/preopens@0.2.3;
+
+    // Dependencies of the above.
+    import wasi:io/error@0.2.3;
+    import wasi:io/poll@0.2.3;
+    import wasi:io/streams@0.2.3;
+    import wasi:clocks/monotonic-clock@0.2.3;
+    import wasi:clocks/wall-clock@0.2.3;
+
+    // The data-plane contract every gardener implements.
+    export better-together:gardener/player@0.1.0;
+}

@@ -1,0 +1,20 @@
+// The world the `keith` sample actually builds against.
+//
+// Like ferris, it exports nothing but the player data plane. Keith is written
+// in C++ and compiled with the WASI SDK for the `wasm32-wasip2` target, where
+// wasi-libc auto-lowers the C/C++ standard library onto the WASI 0.2 imports:
+//
+//   * `printf` / `std::cout`  -> wasi:cli/stdout (Keith's sewer-rat banter)
+//   * `std::ofstream` / `std::ifstream` -> wasi:filesystem (the debt ledger)
+//
+// So those imports don't need to be declared here — `wasm-component-ld` merges
+// the WASI import world contributed by wasi-libc with the `player` export world
+// embedded by `wit-bindgen cpp`. Keeping the bindgen world to just the interface
+// we implement mirrors how ferris builds against `better-together:ferris`.
+package better-together:keith@0.1.0;
+
+/// A single Keith player component: a WASI 0.2.3 reactor that exports the
+/// Better Together player interface.
+world keith {
+    export better-together:gardener/player@0.1.0;
+}

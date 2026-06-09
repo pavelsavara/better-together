@@ -1,0 +1,9 @@
+# .NET build output
+bin/
+obj/
+
+# wit-bindgen generated C# sources (regenerated on every build)
+generated/
+
+# Built component
+andy.wasm

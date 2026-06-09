@@ -1,0 +1,428 @@
+// Dusty — a cautious grey pantry mouse who plays graduated true Tit-for-Tat.
+//
+// Written in pure Grain. The six canonical-ABI exports below are hand-marshalled
+// at the @unsafe / WasmI32 boundary; `wasm-tools component embed` + `component new`
+// (with the WASI preview1 reactor adapter) wrap this core module into a proper
+// `better-together:gardener/player@0.1.0` component.
+//
+// Strategy:
+//   * Opens timid (a small nibble) — exact opener tuned by cross-match memory.
+//   * Each round mirrors the GROUP AVERAGE plant from the previous round.
+//   * Cautious asymmetry: scurries back fast when the garden cools, climbs back
+//     only gently (capped) when others cooperate.
+//   * Talks honestly: BLOOM if it intends to plant >= 5, HOLD if <= 2, else WATCH.
+//   * Remembers across matches (wasi:filesystem): if gardens have generally been
+//     generous it opens braver next time; if barren, warier.
+module Dusty
+
+from "runtime/unsafe/wasmi32" include WasmI32
+from "runtime/unsafe/wasmf32" include WasmF32
+from "runtime/unsafe/memory" include Memory
+from "runtime/dataStructures" include DataStructures
+from "wasi/file" include File
+
+use WasmI32.{ (+), (-), (*), (==), (!=), (<), (>), (<=), (>=) }
+
+// ---------------------------------------------------------------------------
+// Per-instance state (each seat is its own component instance, so module-level
+// mutable globals are private to this gardener and survive between calls).
+// ---------------------------------------------------------------------------
+
+@unsafe
+let mut selfIdPtr = 0n
+@unsafe
+let mut selfIdLen = 0n
+
+@unsafe
+let mut opener = 4n        // timid default opener
+@unsafe
+let mut plannedPlant = 4n  // chosen in `talk`, used in `plant`
+
+// Last completed round, recomputed from history each call.
+@unsafe
+let mut lastSum = 0n
+@unsafe
+let mut lastCount = 0n
+@unsafe
+let mut lastMyFound = 0n
+@unsafe
+let mut lastMyPlant = 0n
+
+// Cross-match memory (loaded at match-start, persisted at match-end).
+@unsafe
+let mut memMatches = 0n
+@unsafe
+let mut memCoopRounds = 0n
+@unsafe
+let mut memTotalRounds = 0n
+// This match's contribution to the above.
+@unsafe
+let mut curCoop = 0n
+@unsafe
+let mut curRounds = 0n
+
+@unsafe
+let _MAGIC = 0x44535431n // "DST1"
+let _MEMPATH = "dusty.mem"
+@unsafe
+let _COOP_AVG = 4n       // group-average plant that counts as a "generous" round
+
+// ---------------------------------------------------------------------------
+// Metadata strings (module constants -> stable, GC-rooted addresses).
+// ---------------------------------------------------------------------------
+
+let metaName = "Dusty"
+let metaVersion = "0.1.0"
+let metaAuthor = "Better Together samples"
+let metaRepo = "https://github.com/better-together/better-together/tree/main/samples/dusty"
+let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind."
+
+// ---------------------------------------------------------------------------
+// Small integer helpers (unsigned-safe for our 0..255 / small positive values).
+// ---------------------------------------------------------------------------
+
+@unsafe
+let clamp10 = (v: WasmI32) => {
+  if (v < 0n) 0n else if (v > 10n) 10n else v
+}
+
+@unsafe
+let divFloor = (a: WasmI32, b: WasmI32) => {
+  if (b == 0n) 0n else WasmI32.divU(a, b)
+}
+
+@unsafe
+let divCeil = (a: WasmI32, b: WasmI32) => {
+  if (b == 0n) 0n else WasmI32.divU(a + b - 1n, b)
+}
+
+// Is `idPtr/idLen` equal to our own id?
+@unsafe
+let isSelf = (idPtr: WasmI32, idLen: WasmI32) => {
+  selfIdLen != 0n && idLen == selfIdLen && Memory.compare(idPtr, selfIdPtr, idLen) == 0n
+}
+
+// Recompute lastSum / lastCount / lastMyPlant from the newest round-result.
+//   round-result = 20 bytes: actions(ptr@0,len@4), garden-total u16@8, mult f32@12, payout f32@16
+//   player-action = 12 bytes: id(ptr@0,len@4), plant u8@8, signal u8@9
+@unsafe
+let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
+  lastSum = 0n
+  lastCount = 0n
+  lastMyFound = 0n
+  lastMyPlant = 0n
+  if (histLen > 0n) {
+    let rr = histPtr + (histLen - 1n) * 20n
+    let actPtr = WasmI32.load(rr, 0n)
+    let actLen = WasmI32.load(rr, 4n)
+    for (let mut i = 0n; i < actLen; i += 1n) {
+      let a = actPtr + i * 12n
+      let idPtr = WasmI32.load(a, 0n)
+      let idLen = WasmI32.load(a, 4n)
+      let plant = WasmI32.load8U(a, 8n)
+      lastSum += plant
+      lastCount += 1n
+      if (isSelf(idPtr, idLen)) {
+        lastMyFound = 1n
+        lastMyPlant = plant
+      }
+    }
+  }
+}
+
+// Graduated, cautious Tit-for-Tat target from the last round.
+@unsafe
+let decideTarget = () => {
+  if (lastCount == 0n) {
+    opener
+  } else {
+    let avg = divFloor(lastSum, lastCount)
+    let my = if (lastMyFound == 1n) lastMyPlant else opener
+    let t = if (avg < my) {
+      // Garden cooled: scurry back an extra step.
+      avg - 1n
+    } else {
+      // Stable or warming: creep forward, but cap the climb at +2.
+      let climb = my + 2n
+      let ceilAvg = divCeil(lastSum, lastCount)
+      if (climb < ceilAvg) climb else ceilAvg
+    }
+    clamp10(t)
+  }
+}
+
+// Count BLOOM broadcasts from other players this round.
+//   signal-broadcast = 12 bytes: id(ptr@0,len@4), signal u8@8 (bloom=0)
+@unsafe
+let countOtherBlooms = (sigPtr: WasmI32, sigLen: WasmI32) => {
+  let mut c = 0n
+  for (let mut i = 0n; i < sigLen; i += 1n) {
+    let s = sigPtr + i * 12n
+    let idPtr = WasmI32.load(s, 0n)
+    let idLen = WasmI32.load(s, 4n)
+    let sg = WasmI32.load8U(s, 8n)
+    if (sg == 0n && !isSelf(idPtr, idLen)) c += 1n
+  }
+  c
+}
+
+// ---------------------------------------------------------------------------
+// Cross-match memory (best-effort; failure just means Dusty plays fresh).
+// ---------------------------------------------------------------------------
+
+@unsafe
+let loadMemory = () => {
+  memMatches = 0n
+  memCoopRounds = 0n
+  memTotalRounds = 0n
+  match (File.open(_MEMPATH, [], [File.FdRead, File.FdSeek], [], [])) {
+    Ok(fd) => {
+      match (File.fdRead(fd, 64)) {
+        Ok((bytes, _)) => {
+          let bp = WasmI32.fromGrain(bytes)
+          let blen = WasmI32.load(bp, 4n)
+          if (blen >= 16n) {
+            let d = bp + 8n
+            if (WasmI32.load(d, 0n) == _MAGIC) {
+              memMatches = WasmI32.load(d, 4n)
+              memCoopRounds = WasmI32.load(d, 8n)
+              memTotalRounds = WasmI32.load(d, 12n)
+            }
+          }
+          ignore(bytes)
+        },
+        Err(_) => void,
+      }
+      ignore(File.fdClose(fd))
+    },
+    Err(_) => void,
+  }
+}
+
+@unsafe
+let saveMemory = () => {
+  let bytes = DataStructures.allocateBytes(16n)
+  let d = bytes + 8n
+  WasmI32.store(d, _MAGIC, 0n)
+  WasmI32.store(d, memMatches + 1n, 4n)
+  WasmI32.store(d, memCoopRounds + curCoop, 8n)
+  WasmI32.store(d, memTotalRounds + curRounds, 12n)
+  let gbytes = WasmI32.toGrain(bytes): Bytes
+  match (
+    File.open(
+      _MEMPATH,
+      [File.Create, File.Truncate],
+      [File.FdRead, File.FdWrite, File.FdSeek],
+      [File.FdRead, File.FdWrite],
+      []
+    )
+  ) {
+    Ok(fd) => {
+      ignore(File.fdWrite(fd, gbytes))
+      ignore(File.fdClose(fd))
+    },
+    Err(_) => void,
+  }
+  ignore(gbytes)
+}
+
+// Pick this match's opening nibble from what Dusty has learned about the world.
+@unsafe
+let chooseOpener = () => {
+  if (memTotalRounds == 0n) {
+    opener = 4n
+  } else {
+    let pct = divFloor(memCoopRounds * 100n, memTotalRounds)
+    opener = if (pct > 60n) 6n else if (pct < 35n) 2n else 4n
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Canonical realloc (used by the lowering side for incoming aggregates).
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("cabi_realloc")
+provide let cabiRealloc = (
+  oldPtr: WasmI32,
+  oldSz: WasmI32,
+  align: WasmI32,
+  newSz: WasmI32,
+) => {
+  Memory.malloc(newSz)
+}
+
+// ---------------------------------------------------------------------------
+// resource intrinsic supplied by `wasm-tools component new`.
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("[resource-new]gardener")
+foreign wasm resourceNew:
+  (WasmI32) => WasmI32 from "[export]better-together:gardener/player@0.1.0"
+
+// ---------------------------------------------------------------------------
+// create: func() -> result<gardener>  =>  ptr to { disc u8@0, handle i32@4 }
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#create")
+provide let create = () => {
+  let p = Memory.malloc(8n)
+  WasmI32.store(p, 0n, 0n) // disc = ok (and clears padding)
+  let h = resourceNew(0n)
+  WasmI32.store(p, h, 4n)
+  p
+}
+
+// ---------------------------------------------------------------------------
+// metadata: func() -> result<metadata>
+//   result<metadata> = disc i32@0=ok, then 5x(ptr,len) strings @4 (size 44)
+// ---------------------------------------------------------------------------
+
+@unsafe
+let storeStr = (area: WasmI32, idx: WasmI32, s: String) => {
+  let sp = WasmI32.fromGrain(s)
+  let len = WasmI32.load(sp, 4n)
+  let off = 4n + idx * 8n
+  WasmI32.store(area, sp + 8n, off)
+  WasmI32.store(area, len, off + 4n)
+}
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.metadata")
+provide let metadata = (self: WasmI32) => {
+  let p = Memory.malloc(44n)
+  WasmI32.store(p, 0n, 0n) // disc = ok
+  storeStr(p, 0n, metaName)
+  storeStr(p, 1n, metaVersion)
+  storeStr(p, 2n, metaAuthor)
+  storeStr(p, 3n, metaRepo)
+  storeStr(p, 4n, metaLore)
+  p
+}
+
+// ---------------------------------------------------------------------------
+// match-start: func(context) -> result
+//   params: self, matchId(ptr,len), players(ptr,len), selfId(ptr,len), groupSize
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.match-start")
+provide let matchStart = (
+  self: WasmI32,
+  midPtr: WasmI32,
+  midLen: WasmI32,
+  plPtr: WasmI32,
+  plLen: WasmI32,
+  sidPtr: WasmI32,
+  sidLen: WasmI32,
+  groupSize: WasmI32,
+) => {
+  // Copy our own id so we can recognise ourselves in round histories.
+  if (selfIdPtr != 0n) Memory.free(selfIdPtr)
+  selfIdLen = sidLen
+  if (sidLen > 0n) {
+    selfIdPtr = Memory.malloc(sidLen)
+    Memory.copy(selfIdPtr, sidPtr, sidLen)
+  } else {
+    selfIdPtr = 0n
+  }
+  // Fresh per-match tally; load what we remember about the world.
+  curCoop = 0n
+  curRounds = 0n
+  loadMemory()
+  chooseOpener()
+  plannedPlant = opener
+  0n // ok
+}
+
+// ---------------------------------------------------------------------------
+// talk: func(state) -> result<signal>  =>  ptr to { disc u8@0, signal u8@1 }
+//   signal: bloom=0, hold=1, watch=2
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.talk")
+provide let talk = (
+  self: WasmI32,
+  round: WasmI32,
+  histPtr: WasmI32,
+  histLen: WasmI32,
+  sigPtr: WasmI32,
+  sigLen: WasmI32,
+) => {
+  computeLastRound(histPtr, histLen)
+  let target = decideTarget()
+  plannedPlant = target
+  let signal = if (target >= 5n) 0n else if (target <= 2n) 1n else 2n
+  let p = Memory.malloc(4n)
+  WasmI32.store8(p, 0n, 0n)      // disc = ok
+  WasmI32.store8(p, signal, 1n)  // signal
+  p
+}
+
+// ---------------------------------------------------------------------------
+// plant: func(state) -> result<u8>  =>  ptr to { disc u8@0, value u8@1 }
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.plant")
+provide let plant = (
+  self: WasmI32,
+  round: WasmI32,
+  histPtr: WasmI32,
+  histLen: WasmI32,
+  sigPtr: WasmI32,
+  sigLen: WasmI32,
+) => {
+  computeLastRound(histPtr, histLen)
+
+  // Tally the just-completed round into this match's cross-match memory.
+  if (lastCount > 0n) {
+    curRounds += 1n
+    if (divFloor(lastSum, lastCount) >= _COOP_AVG) curCoop += 1n
+  }
+
+  let mut target = plannedPlant
+  // If most neighbours just promised to bloom, lean in one extra seed.
+  let blooms = countOtherBlooms(sigPtr, sigLen)
+  if (sigLen > 0n && blooms * 2n >= sigLen) target = clamp10(target + 1n)
+
+  let p = Memory.malloc(4n)
+  WasmI32.store8(p, 0n, 0n)              // disc = ok
+  WasmI32.store8(p, clamp10(target), 1n) // value 0..10
+  p
+}
+
+// ---------------------------------------------------------------------------
+// match-end: func(summary) -> result
+//   params: self, rounds, finalScores(ptr,len), yourScore f32
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.match-end")
+provide let matchEnd = (
+  self: WasmI32,
+  rounds: WasmI32,
+  fsPtr: WasmI32,
+  fsLen: WasmI32,
+  yourScore: WasmF32,
+) => {
+  saveMemory()
+  0n // ok
+}
+
+// ---------------------------------------------------------------------------
+// resource destructor.
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[dtor]gardener")
+provide let dtor = (self: WasmI32) => {
+  if (selfIdPtr != 0n) {
+    Memory.free(selfIdPtr)
+    selfIdPtr = 0n
+  }
+  void
+}
