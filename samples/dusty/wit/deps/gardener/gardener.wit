@@ -1,0 +1,71 @@
+// Vendored data-plane contract (types + player) for the spike.
+package better-together:gardener@0.1.0;
+
+interface types {
+    type player-id = string;
+
+    record metadata {
+        name: string,
+        version: string,
+        author: string,
+        repo: string,
+        lore: string,
+    }
+
+    enum signal {
+        bloom,
+        hold,
+        watch,
+    }
+
+    record player-action {
+        id: player-id,
+        plant: u8,
+        signal: signal,
+    }
+
+    record round-result {
+        actions: list<player-action>,
+        garden-total: u16,
+        multiplier: f32,
+        garden-payout: f32,
+    }
+
+    record match-context {
+        match-id: string,
+        players: list<player-id>,
+        self-id: player-id,
+        group-size: u8,
+    }
+
+    record signal-broadcast {
+        id: player-id,
+        signal: signal,
+    }
+
+    record round-state {
+        round: u8,
+        history: list<round-result>,
+        signals: list<signal-broadcast>,
+    }
+
+    record match-summary {
+        rounds-played: u8,
+        final-scores: list<tuple<player-id, f32>>,
+        your-score: f32,
+    }
+}
+
+interface player {
+    use types.{metadata, signal, match-context, round-state, match-summary};
+
+    create: func() -> result<gardener>;
+
+    resource gardener {
+        metadata: func() -> result<metadata>;
+        match-start: func(context: match-context) -> result;
+        talk: func(state: round-state) -> result<signal>;
+        plant: func(state: round-state) -> result<u8>;
+        match-end: func(summary: match-summary) -> result;
+    }
+}
