@@ -1,0 +1,19 @@
+{
+    "name": "better-together-tests",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "jsco integration tests for the Better Together gardener samples.",
+    "scripts": {
+        "test": "node --experimental-wasm-jspi run.mjs",
+        "test:release": "node --experimental-wasm-jspi run.mjs --jsco=release",
+        "test:debug": "node --experimental-wasm-jspi run.mjs --jsco=debug",
+        "test:both": "npm run test && npm run test:release",
+        "test:players": "node --experimental-wasm-jspi players.test.mjs",
+        "test:scenarios": "node --experimental-wasm-jspi scenarios.test.mjs",
+        "test:attacker": "node --experimental-wasm-jspi attacker.test.mjs"
+    },
+    "dependencies": {
+        "@pavelsavara/jsco": "file:../../jsco/dist/debug"
+    }
+}

@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Andy — the forgiving hedgehog, a C# gardener for Better Together.
+
+    Built with componentize-dotnet (NativeAOT-LLVM + WASI SDK + wit-bindgen +
+    wasm-tools), which turns this class library into a WASI 0.2 *component* that
+    exports `better-together:gardener/player@0.1.0`.
+
+    The toolchain (LLVM ilcompiler + WASI SDK) is pulled from NuGet — the
+    `dotnet-experimental` feed in nuget.config — and cached on first build.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- We EXPORT an interface, so this is a library, not an executable. -->
+    <OutputType>library</OutputType>
+    <Nullable>enable</Nullable>
+    <!-- The wit-bindgen-generated sources rely on implicit System usings. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Output file name: andy.wasm. -->
+    <AssemblyName>andy</AssemblyName>
+    <RootNamespace>Andy</RootNamespace>
+
+    <!-- WASI 0.2 component compilation via NativeAOT-LLVM. -->
+    <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+    <UseAppHost>false</UseAppHost>
+    <PublishTrimmed>true</PublishTrimmed>
+    <SelfContained>true</SelfContained>
+    <!-- No ICU: keeps the component small and avoids a wasi globalization dep. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Required so wit-bindgen's string marshalling can export cabi_realloc. -->
+    <IlcExportUnmanagedEntrypoints>true</IlcExportUnmanagedEntrypoints>
+
+    <!-- Emit the generated wit-bindgen C# sources somewhere we can read them. -->
+    <WitGeneratedFilesRoot>generated/wit</WitGeneratedFilesRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="0.7.0-preview00010" />
+  </ItemGroup>
+
+  <!--
+    The NativeAOT-LLVM *host* compiler (`ilc`) is a platform-specific package the
+    SDK does not pull in automatically: restore only resolves the wasi-wasm
+    *target* package for our RuntimeIdentifier. Reference the host package that
+    matches the build machine so `ilc` is found. The version tracks the
+    ilcompiler the SDK pins (10.0.0-alpha.1.25162.1). CI builds Andy in the
+    Linux toolchain image, hence linux-x64 is the one that matters there.
+  -->
+  <ItemGroup>
+    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-alpha.1.25162.1" Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
+    <PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-alpha.1.25162.1" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+    <PackageReference Include="runtime.osx-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-alpha.1.25162.1" Condition="$([MSBuild]::IsOSPlatform('OSX'))" />
+  </ItemGroup>
+
+  <!--
+    Point wit-bindgen at the whole `wit/` folder (so it resolves wit/deps/*),
+    selecting the `andy` world. The default "every .wit file" behaviour would
+    wrongly try to generate bindings for the vendored dependency too.
+  -->
+  <ItemGroup>
+    <Wit Remove="**\*.wit" />
+    <Wit Include="wit" World="andy" />
+  </ItemGroup>
+
+</Project>

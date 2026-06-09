@@ -1,0 +1,14 @@
+// The world the `attacker` sample builds against.
+//
+// Like the other Rust samples it exports only the player data plane and reaches
+// the console / virtual filesystem / network through Rust `std` on the
+// wasm32-wasip2 target. The point of this sample is that it *tries* to use
+// capabilities a gardener must never have — outbound network (sockets/http) and
+// an oversized filesystem write — so the host can prove it denies them.
+package better-together:attacker@0.1.0;
+
+/// A misbehaving gardener: a WASI 0.2.3 reactor that exports the Better Together
+/// player interface but attempts forbidden host operations on every call.
+world attacker {
+    export better-together:gardener/player@0.1.0;
+}
