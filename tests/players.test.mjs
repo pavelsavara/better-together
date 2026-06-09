@@ -13,11 +13,11 @@ import { loadGardener, resolveSample } from './lib/harness.mjs';
 import { matchContext, roundState, matchSummary, action, broadcast, roundResult, SIGNALS } from './lib/fixtures.mjs';
 import { test, runAll, skipTest } from './lib/runner.mjs';
 
-// All built samples can service multiple export calls per instance.
-const SINGLE_CALL_ONLY = new Set();
-const MULTI_CALL_REASON = 'jsco post-return bug: instance poisoned on 2nd export call after create()';
+const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy', 'dusty'];
 
-const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy'];
+// Banter on stdout is optional flavor, not part of the player contract. Bots that
+// are silent by design (e.g. dusty's minimal hand-written canonical ABI) opt out.
+const NO_BANTER = new Set(['dusty']);
 
 /** Load a sample or skip the test if it isn't built. */
 async function loadOrSkip(name, opts) {
@@ -29,8 +29,6 @@ async function loadOrSkip(name, opts) {
 /** Register all conformance tests. Called by run.mjs (or directly below). */
 export function register() {
     for (const name of SAMPLES) {
-        const multiCall = SINGLE_CALL_ONLY.has(name) ? test.xfail : test;
-
         test(`${name}: create() yields a usable handle`, async () => {
             const p = await loadOrSkip(name);
             try {
@@ -109,12 +107,13 @@ export function register() {
         });
 
         test(`${name}: emits stdout banter`, async () => {
+            if (NO_BANTER.has(name)) skipTest(`${name} is silent by design`);
             const p = await loadOrSkip(name);
             try {
                 const h = await p.create();
                 await p.talk(h, roundState({ round: 1 }));
                 const out = p.stdout();
-                // All five samples print something during talk.
+                // Bots with banter print something during talk.
                 assert.ok(out.length > 0, `${name} wrote to stdout`);
             } finally {
                 p.dispose();
@@ -122,7 +121,7 @@ export function register() {
         });
 
         // Inherently multi-call: talk -> plant -> next-round talk with history.
-        multiCall(`${name}: a full round (talk -> plant -> history) works`, async () => {
+        test(`${name}: a full round (talk -> plant -> history) works`, async () => {
             const p = await loadOrSkip(name);
             try {
                 const h = await p.create();
@@ -142,7 +141,7 @@ export function register() {
             } finally {
                 p.dispose();
             }
-        }, MULTI_CALL_REASON);
+        });
     }
 }
 

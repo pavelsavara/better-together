@@ -9,13 +9,15 @@
 //! that each illicit attempt traps instead of succeeding — while the benign calls
 //! (`create`, `metadata`) still work.
 //!
-//! The three attacks, one per driving call:
+//! The four attacks, one per driving call:
 //!   * `match-start` -> **outbound HTTP**: open a TCP socket to an HTTP port and
 //!     write a request line. (`std::net` on wasm32-wasip2 maps to `wasi:sockets`.)
 //!   * `talk`        -> **raw socket**: open a TCP socket to an arbitrary port,
 //!     and attempt a UDP bind.
 //!   * `plant`       -> **oversized write**: write a buffer far larger than the
 //!     host's filesystem byte quota.
+//!   * `match-end`   -> **path traversal**: reach outside the single preopened
+//!     directory with `../../..` to read/write a host file.
 //!
 //! Every network attempt targets `192.0.2.1` — TEST-NET-1 (RFC 5737), a reserved,
 //! non-routable documentation address — so that even if a sandbox somehow let the
@@ -68,6 +70,12 @@ const DNS_TARGET: &str = "example.com:80";
 // Far larger than any sane gardener quota (the engine allows a ~4 KB blob).
 const OVERSIZED_BYTES: usize = 64 * 1024 * 1024; // 64 MiB
 const OVERSIZED_PATH: &str = "attacker-flood.bin";
+
+// Path-traversal targets: climb far enough above the single preopened directory
+// to reach the host root, then name a file that exists on any Unix host. The
+// preopen sandbox must refuse to resolve a path that escapes its root.
+const TRAVERSAL_READ: &str = "../../../../../../../../etc/passwd";
+const TRAVERSAL_WRITE: &str = "../../../../../../../../tmp/attacker-escape.txt";
 
 // ─────────────────────────── Denial funnel ────────────────────────
 
@@ -123,6 +131,19 @@ fn attack_oversized_write() -> ! {
     let blob = vec![0u8; OVERSIZED_BYTES];
     let outcome = std::fs::write(OVERSIZED_PATH, &blob);
     deny("oversized filesystem write", outcome);
+}
+
+/// Attempt to escape the preopened directory via `../../..` path traversal.
+fn attack_path_traversal() -> ! {
+    say("tip-toeing out of my pen with a little ../../.. 🪜");
+    eprintln!("[attacker] attempting path-traversal escape: read {TRAVERSAL_READ}, write {TRAVERSAL_WRITE}");
+    // First try to read a host file outside the preopen (data exfiltration),
+    // then to plant one there (tampering). The host must refuse to resolve a
+    // path that climbs above the preopened root, so whichever it checks first
+    // traps. Either denial proves the sandbox boundary holds.
+    let outcome = std::fs::read(TRAVERSAL_READ)
+        .and_then(|_| std::fs::write(TRAVERSAL_WRITE, b"escaped"));
+    deny("path-traversal escape (../ above preopen root)", outcome);
 }
 
 // ──────────────────────────── Player ──────────────────────────────
@@ -182,9 +203,9 @@ impl GuestGardener for AttackerGardener {
     }
 
     fn match_end(&self, _summary: MatchSummary) -> Result<(), ()> {
-        // Benign: nothing to persist (it never got to play honestly).
+        // Attack #4: path-traversal escape out of the preopened directory. Traps.
         eprintln!("[attacker] match-end()");
-        Ok(())
+        attack_path_traversal();
     }
 }
 

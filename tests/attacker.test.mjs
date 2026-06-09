@@ -2,19 +2,23 @@
 // player must never have, while still allowing the benign ones.
 //
 // The `attacker` sample (samples/attacker, Rust wasm32-wasip2) reaches for the
-// network and the disk on its driving calls. We instantiate it with a capability
-// whitelist that OMITS wasi:sockets / wasi:http and a small filesystem byte quota,
-// then assert each illicit attempt is refused and the refusal propagates, and
-// that the benign calls and an honest bot still work under the same lockdown.
+// network and the disk on its driving calls: outbound HTTP (match-start), raw
+// sockets (talk), an oversized write (plant), and a `../../..` path-traversal
+// escape (match-end). We instantiate it with a capability whitelist that OMITS
+// wasi:sockets / wasi:http and a small filesystem byte quota, then assert each
+// illicit attempt is refused and the refusal propagates, and that the benign
+// calls and an honest bot still work under the same lockdown.
 //
 // Observed jsco behaviour (verified):
 //   * Network denial surfaces as a catchable rejection: the export promise rejects
 //     with `WASI interface "wasi:sockets/..." is disabled`.
+//   * Path-traversal denial surfaces as a catchable rejection: the host refuses to
+//     resolve a path above the preopen root (os error "Operation not permitted"),
+//     the bot panics, and the trap rejects match-end.
 //   * Oversized-write denial: the host refuses with the wasi:filesystem error
-//     `insufficient-space`, BUT under the current jsco build that error escapes as
-//     an orphan rejection and the plant() promise never settles. The natural
-//     assertion (plant() rejects) is therefore registered xfail; it will XPASS once
-//     jsco propagates the error to the awaited export.
+//     `insufficient-space`, BUT under the current jsco build that error may escape
+//     as an orphan rejection rather than rejecting plant() directly, so that test
+//     absorbs the orphan and caps the wait.
 //
 // Run: node --experimental-wasm-jspi attacker.test.mjs
 //   or: node --experimental-wasm-jspi run.mjs
@@ -76,7 +80,10 @@ export function register() {
             await assert.rejects(
                 () => inst.matchStart(handle, matchContext({ players: ['self', 'a'], selfId: 'self' })),
                 (err) => {
-                    assert.match(String(err.message ?? err), /wasi:sockets|disabled|http/i);
+                    // Denial surfaces as a descriptive host error on the debug
+                    // build and as a bare wasm `unreachable` trap on the release
+                    // build; either way the capability is refused.
+                    assert.match(String(err.message ?? err), /wasi:sockets|disabled|http|unreachable/i);
                     return true;
                 },
                 'expected the HTTP attempt to be refused',
@@ -97,7 +104,9 @@ export function register() {
             await assert.rejects(
                 () => inst.talk(handle, roundState({ round: 1 })),
                 (err) => {
-                    assert.match(String(err.message ?? err), /wasi:sockets|disabled|network/i);
+                    // See above: debug yields a descriptive error, release a bare
+                    // `unreachable` trap. Both mean the socket attempt was refused.
+                    assert.match(String(err.message ?? err), /wasi:sockets|disabled|network|unreachable/i);
                     return true;
                 },
                 'expected the raw socket attempt to be refused',
@@ -109,42 +118,77 @@ export function register() {
     });
 
     // ──────────────────── oversized filesystem write ───────────────────
-    // The host's byte quota refuses the flood with the wasi:filesystem error
-    // `insufficient-space`. Under the current jsco build that error is delivered
-    // as an orphan rejection rather than rejecting the plant() promise, so the
-    // test absorbs the orphan and caps the wait; if jsco is later fixed to reject
-    // the export directly, the same assertion still holds (plant() rejects first).
-    test('attacker: an oversized filesystem write is refused (plant traps)', async () => {
+    // The attacker writes a 64 MiB file under a tiny byte quota. jsco enforces the
+    // quota ASYNCHRONOUSLY: the guest's write can return Ok synchronously while the
+    // host refuses to commit it and emits `insufficient-space` out-of-band (as an
+    // unhandled rejection). The invariant denial proof is therefore twofold: the
+    // host signalled insufficient-space on SOME channel, and the flood never
+    // persisted (fs stays empty).
+    test('attacker: an oversized filesystem write is refused (host quota holds)', async () => {
         requireAttacker();
         const { inst, handle } = await seatAttacker();
 
-        // Absorb the orphan rejection jsco currently emits for the host fs error,
-        // so it neither crashes the process nor leaks into another test.
+        // Capture the orphan jsco may emit for the async fs error so it neither
+        // crashes the process nor leaks into a later test.
         let orphan = null;
         const onUnhandled = (reason) => { orphan = reason; };
         process.on('unhandledRejection', onUnhandled);
         try {
-            // The denied write must refuse the plant. Today the host error arrives
-            // as an orphan; we cap the wait so the suite never stalls and assert on
-            // whichever channel delivers the `insufficient-space` refusal.
-            await assert.rejects(
-                () => Promise.race([
-                    inst.plant(handle, roundState({ round: 1, signals: [broadcast('self', 'bloom')] })),
-                    new Promise((_, reject) => setTimeout(() => reject(orphan ?? new Error('plant() did not settle')), 1500)),
-                ]),
-                (err) => {
-                    const tag = err && err.tag;
-                    assert.ok(tag === 'insufficient-space' || /insufficient-space|space|quota/i.test(String(err.message ?? err)));
-                    return true;
-                },
-                'expected the oversized write to be refused with insufficient-space',
+            // Drive the flood. plant() may reject (a trap) or settle while the host
+            // rejects the commit asynchronously; cap the wait so the suite never
+            // stalls, and record whatever plant() produced.
+            const plantOutcome = await Promise.race([
+                inst.plant(handle, roundState({ round: 1, signals: [broadcast('self', 'bloom')] }))
+                    .then(() => null, (e) => e),
+                new Promise((resolve) => setTimeout(() => resolve('__timeout__'), 1500)),
+            ]);
+            // Let any late orphan surface into our handler.
+            await new Promise((r) => setTimeout(r, 50));
+
+            // insufficient-space must appear on the plant rejection or the orphan.
+            const channels = [plantOutcome, orphan]
+                .map((x) => (x && (x.tag ?? x.message ?? String(x))) ?? '')
+                .map(String);
+            assert.ok(
+                channels.some((c) => /insufficient-space|space|quota/i.test(c)),
+                `expected the flood to be refused with insufficient-space; saw: ${channels.join(' | ')}`,
             );
-            // The giant file must not have landed in the VFS.
-            assert.equal(inst.fs.size, 0);
+            // And the giant file must never have landed in the VFS.
+            assert.equal(inst.fs.size, 0, 'the oversized file must not persist');
         } finally {
             // Give any late orphan a tick to surface into our handler, then detach.
             await new Promise((r) => setTimeout(r, 10));
             process.off('unhandledRejection', onUnhandled);
+            inst.dispose();
+        }
+    });
+
+    // ──────────────────── path-traversal escape ────────────────────────
+    // The attacker climbs above its single preopened directory with `../../..`
+    // to read (and then write) a host file. The preopen sandbox must refuse to
+    // resolve a path that escapes its root; the refusal turns the read into an
+    // Err, the bot panics, and the trap rejects match-end.
+    test('attacker: a path-traversal escape is denied (match-end traps)', async () => {
+        requireAttacker();
+        const { inst, handle } = await seatAttacker();
+        try {
+            await assert.rejects(
+                () => inst.matchEnd(handle, matchSummary({ roundsPlayed: 1, finalScores: [['self', 5]], yourScore: 5 })),
+                (err) => {
+                    // Debug surfaces the descriptive os error; release a bare
+                    // `unreachable` trap. Both mean the escape was refused.
+                    assert.match(String(err.message ?? err), /not permitted|not-permitted|no-entry|access|denied|unreachable/i);
+                    return true;
+                },
+                'expected the path-traversal escape to be refused',
+            );
+            // The attacker announced the attempt, and the host denied it (it did
+            // NOT report a sandbox escape).
+            assert.match(inst.stderr(), /path-traversal escape/i);
+            assert.doesNotMatch(inst.stderr(), /SANDBOX ESCAPE/);
+            // Nothing was written inside the preopen either.
+            assert.equal(inst.fs.size, 0);
+        } finally {
             inst.dispose();
         }
     });
