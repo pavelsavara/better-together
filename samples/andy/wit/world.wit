@@ -1,0 +1,22 @@
+// The world the `andy` sample builds against.
+//
+// Like ferris and keith, it exports nothing but the player data plane. Andy is
+// written in C# and compiled to a WASI 0.2.3 reactor component with
+// componentize-dotnet (NativeAOT-LLVM + WASI SDK). The .NET runtime lowers the
+// BCL onto the WASI 0.2 imports automatically:
+//
+//   * Console.WriteLine        -> wasi:cli/stdout (Andy's gentle hedgehog banter)
+//   * System.IO.File           -> wasi:filesystem (his little friend-book)
+//   * DateTime / Environment    -> wasi:clocks, wasi:cli/environment
+//
+// So those imports don't need to be declared here — NativeAOT-LLVM contributes
+// the WASI import world and the component encoder merges it with the `player`
+// export world emitted by `wit-bindgen c-sharp`. Keeping the bindgen world to
+// just the interface we implement mirrors how ferris and keith build.
+package better-together:andy@0.1.0;
+
+/// A single Andy player component: a WASI 0.2.3 reactor that exports the
+/// Better Together player interface.
+world andy {
+    export better-together:gardener/player@0.1.0;
+}
