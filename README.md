@@ -59,6 +59,9 @@ Polyglot by design — every bot is just a component, regardless of source langu
 | **Khaos**  | JavaScript (`jco`) | Coin-flip god — friend or foe forever, words at random | [samples/khaos](samples/khaos) |
 | **Gopher** | Go (TinyGo `wasip2`) | Pavlov forager — win-stay, lose-shift out of pure habit | [samples/gopher](samples/gopher) |
 | **Micro**  | Hand-written `.wat` | Minimalist signal-matcher — matches the table's blooms, no memory | [samples/micro](samples/micro) |
+| **Keith**  | C++ (`wasm32-wasip2`) | Ledger-keeping sewer rat — generous Tit-for-Tat that enforces promises | [samples/keith](samples/keith) |
+| **Andy**   | C# (`wasi-wasm`) | Forgiving hedgehog — Tit-for-Tat on deeds, warm to friends, cold-forgetful of foes | [samples/andy](samples/andy) |
+| **Dusty**  | Grain (`.gr`) | Cautious pantry mouse — graduated Tit-for-Tat that mirrors the table's average | [samples/dusty](samples/dusty) |
 
 Inspect a built component's interface with [`wasm-tools`](https://github.com/bytecodealliance/wasm-tools):
 
@@ -74,7 +77,7 @@ wasm-tools component wit samples/corro/target/wasm32-wasip1/release/corro.wasm
 better-together/
 ├── docs/           Player Rules, Engine Rules & Architecture
 ├── wit/            The game, gardener, and multiplexer contracts
-├── samples/        Reference bots (Ferris, Corro, Khaos, Gopher, Micro)
+├── samples/        Reference bots (Ferris, Corro, Khaos, Gopher, Micro, Keith, Andy, Dusty)
 ├── game/           Tournament host implementation
 └── README.md       You are here
 ```

@@ -64,7 +64,7 @@ jobs:
           sha_tag="sha-${GITHUB_SHA::12}"
           source_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
           failed=()
-          for sample in ferris corro khaos gopher micro; do
+          for sample in ferris corro khaos gopher micro andy dusty; do
             ref="${REGISTRY}/${namespace}/${sample}"
             readme="samples/${sample}/README.md"
             # OCI annotation values cannot contain newlines/tabs/CR (registries
