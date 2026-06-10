@@ -3,14 +3,37 @@
 // observable view the UI animates (architecture §5). Exhibition only — nothing
 // here affects the official leaderboard.
 
-import { createGardenerSeat, type GardenerSeat } from '../../../game/src/host/seat.ts';
+import { createGardenerSeat } from '../../../game/src/host/seat.ts';
 import { createMatchDriver, type MatchDriver } from '../../../game/src/core/match.ts';
+import type { Seat } from '../../../game/src/types.ts';
 import type { BotRecord, SignalBroadcast, PlayerAction, RoundOutcome } from '../data/types.ts';
 
 export interface SeatView {
     id: string;
     glyph: string;
     name: string;
+}
+
+/** A seat plus the bits the controller needs for banter + teardown. */
+export interface SeatEntry {
+    seat: Seat;
+    view: SeatView;
+    stdout: () => string;
+    dispose: () => void;
+}
+
+/** Build a seat entry for a registered bot: fetch its wasm same-origin + seat it. */
+export async function createBotEntry(bot: BotRecord, baseUrl: string): Promise<SeatEntry> {
+    const res = await fetch(`${baseUrl}${bot.wasm}`);
+    if (!res.ok) throw new Error(`fetch ${bot.wasm}: HTTP ${res.status}`);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const seat = await createGardenerSeat(bytes, { id: bot.id, callBudgetMs: 0 });
+    return {
+        seat,
+        view: { id: bot.id, glyph: bot.glyph, name: bot.name },
+        stdout: () => seat.stdout(),
+        dispose: () => seat.dispose(),
+    };
 }
 
 export type MatchStatus = 'idle' | 'loading' | 'running' | 'paused' | 'done' | 'error';
@@ -47,7 +70,7 @@ const EMPTY: MatchView = {
 export class MatchController {
     #view: MatchView = { ...EMPTY };
     #driver: MatchDriver | null = null;
-    #seats: GardenerSeat[] = [];
+    #entries: SeatEntry[] = [];
     #stdoutLen = new Map<string, number>();
     #playing = false;
     #timer: ReturnType<typeof setTimeout> | null = null;
@@ -76,45 +99,53 @@ export class MatchController {
         this.dispose();
         this.#emit({ ...EMPTY, status: 'loading', seed });
         try {
-            const seats: GardenerSeat[] = [];
+            const entries: SeatEntry[] = [];
             for (const bot of bots) {
-                const res = await fetch(`${baseUrl}${bot.wasm}`);
-                if (!res.ok) throw new Error(`fetch ${bot.wasm}: HTTP ${res.status}`);
-                const bytes = new Uint8Array(await res.arrayBuffer());
-                seats.push(await createGardenerSeat(bytes, { id: bot.id, callBudgetMs: 0 }));
+                entries.push(await createBotEntry(bot, baseUrl));
             }
-            this.#seats = seats;
-            const driver = createMatchDriver({ matchId: `live-${seed}`, seed, seats });
-            this.#driver = driver;
-            await driver.matchStart();
-
-            const byId = new Map(bots.map((b) => [b.id, b] as const));
-            const seatViews: SeatView[] = driver.players.map((id) => {
-                const b = byId.get(id);
-                return { id, glyph: b?.glyph ?? '🌱', name: b?.name ?? id };
-            });
-            this.#emit({
-                status: 'paused',
-                round: 1,
-                phase: 'talk',
-                seats: seatViews,
-                runningTotals: driver.players.map(() => 0),
-            });
+            await this.#begin(entries, seed);
         } catch (e) {
             this.#emit({ status: 'error', error: (e as Error).message });
         }
     }
 
+    /** Begin a match over caller-built seat entries (Bot Builder mixed roster). */
+    async loadEntries(entries: SeatEntry[], seed: string): Promise<void> {
+        this.dispose();
+        this.#emit({ ...EMPTY, status: 'loading', seed });
+        try {
+            await this.#begin(entries, seed);
+        } catch (e) {
+            this.#emit({ status: 'error', error: (e as Error).message });
+        }
+    }
+
+    async #begin(entries: SeatEntry[], seed: string): Promise<void> {
+        this.#entries = entries;
+        const driver = createMatchDriver({ matchId: `live-${seed}`, seed, seats: entries.map((e) => e.seat) });
+        this.#driver = driver;
+        await driver.matchStart();
+        const byId = new Map(entries.map((e) => [e.view.id, e.view] as const));
+        const seatViews: SeatView[] = driver.players.map((id) => byId.get(id) ?? { id, glyph: '🌱', name: id });
+        this.#emit({
+            status: 'paused',
+            round: 1,
+            phase: 'talk',
+            seats: seatViews,
+            runningTotals: driver.players.map(() => 0),
+        });
+    }
+
     #collectBanter(): Array<{ id: string; text: string }> {
         const lines: Array<{ id: string; text: string }> = [];
-        for (const seat of this.#seats) {
-            const out = seat.stdout();
-            const prev = this.#stdoutLen.get(seat.id) ?? 0;
+        for (const entry of this.#entries) {
+            const out = entry.stdout();
+            const prev = this.#stdoutLen.get(entry.view.id) ?? 0;
             if (out.length > prev) {
                 const fresh = out.slice(prev).trim();
-                this.#stdoutLen.set(seat.id, out.length);
+                this.#stdoutLen.set(entry.view.id, out.length);
                 for (const line of fresh.split('\n')) {
-                    if (line.trim()) lines.push({ id: seat.id, text: line.trim() });
+                    if (line.trim()) lines.push({ id: entry.view.id, text: line.trim() });
                 }
             }
         }
@@ -191,14 +222,14 @@ export class MatchController {
 
     dispose(): void {
         this.pause();
-        for (const seat of this.#seats) {
+        for (const entry of this.#entries) {
             try {
-                seat.dispose();
+                entry.dispose();
             } catch {
                 /* ignore */
             }
         }
-        this.#seats = [];
+        this.#entries = [];
         this.#driver = null;
         this.#stdoutLen.clear();
     }

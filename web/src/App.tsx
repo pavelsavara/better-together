@@ -5,6 +5,7 @@ import { Bot } from './pages/Bot.tsx';
 import { Submit } from './pages/Submit.tsx';
 import { About } from './pages/About.tsx';
 import { Rules } from './pages/Rules.tsx';
+import { Builder } from './pages/Builder.tsx';
 
 const NAV = [
     { to: '/', label: 'Home', end: true },
@@ -44,15 +45,6 @@ export function App() {
                 <span>jsco · WASI · better-together</span>
                 <span className="muted">“When you join a group, does it flourish?”</span>
             </footer>
-        </div>
-    );
-}
-
-function Builder() {
-    return (
-        <div className="panel">
-            <h2>═══| BOT BUILDER |═══</h2>
-            <p className="muted">The in-browser strategy editor arrives in a later phase.</p>
         </div>
     );
 }
