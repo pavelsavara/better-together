@@ -78,16 +78,35 @@ When the round resolves, you see the full outcome — every ballot and the tax:
     { voter: "bob",   target: null  }
   ],
   garden_total: 21,        // sum of plants, before tax
-  tax_target: "bob",       // plurality vote, >= 2 weight
+  tax_target: "bob",       // 3 distinct voters, uniquely highest weight
   tax_seized: 5,           // floor(bob.kept / 2) = floor(10/2)
   garden_payout_per_player: 13.0,   // (21 + 5) * 2 / 4
-  your_score_this_round: 19.0
+  your_score_this_round: 17.0
 }
 ```
 
 > Note: `bob` planted 0, so his ballot was worth only **1 vote**; alice, you, and
-> carol each planted ≥ 3, so each cast **2 votes** — enough to tax bob's hoard
-> into the garden.
+> carol each planted ≥ 3, so each cast **2 votes**. Three distinct voters named
+> bob with the uniquely highest weight, and bob kept seeds to seize — enough to
+> tax his hoard into the garden.
+
+### One Round in 20 Seconds
+
+A K=4 table — you are **you**:
+
+1. **Talk.** alice and you broadcast `BLOOM`; carol `WATCH`; bob `HOLD`.
+2. **Plant.** alice plants 8, carol 7, you 6 — all ≥ 3, so each is a *contributor*
+   with **2 votes**. bob plants **0** (1 vote). Every plant is revealed.
+3. **Vote.** alice, carol, and you each name **bob**, the obvious hoarder; bob
+   abstains. Three distinct voters, bob's weight is uniquely highest, and bob kept
+   10 (> 0) — so bob is taxed. (One voter alone, even a contributor, could not.)
+4. **Resolve.** `garden_total` = 8 + 7 + 6 + 0 = **21**. Seize `floor(10 / 2)` =
+   **5** from bob → `garden` = 26. Payout = 26 × 2 ÷ 4 = **13** to everyone.
+5. **Score.** You kept 4, plus 13 → **17** this round. bob kept 10, lost 5 to the
+   tax, plus 13 → **18** — still ahead for one round, but the table closed the gap
+   and bob's hoarding reputation follows him into the next match.
+
+Now the formal version.
 
 ### 5. Scoring (your match score)
 
@@ -102,9 +121,10 @@ Where:
   taxed from you this round if you were the tax-target.
 - `garden_payout` = ((garden_total + tax_seized) × **2**) ÷ K — everything in the
   garden is **doubled**, then split equally among all K players.
-- `tax_seized` = `floor(target.kept / 2)`, minimum 1, taken from the plurality
-  vote-target and added to the garden before doubling. No tax if no target
-  reached quorum (2 vote-weight) or the top vote tied.
+- `tax_seized` = `floor(target.kept / 2)`, minimum 1, taken from the tax-target
+  and added to the garden before doubling. A target needs **at least two distinct
+  voters** and the **uniquely highest** vote-weight; a player who kept 0 can't be
+  taxed. No tax if no target clears those bars or the top weight ties.
 
 Planting **≥ 3** this round doesn't change your payout — it makes your ballot worth
 **2 votes** instead of 1. The threshold is a *voting franchise*.
@@ -123,7 +143,8 @@ flat ×2 keeps it alive at every group size.
 **The vote is how the table fights back.** You can't out-plant a hoarder on your
 own — but you can organise a tax. Seizing a hoarder's kept seeds doubles them into
 the garden, turning private hoarding into shared value. That needs a **coalition**:
-one ballot can't reach the 2-vote quorum, so discipline takes allies.
+a lone ballot can't tax anyone — a tax needs at least two voters aimed at the same
+target, so discipline takes allies.
 
 **The threshold is a franchise, not a target.** Planting ≥ 3 buys you two votes —
 a real say in who gets taxed — but nothing for your payout, so there's no reason to

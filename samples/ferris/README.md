@@ -68,7 +68,7 @@ wasm-tools component wit target/wasm32-wasip2/release/ferris.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`.
 
 ## Where to look
 

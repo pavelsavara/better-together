@@ -78,7 +78,7 @@ wasm-tools component wit micro.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`, importing
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`, importing
 `better-together:gardener/types@0.1.0` plus the three wasi interfaces used for
 banter.
 

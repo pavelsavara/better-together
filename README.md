@@ -25,7 +25,6 @@
 |----------------------------------------------------|----------|
 | **Write a bot** — the full player-facing contract  | [Player Rules](docs/player-rules.md) |
 | **Understand scoring** — how the host runs the tournament| [Engine Rules](docs/engine-rules.md) |
-| **See the component wiring** — how it all runs     | [Architecture](docs/architecture.md) |
 
 Two quick jumping-off points:
 
@@ -44,7 +43,7 @@ The game is defined by two WebAssembly Interface Type packages:
 | `better-together:gardener`  | [wit/gardener.wit](wit/gardener.wit)       | The **player** contract every bot implements. |
 
 To implement a bot you only need the [`player` interface](wit/gardener.wit): export a
-`gardener` resource with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
+`gardener` resource with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`.
 
 ---
 
@@ -62,7 +61,7 @@ Polyglot by design — every bot is just a component, regardless of source langu
 | **Keith**  | C++ (`wasm32-wasip2`) | Ledger-keeping sewer rat — generous Tit-for-Tat that enforces promises | [samples/keith](samples/keith) |
 | **Andy**   | C# (`wasi-wasm`) | Forgiving hedgehog — Tit-for-Tat on deeds, warm to friends, cold-forgetful of foes | [samples/andy](samples/andy) |
 | **Dusty**  | Grain (`.gr`) | Cautious pantry mouse — graduated Tit-for-Tat that mirrors the table's average | [samples/dusty](samples/dusty) |
-| **Reynard** | JavaScript (`jco`) | Velvet-gloved skimmer — the polite opportunist who skims fat tables and never trips the tax *(design sketch)* | [samples/reynard](samples/reynard) |
+| **Reynard** | JavaScript (`jco`) | Velvet-gloved skimmer — the polite opportunist who skims fat tables and tries not to draw a taxing coalition *(design sketch)* | [samples/reynard](samples/reynard) |
 | **Bram**   | C# (`componentize-dotnet`) | Union boss — organizes a voting bloc, taxes hoarders, plays for the whole table *(design sketch)* | [samples/bram](samples/bram) |
 
 Inspect a built component's interface with [`wasm-tools`](https://github.com/bytecodealliance/wasm-tools):

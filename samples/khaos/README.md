@@ -83,7 +83,7 @@ wasm-tools component wit khaos.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`, and importing
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`, and importing
 `wasi:filesystem` (for memory), `wasi:cli`, `wasi:io`, `wasi:clocks`, and
 `wasi:random` — but no `wasi:http` or `wasi:sockets`.
 

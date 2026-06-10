@@ -26,8 +26,9 @@ budget*. His rules of thumb:
   a believable handful (≈ 5–6). He looks exactly like a normal cooperator.
 - **Skim the fat tables.** When the room is over-generous — high average plant,
   no disciplinarian seated — he quietly trims to **3–4 seeds**: still above the
-  contributor floor, so he keeps his two votes and never trips the tax, but he is
-  now banking a doubled payout everyone else paid for.
+  contributor floor, so he keeps his two votes and *looks* less like a hoarder —
+  not immune to the tax (a coalition can still elect him), just less likely to draw
+  one — while banking a doubled payout everyone else paid for.
 - **Never below the floor.** He will not drop under the contributor threshold the
   way Corro does, because that is what gets you *seen* — flagged a defector,
   marked a liar, voted into the tax. Reynard's genius is that

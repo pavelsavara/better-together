@@ -48,10 +48,15 @@ table can collectively discipline a hoarder:
    **Vote weight**: a player who planted **≥ 3** this round (a *contributor*)
    casts **2 votes**; everyone else casts **1**. Abstaining costs nothing.
 4. **Resolve the tax**:
-   - Tally total vote-weight per named target.
-   - The unique target with the most weight **and at least 2 total weight** is
-     the `tax-target`. A tie for the top, or a top under 2, means **no tax**.
-   - Seize `floor(kept / 2)`, minimum **1**, from the tax-target's pot
+   - Tally, per named target, both the **number of distinct voters** and their
+     **total vote-weight**.
+   - A target is eligible only if **at least two distinct voters** named it. Among
+     eligible targets, the one whose vote-weight is the **uniquely highest** is the
+     `tax-target`. Fewer than two voters on every target, or a tie for the top
+     weight, means **no tax**.
+   - A player who **kept 0** seeds (planted all 10) **cannot be taxed**: if the
+     elected target kept nothing, the round produces **no tax**.
+   - Otherwise seize `floor(kept / 2)`, minimum **1**, from the tax-target's pot
      (`kept = 10 - plant`) and **add the seized seeds to the garden**.
 5. **Compute the garden**:
    - `garden_total` = sum of all `plant` values (before tax)
@@ -100,8 +105,10 @@ confiscating** what a free-rider tried to keep.
 
 #### The coalition is load-bearing
 
-A single disciplinarian **cannot** tax anyone: the quorum is 2 vote-weight, and
-the biggest punishments need a bloc. Punishment therefore *requires* allies —
+A single disciplinarian **cannot** tax anyone: a tax needs **at least two
+different voters** aimed at the same target, so even a contributor's 2-vote
+ballot can't punish alone, and the biggest punishments need a bloc. Punishment
+therefore *requires* allies —
 which is exactly why a union (see [Bram](../samples/bram/README.md)) out-performs
 a lone altruist, and why collusion is a first-class, intended strategy rather
 than an exploit. Random match composition keeps any one bloc's edge bounded.
@@ -258,8 +265,9 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
 2. **Vote weight**: Alice, Carol, Dave each planted ≥ 3 → **2 votes** each; Bob
    planted 0 → **1 vote**. Bob is the obvious hoarder, so Alice, Carol, and Dave
    all vote to tax Bob (Bob abstains).
-3. **Tax**: Bob's tally is 6 vote-weight — a clear plurality over quorum (2). Bob
-   is the `tax-target`. Seize `floor(kept / 2)` = `floor(10 / 2)` = **5** seeds
+3. **Tax**: three distinct voters named Bob (6 vote-weight) — a coalition with the
+   uniquely highest weight, and Bob kept 10 (> 0), so he is taxable. Bob is the
+   `tax-target`. Seize `floor(kept / 2)` = `floor(10 / 2)` = **5** seeds
    from Bob's pot into the garden.
 4. `garden` = 21 + 5 = **26**
 5. `garden_payout` = 26 × 2 / 4 = **13.0** (everyone gets this — even Bob)

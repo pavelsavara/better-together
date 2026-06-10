@@ -117,7 +117,7 @@ wasm-tools component wit dusty.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `create`, `metadata`, `match-start`, `talk`, `plant`, and `match-end`,
+with `create`, `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`,
 importing `better-together:gardener/types@0.1.0` plus the wasi interfaces the
 adapter kept (stdio, `wasi:filesystem`, and their io/clocks dependencies).
 
