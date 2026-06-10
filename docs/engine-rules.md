@@ -7,15 +7,18 @@
 ### 1. Tournament Structure
 
 ```
-Tournament
- └── Season (one leaderboard cycle)
-      └── Many Matches (random group compositions)
-           └── R Rounds per match (random length)
+Tournament (permanent — always running)
+ └── Many Matches (random group compositions, drawn continuously)
+      └── R Rounds per match (random length)
 ```
 
-- A **season** consists of many matches, enough to give every pair of bots many opportunities to interact.
+- The tournament is **permanent**: a bot registers once and plays forever. There
+  are no seasons or resets — the engine keeps drawing fresh random groups and
+  running matches for as long as the bot is entered.
 - Each **match** groups K players drawn from the pool and runs them together for R rounds.
-- Groups are assigned **randomly** by the engine, but every bot will face many different combinations of opponents over a season.
+- Groups are assigned **randomly** by the engine, so over time every bot faces many different combinations of opponents.
+- The leaderboard is **live**: scores are recomputed continuously over a trailing
+  window of recent matches (see [§7](#7-the-best-co-player-score)).
 
 ### 2. Match Composition
 
@@ -23,7 +26,7 @@ Tournament
 |--------------------|---------------|-----------------------------------------|
 | Group size (K)     | 4–6           | Drawn uniformly at random per match     |
 | Rounds per match   | 8 + geometric | Min 8; after round 8 each further round happens with prob 2/3 (public hazard 1/3). Mean ≈ 10. Realized length unknown to players. |
-| Matches per season | ≥ C(N,K) × 3 | Enough that all subsets are well-sampled |
+| Match draw         | continuous    | The engine draws random groups indefinitely; every subset gets well-sampled over time |
 
 - Bots receive `match_start` with the list of player IDs in their group and K, but **not** the number of rounds.
 - Because any round after the 8th may be the last — and none is *ever* known to be — there is no fixed final round to backward-induct from, so "last round defection" has no base case to unravel from.
@@ -53,7 +56,7 @@ table can collectively discipline a hoarder:
 5. **Compute the garden**:
    - `garden_total` = sum of all `plant` values (before tax)
    - `garden = garden_total + tax_seized`
-6. **Compute payout** (flat doubling — no multiplier):
+6. **Compute payout** (flat doubling):
    - `garden_payout = (garden × 2) / K`
    - Every player (including the taxed one) receives `garden_payout`.
 7. **Compute individual round scores**:
@@ -83,12 +86,11 @@ of total value for the group. The dilemma holds at every group size; "everyone
 hoards" is still the one-shot Nash trap, and cooperation must be rescued by
 *reputation and the vote*, not by a payout curve.
 
-**The contributor threshold is now a franchise, not a payout kink.** Planting
-≥ 3 no longer bumps any multiplier — it grants you **2 votes instead of 1**. The
-only thing the threshold buys is political weight: to help *weed* the garden, you
-must have a real stake *in* it. This deliberately removes any payoff reason to
-aim for "exactly 3" — the number that makes you *enfranchised* and the number that
-makes the group *rich* are nowhere near each other.
+**The contributor threshold is a franchise.** Planting ≥ 3 grants you **2 votes
+instead of 1**. The threshold buys only political weight: to help *weed* the
+garden, you must hold a real stake *in* it. It never touches your payout, so
+there is no payoff reason to aim for "exactly 3" — the number that *enfranchises*
+you and the number that makes the group *rich* are nowhere near each other.
 
 **The tax is how discipline pays.** Seizing a hoarder's kept seeds and doubling
 them into the garden converts a privately-hoarded seed (worth 1) into shared,
@@ -154,14 +156,17 @@ A bot that cooperates reliably and elicits cooperation from others will consiste
 
 #### Formal Definition (Approximate Shapley Value)
 
-Over a season with many randomly composed matches:
+Computed continuously over a **trailing window** of recent matches:
 
 ```
-co_player_score(i) = mean(group_total(m) for all matches m containing player i)
-                   − mean(group_total(m) for all matches m in the season)
+co_player_score(i) = mean(group_total(m) for recent matches m containing player i)
+                   − mean(group_total(m) for all recent matches m in the window)
 ```
 
-Where `group_total(m)` = sum of all players' match scores in match m.
+Where `group_total(m)` = sum of all players' match scores in match m. The window
+(a fixed number of recent matches, or an exponential decay with a half-life
+measured in matches) keeps the baseline tracking the **current** field as the
+meta evolves, instead of being diluted by long-obsolete matches.
 
 **Interpretation**:
 - **Positive** → groups perform above average when you're present.
@@ -170,7 +175,21 @@ Where `group_total(m)` = sum of all players' match scores in match m.
 
 Because groups are **randomly composed** by the engine, this converges to the **Shapley value** of each player's contribution to coalition performance — the unique fair attribution from cooperative game theory.
 
-#### Why This Works
+#### Fairness to New Players & Convergence
+
+The score is a *difference from the current field's mean*, so it never depends on
+how long you've competed: a bot that registered yesterday is measured on exactly
+the same footing as one that has played for months. There is no starting rating
+to climb out of, no seniority bonus, and no penalty for being new — a strong new
+entrant can top the board as soon as it has played enough matches.
+
+Because matches are composed randomly, each Co-Player Score is an unbiased
+estimate whose noise shrinks with the number of matches it averages over (roughly
+as 1/√matches). Convergence is therefore measured in **matches played, not
+calendar time**: a few hundred matches in the trailing window give a stable
+ranking, which the permanent engine reaches quickly for any actively-entered bot.
+One fluke table can't crown anyone; a persistent effect on your tables shows up
+fast.
 
 | Strategy              | Individual Score | Co-Player Score | Why                                                  |
 |-----------------------|-----------------|-----------------|------------------------------------------------------|
@@ -182,7 +201,7 @@ Because groups are **randomly composed** by the engine, this converges to the **
 > **A note on "Best Co-Player" vs. raw score** — and why new bot authors should
 > read it carefully. Your *intuition* will push you to maximize your own match
 > score (hoard a little, free-ride). The crown rewards the **opposite**: how much
-> the groups you join out-perform the season average. Recall the identity
+> the groups you join out-perform the field average. Recall the identity
 > `group_total = 10K + garden_total + tax_seized` — you win by *filling the
 > garden* (your plant plus the plants you elicit) and by *confiscating hoards*
 > (the tax you organize), not by fattening your own pot.
@@ -192,7 +211,7 @@ Because groups are **randomly composed** by the engine, this converges to the **
 > tax. In a field of purely unconditional bots, nothing you do changes their
 > play, so the altruist (All-Bloom) ties the disciplinarian. The disciplinarian
 > *pulls ahead* the moment opponents are deterrable and bloc-taxable — which, in a
-> real season full of memory-keeping bots and union voters, they are. Build for a
+> real field full of memory-keeping bots and union voters, they are. Build for a
 > reactive world.
 
 ### 8. Secondary Leaderboard: Raw Score
@@ -270,20 +289,18 @@ Co-Player Score.
 ### Why Public Goods (not Prisoner's Dilemma)?
 The PD is 2-player and binary (cooperate/defect). The public goods game is natively N-player and continuous (plant 0–10), making it richer, more visual, and more natural for a tournament with many bots.
 
-### Why a flat double (not a diversity multiplier)?
-An earlier design grew the payout with the *number of distinct contributors*. It
-worked, but it added a payout curve players had to reverse-engineer, and it
-created a salient "plant exactly at the threshold" target. A flat ×2 is simpler
-to explain ("whatever's planted is doubled and shared") and pushes all the
-"better together" pressure onto the **vote**: the table grows the garden by
-*confiscating* hoards, not by a lone whale's sacrifice.
+### Why a flat double?
+A flat ×2 is the simplest possible rule — "whatever's planted is doubled and
+shared" — with no payout curve to reverse-engineer and no salient "plant exactly
+at the threshold" target. It pushes all the "better together" pressure onto the
+**vote**: the table grows the garden by *confiscating* hoards, not by a lone
+whale's sacrifice.
 
 ### Why a contribution threshold (plant ≥ 3)?
 The threshold is the **voting franchise**: plant ≥ 3 and you cast 2 votes instead
 of 1. To help *weed* the garden you must hold a real stake *in* it — pure
-hoarders can't be kingmakers. Because the threshold no longer touches payout,
-there is no longer any reason to aim for "exactly 3"; it only governs your
-political weight.
+hoarders can't be kingmakers. The threshold never touches payout, so it governs
+only your political weight, never the size of your harvest.
 
 ### Why a vote-and-tax (instead of pure withdrawal)?
 In a public-goods game the only other punishment channel is *withholding seeds* —

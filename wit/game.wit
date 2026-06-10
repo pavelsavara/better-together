@@ -4,7 +4,7 @@
 package better-together:game@0.1.0;
 
 /// Tournament value types: the result of running a single match, reported back
-/// to the season orchestrator (the host) so it can aggregate the
+/// to the tournament orchestrator (the host) so it can aggregate the
 /// "Best Co-Player" and raw-score leaderboards across many matches.
 interface tournament {
     use better-together:gardener/types.{player-id};
@@ -126,7 +126,7 @@ interface runner {
         /// (including whether the match is over).
         vote: func() -> result<round-outcome, string>;
         /// End the match — every seat persists its memory — and return the final
-        /// per-player report for the season orchestrator.
+        /// per-player report for the tournament orchestrator.
         match-end: func() -> result<match-report, string>;
     }
 
@@ -138,10 +138,10 @@ interface runner {
 
 /// The tournament engine. Exports a stepped `match` driver (see `runner`) the
 /// host advances one phase at a time over a host-seated `roster`, so the host
-/// owns the round loop and can observe every turn. The season orchestrator
+/// owns the round loop and can observe every turn. The tournament orchestrator
 /// pre-seats the roster (instantiating + sandboxing each player and creating its
-/// gardener), opens one match per group, steps it, and aggregates the season
-/// leaderboards itself.
+/// gardener), opens one match per group, steps it, and continuously aggregates
+/// the live leaderboards itself.
 world engine {
     // The host pre-creates one seated player per match and hands them to the
     // engine through this roster; the engine never loads or constructs players,

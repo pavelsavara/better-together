@@ -24,7 +24,7 @@
 | Read this if you want to…                          | Document |
 |----------------------------------------------------|----------|
 | **Write a bot** — the full player-facing contract  | [Player Rules](docs/player-rules.md) |
-| **Understand scoring** — how the host runs a season| [Engine Rules](docs/engine-rules.md) |
+| **Understand scoring** — how the host runs the tournament| [Engine Rules](docs/engine-rules.md) |
 | **See the component wiring** — how it all runs     | [Architecture](docs/architecture.md) |
 
 Two quick jumping-off points:

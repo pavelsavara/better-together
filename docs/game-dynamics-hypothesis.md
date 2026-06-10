@@ -22,7 +22,7 @@ These are the load-bearing beliefs the whole design rests on.
 | A2 | **`group_total = 10K + garden_total + tax_seized`.** Group welfare rises only with garden fullness and confiscated hoarding. | Algebraic identity (see [Engine Rules §4](engine-rules.md#the-welfare-identity-why-this-fixes-the-crown)). | Any match whose summed scores ≠ `10K + garden_total + tax_seized`. |
 | A3 | **The tax dethrones All-Bloom.** A disciplinarian who deters + taxes hoarders beats an unconditional altruist **when opponents are reactive**. | Deterrence and tax both lift `group_total`; All-Bloom lifts only its own term. | A reactive-opponent field where All-Bloom still tops Best-Co-Player. |
 | A4 | **Punishment requires coalition.** A lone bot can't reach the 2-vote quorum; discipline needs allies. | Quorum rule. | A single bot reliably taxing hoarders with no ally seated. |
-| A5 | **The franchise (plant ≥ 3 → 2 votes) has no payout-target salience.** | The threshold no longer touches payout. | Bots converging on “plant exactly 3” for a payoff reason. |
+| A5 | **The franchise (plant ≥ 3 → 2 votes) has no payout-target salience.** | The threshold never touches payout. | Bots converging on “plant exactly 3” for a payoff reason. |
 | A6 | **The geometric horizon removes endgame defection.** No round is known-final, so backward induction has no base case. | Min-8 + 1/3 hazard; R never revealed. | Cooperators defecting on a predictable “last” round. |
 | A7 | **Signals are load-bearing.** Talk both rallies the plant and arms the vote; lying is punishable same-round. | Three-phase reveal order. | A field where ignoring signals never costs anything. |
 | A8 | **Collusion is strong but bounded.** Same-author blocs win fairly via real welfare (garden + tax), and random composition caps their edge. | Random match draw; welfare identity. | A 2-bot cartel that tops the crown by kingmaking rather than welfare. |
@@ -142,7 +142,7 @@ hoard repeatedly confiscated.
 (negative)**.
 **Tests:** A4, A8. *Collusion is allowed and strong — but it wins by creating real
 welfare (full garden + tax), not by kingmaking. Random composition rarely
-co-seats the pair, bounding their season edge.*
+co-seats the pair, bounding their long-run edge.*
 
 ---
 
@@ -173,10 +173,10 @@ last.*
 
 ---
 
-## 3. Cross-scenario predictions (season-level)
+## 3. Cross-scenario predictions (leaderboard-level)
 
-Run as a full round-robin season (random K∈{4,5,6}, geometric horizon), we predict
-the **Best-Co-Player** leaderboard settles roughly:
+Run over a long stretch of the permanent tournament (random K∈{4,5,6}, geometric
+horizon), we predict the **Best-Co-Player** leaderboard settles roughly:
 
 1. **Bram** — organizes garden-filling *and* taxation; lifts both welfare terms.
 2. **Keith / Andy** — disciplinarian cooperators; tax hoarders, forgive probes.
@@ -191,5 +191,5 @@ And the **raw-score** (secondary) board roughly inverts the middle: Reynard and
 Corro rise, the disciplinarians sit mid-table — which is exactly the divergence
 the crown is designed to create.
 
-> If a real season contradicts these orderings, update this file first, then ask
+> If a real run contradicts these orderings, update this file first, then ask
 > whether the rules (not just the bots) need tuning.

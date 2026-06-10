@@ -32,16 +32,15 @@ Every round runs in **three phases**, and your component is called once per phas
 | `plant`      | plant | Integer, 0–10            | How many of your 10 seeds go into the shared garden. The rest (10 − plant) go into your own pot. |
 | `vote`       | vote  | A player-id, or abstain  | Whom to tax this round (or `none`). Plant ≥ 3 this round → your ballot is worth **2 votes**, else **1**. |
 
-Because talk happens first, a signal can genuinely **rally the table this round**
-— but it is still cheap talk, and a `BLOOM` you don't honour is a betrayal
-everyone sees the moment plants are revealed *and* a reason the table votes to
-tax you.
+Talk comes first, so a signal can rally the table this round. But it's still
+cheap talk: a `BLOOM` you don't honour is a betrayal everyone sees when plants
+are revealed — and a reason they vote to tax you.
 
 ### 3. Signals
 
-Signals carry no enforced meaning — they are **cheap talk**. But because they're
-revealed before plants *and* before the vote, they now both rally the plant and
-foreshadow the tax. Suggested semantics:
+Signals carry no enforced meaning — they are **cheap talk**. But they're revealed
+before plants and before the vote, so they both rally the planting and hint at
+who'll be taxed. Suggested meanings:
 
 | Signal  | Conventional Meaning                                         |
 |---------|--------------------------------------------------------------|
@@ -49,22 +48,19 @@ foreshadow the tax. Suggested semantics:
 | `HOLD`  | "I intend to keep most/all of my seeds" — expect a vote.      |
 | `WATCH` | "I'm deciding from the table" — including whom to tax.        |
 
-You may use them honestly, deceptively, or as part of a private protocol with
-allies. Because **all signals are revealed before anyone plants**, you can read
-the room in your `plant` phase; and because **all plants are revealed before the
-vote**, the table can punish a `BLOOM`-then-hoard liar the same round. Other
-players will remember whether your signals matched your actions — and who you
-voted to tax.
+Use them honestly, deceptively, or as a private code with allies. Signals are
+revealed before anyone plants, so you can read the room before committing seeds;
+plants are revealed before the vote, so the table can tax a `BLOOM`-then-hoard
+liar the same round. Others remember whether your signals matched your actions —
+and whom you voted to tax.
 
 ### 4. What You Receive Each Round (your observation)
 
-During your **plant** phase, `state.signals` already holds every player's signal
-for the current round (yours included). During your **vote** phase, `state.plants`
-also holds every player's plant for the current round, so you can target a
-hoarder.
+In your **plant** phase, `state.signals` holds every player's signal for this
+round (yours included). In your **vote** phase, `state.plants` also holds every
+player's plant, so you can target a hoarder.
 
-After the round fully resolves, you observe the outcome — including every ballot
-and the tax:
+When the round resolves, you see the full outcome — every ballot and the tax:
 
 ```
 {
@@ -104,44 +100,37 @@ round_score = seeds_kept + garden_payout
 Where:
 - `seeds_kept` = 10 − plant (each worth exactly 1 point), **minus** any seeds
   taxed from you this round if you were the tax-target.
-- `garden_payout` = ((garden_total + tax_seized) × **2**) ÷ K — the garden is
-  flatly **doubled**; there is no diversity multiplier.
+- `garden_payout` = ((garden_total + tax_seized) × **2**) ÷ K — everything in the
+  garden is **doubled**, then split equally among all K players.
 - `tax_seized` = `floor(target.kept / 2)`, minimum 1, taken from the plurality
   vote-target and added to the garden before doubling. No tax if no target
   reached quorum (2 vote-weight) or the top vote tied.
 
-Planting **≥ 3** this round does not change your payout — it makes your ballot
-worth **2 votes** instead of 1. The threshold is a *voting franchise*, not a
-payout kink.
+Planting **≥ 3** this round doesn't change your payout — it makes your ballot worth
+**2 votes** instead of 1. The threshold is a *voting franchise*.
 
 Your **match score** = sum of `round_score` across all rounds.
 
 ### 6. The Key Tension
 
-Keeping a seed is worth **1 point to you, guaranteed**.
+Keeping a seed is worth **1 point, guaranteed**. A seed you plant returns you only
+**2 ÷ K** points (0.5 at K=4, 0.33 at K=6) — always less than 1. So every seed you
+plant is a small personal loss, but it adds **2** points of value to the group.
+Keep, and you help yourself a little while costing the group a lot; plant, and you
+cost yourself a little while helping the group a lot. That's the dilemma, and the
+flat ×2 keeps it alive at every group size.
 
-A *marginal* planted seed yields you only **2 ÷ K** points (0.5 at K=4, 0.33 at
-K=6) — always < 1 — so each seed you plant is a small personal loss. But planting
-creates **(2 ÷ K) × K = 2** points of total value for the group. Every seed you
-plant costs you a little and helps the group a lot; every seed you keep helps you
-a little and costs the group a lot. That is the dilemma, and a flat ×2 keeps it
-alive at every group size.
+**The vote is how the table fights back.** You can't out-plant a hoarder on your
+own — but you can organise a tax. Seizing a hoarder's kept seeds doubles them into
+the garden, turning private hoarding into shared value. That needs a **coalition**:
+one ballot can't reach the 2-vote quorum, so discipline takes allies.
 
-**The vote is how the table resolves it.** You can't out-plant a hoarder into
-profitability alone — but you *can* organize a tax. Confiscating a hoarder's kept
-seeds doubles them into the garden, turning private hoarding into shared value.
-That takes a **coalition**: a single ballot can't reach the 2-vote quorum, so
-discipline requires allies.
-
-**The contributor threshold is a franchise, not a target.** Planting ≥ 3 buys you
-*two votes* — a real say in who gets taxed — but it does nothing for your payout,
-so there is no clever reason to aim for "exactly 3." A table where everyone plants
-the bare voting minimum fills almost nothing: low garden, low payout, low
-Co-Player score for all. The number that *enfranchises* you and the number that
-makes the group *rich* are nowhere near each other.
-
-**Fill the garden, and organize the tax against those who won't.** That — not
-fattening your own pot — is what the crown rewards.
+**The threshold is a franchise, not a target.** Planting ≥ 3 buys you two votes —
+a real say in who gets taxed — but nothing for your payout, so there's no reason to
+aim for "exactly 3." A table where everyone plants the bare minimum fills almost
+nothing: low garden, low payout, low Co-Player score for all. Aim to fill the
+garden, and organise the tax against those who won't. That — not fattening your
+own pot — is what the crown rewards.
 
 ### 7. Winning
 
@@ -149,12 +138,16 @@ You are ranked on the **"Best Co-Player" leaderboard** (see [Engine Rules §7](e
 
 > **"When you join a group, does the group flourish?"**
 
-**Read this before you tune for raw score.** Your instinct will be to maximize
-your *own* match score — which rewards a little hoarding and free-riding. The
-crown rewards the opposite: how much better the groups you join do *because you
-were in them*. A bot that scores well solo but drags its partners down lands at
-the bottom of the primary leaderboard. If you remember one thing: **make your
-table richer, not just your own pot.**
+This is measured across **many matches against many random rosters** in a
+permanent, always-running tournament, so a single lucky or unlucky table doesn't
+decide your rank — only your consistent effect on the groups you join.
+
+**Read this before you tune for raw score.** Your instinct is to maximise your
+*own* match score — which rewards a little hoarding and free-riding. The crown
+rewards the opposite: how much better the groups you join do *because you were
+there*. A bot that scores well alone but drags its partners down lands at the
+bottom of the primary leaderboard. If you remember one thing: **make your table
+richer, not just your own pot.**
 
 ## Appendix A — Classic Strategies
 
