@@ -60,3 +60,12 @@ test('inactive bots are skipped entirely', async () => {
     assert.deepEqual(result.changed, []);
     assert.equal(result.state.bots['a#x'], undefined);
 });
+
+test('a bot whose OCI ref no longer resolves is retired', async () => {
+    const bots = [bot('a#x', 'ghcr.io/a:1', 'sha256:aaa')];
+    const checks = new Map<string, ManifestStatus>([['ghcr.io/a:1', { changed: false, digest: null, etag: null, notFound: true }]]);
+    const result = await detectChanges(bots, null, mapChecker(checks), 'now');
+    assert.deepEqual(result.retired, ['a#x']);
+    assert.deepEqual(result.changed, []);
+    assert.equal(result.state.bots['a#x'], undefined);
+});

@@ -9,8 +9,9 @@ import { join } from 'node:path';
 import { runTournament } from './run.ts';
 import { mapChecker, type ManifestStatus } from './scan/detect.ts';
 import { cacheWasm, writeIndex } from './store/write.ts';
-import { loadScores, loadRegistryState, loadRecentMatchLogs } from './store/read.ts';
+import { loadScores, loadRegistryState, loadRecentMatchLogs, loadIndex } from './store/read.ts';
 import { manufactureId } from './validate/id.ts';
+import { sha256Hex } from './validate/checks.ts';
 import type { BotRecord, RegistryIndex } from './types.ts';
 
 const ROOT = new URL('../../', import.meta.url);
@@ -63,7 +64,7 @@ async function seedStore(base: string): Promise<{ ids: string[]; ociById: Map<st
         const id = manufactureId(oci, `together.${n}`);
         const bytes = new Uint8Array(await readFile(path(n)));
         await cacheWasm(base, id, '1.0.0', bytes);
-        bots.push(record(id, oci));
+        bots.push({ ...record(id, oci), wasmSha256: sha256Hex(bytes) });
         ociById.set(id, oci);
     }
     const index: RegistryIndex = { version: 1, updated: 'now', bots };
@@ -127,6 +128,34 @@ test('a run where nothing changed exits without committing', { skip: !HAVE ? 'ne
         assert.equal(result.matchesRun, 0);
         const logsAfterSecond = (await loadRecentMatchLogs(base)).length;
         assert.equal(logsAfterSecond, logsAfterFirst, 'no new logs on a skipped run');
+    } finally {
+        await rm(base, { recursive: true, force: true });
+    }
+});
+
+test('a provenance-mismatched bot is skipped (served wasm sha256 != index pin)', { skip: !HAVE ? 'need 5 built samples' : false }, async () => {
+    const base = await mkdtemp(join(tmpdir(), 'bt-run-prov-'));
+    try {
+        await seedStore(base);
+        // Corrupt one bot's pinned sha so its served bytes fail the provenance audit.
+        const index = await loadIndex(base);
+        index.bots[0]!.wasmSha256 = 'deadbeefdeadbeef';
+        const corruptedId = index.bots[0]!.id;
+        await writeIndex(base, index);
+
+        const result = await runTournament({
+            base,
+            check: mapChecker(new Map()),
+            masterSeed: 'prov',
+            budget: 6,
+            callBudgetMs: 0,
+            scoring: { windowPerBot: 500, minMatchesToRank: 1 },
+            now: () => '2026-06-11T00:00:00Z',
+        });
+        assert.equal(result.skipped, false);
+        // The corrupted bot must never be seated in any logged match.
+        const logs = await loadRecentMatchLogs(base);
+        for (const log of logs) assert.ok(!log.players.includes(corruptedId), 'corrupted bot must not be seated');
     } finally {
         await rm(base, { recursive: true, force: true });
     }

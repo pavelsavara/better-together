@@ -19,6 +19,7 @@ import { loadIndex, loadRegistryState, loadRecentMatchLogs, loadVfs, loadMeta } 
 import { writeIndex, writeScores, writeRegistryState, writeMatchLog, writeVfs, writeMeta } from './store/write.ts';
 import { wasmPath } from './store/paths.ts';
 import { emptyMeta, ENGINE_VERSION, INDEX_VERSION } from './store/schema.ts';
+import { sha256Hex } from './validate/checks.ts';
 
 export interface RunDeps {
     /** Store base directory (the checked-out gh-pages branch). */
@@ -34,6 +35,8 @@ export interface RunDeps {
     callBudgetMs?: number;
     now?: () => string;
     runId?: string;
+    /** Cap the run's wall-clock time (ms) so a tick fits inside its hour. */
+    maxRunMs?: number;
     /** Resolve a bot's component bytes (defaults to the cached store wasm). */
     loadWasm?: (record: BotRecord) => Promise<Uint8Array>;
 }
@@ -41,12 +44,21 @@ export interface RunDeps {
 export interface RunResult {
     skipped: boolean;
     changed: string[];
+    retired: string[];
     matchesRun: number;
     matchLogPaths: string[];
 }
 
 function defaultLoadWasm(base: string): (record: BotRecord) => Promise<Uint8Array> {
-    return async (record) => new Uint8Array(await readFile(wasmPath(base, record.id, record.version)));
+    return async (record) => {
+        const bytes = new Uint8Array(await readFile(wasmPath(base, record.id, record.version)));
+        // Provenance audit: the served bytes must match the sha256 pinned in the
+        // index, so a tampered/wrong cache can't be seated (architecture §6).
+        if (record.wasmSha256 && sha256Hex(bytes) !== record.wasmSha256) {
+            throw new Error(`provenance mismatch for ${record.id}: served wasm sha256 != index pin`);
+        }
+        return bytes;
+    };
 }
 
 /** Build a match log from a driver report + per-round outcomes. */
@@ -106,7 +118,7 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
 
     const detect = await detectChanges(active, prevState, deps.check, now);
     if (detect.changed.length === 0) {
-        return { skipped: true, changed: [], matchesRun: 0, matchLogPaths: [] };
+        return { skipped: true, changed: [], retired: [], matchesRun: 0, matchLogPaths: [] };
     }
 
     // Current windowed match counts (from existing logs) drive opponent weighting.
@@ -136,8 +148,10 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
     const wentInactive = new Set<string>();
     const newLogs: MatchLog[] = [];
     const matchLogPaths: string[] = [];
+    const startedAt = Date.now();
 
     for (let m = 0; m < rosters.length; m++) {
+        if (deps.maxRunMs && Date.now() - startedAt > deps.maxRunMs) break; // wall-time cap
         const roster = rosters[m]!;
         const triggeredBy = detect.changed[m % detect.changed.length]!;
         const seed = matchSeed(deps.masterSeed, m);
@@ -147,8 +161,14 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
             for (const id of roster) {
                 const record = byId.get(id);
                 if (!record) continue;
-                const bytes = await loadWasm(record);
-                seats.push(await createGardenerSeat(bytes, { id, fs: await vfsFor(id), callBudgetMs }));
+                try {
+                    const bytes = await loadWasm(record);
+                    seats.push(await createGardenerSeat(bytes, { id, fs: await vfsFor(id), callBudgetMs }));
+                } catch {
+                    // A seat that fails to load (e.g. provenance mismatch) is
+                    // skipped for this match rather than aborting the whole run.
+                    continue;
+                }
             }
             if (seats.length < 4) {
                 // Not enough live seats: drop these bots' carried VFS so a failed
@@ -187,6 +207,7 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
     // Update the index: mark inactive bots, bump matchesSinceUpdate, and for the
     // changed bots stamp lastDigestChangeAt + reset their since-update counter.
     const changedSet = new Set(detect.changed);
+    const retiredSet = new Set(detect.retired);
     const updatedBots: BotRecord[] = index.bots.map((b) => {
         const played = seatedThisRun.get(b.id) ?? 0;
         let rec = b;
@@ -197,6 +218,9 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
         }
         if (wentInactive.has(b.id) && rec.status === 'active') {
             rec = { ...rec, status: 'inactive' };
+        }
+        if (retiredSet.has(b.id) && rec.status === 'active') {
+            rec = { ...rec, status: 'retired' };
         }
         return rec;
     });
@@ -216,8 +240,8 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
         updated: now,
         totalMatches: prevMeta.totalMatches + newLogs.length,
         totalRuns: prevMeta.totalRuns + 1,
-        ...(prevMeta.notes !== undefined ? { notes: prevMeta.notes } : {}),
+        notes: `tuning: budget=${budget}, windowPerBot=${scoring.windowPerBot}, minMatchesToRank=${scoring.minMatchesToRank}`,
     });
 
-    return { skipped: false, changed: detect.changed, matchesRun: newLogs.length, matchLogPaths };
+    return { skipped: false, changed: detect.changed, retired: detect.retired, matchesRun: newLogs.length, matchLogPaths };
 }

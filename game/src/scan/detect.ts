@@ -17,6 +17,8 @@ export interface ManifestStatus {
     digest: string | null;
     /** Current manifest ETag, or null. */
     etag: string | null;
+    /** True when the ref no longer resolves (→ the bot is retired). */
+    notFound?: boolean;
 }
 
 /**
@@ -28,6 +30,8 @@ export type ManifestChecker = (oci: string, etag: string | null) => Promise<Mani
 export interface DetectResult {
     /** Ids of bots whose image changed since the last tick. */
     changed: string[];
+    /** Ids of bots whose OCI ref no longer resolves (to be marked retired). */
+    retired: string[];
     /** The updated registry-state to persist. */
     state: RegistryState;
 }
@@ -67,12 +71,20 @@ export async function detectChanges(
         bots: {},
     };
     const changed: string[] = [];
+    const retired: string[] = [];
 
     for (const bot of bots) {
         if (bot.status !== 'active') continue;
         const known = prevState?.bots[bot.id];
         const lastEtag = known?.etag ?? null;
         const status = await check(bot.oci, lastEtag);
+
+        if (status.notFound) {
+            // The image no longer resolves → retire the bot (drop from rosters).
+            // It is intentionally NOT carried in the new registry-state.
+            retired.push(bot.id);
+            continue;
+        }
 
         if (!known) {
             // First time the scheduler sees this bot → it is "changed" so it
@@ -97,5 +109,5 @@ export async function detectChanges(
         }
     }
 
-    return { changed, state };
+    return { changed, retired, state };
 }
