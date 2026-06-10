@@ -3,18 +3,151 @@
 
 package better-together:game@0.1.0;
 
-/// The tournament engine. Discovers how many players are seated from the
-/// multiplexer registry, constructs one gardener per seat through the
-/// virtualized player interface, runs the match(es), and reports results.
-world engine {
-    // How many players the host has seated. The engine creates one gardener
-    // per returned provider-ref via the virtualized `player.create` below.
-    import jsco:multiplex/registry@0.1.0;
+/// Tournament value types: the result of running a single match, reported back
+/// to the tournament orchestrator (the host) so it can aggregate the
+/// "Best Co-Player" and raw-score leaderboards across many matches.
+interface tournament {
+    use better-together:gardener/types.{player-id};
 
-    // The multiplexed data plane: `create()` plus the `gardener` resource and
-    // its methods. Backed by jsco's multiplexer host, which routes each handle
-    // to a distinct gardener component instance.
-    import better-together:gardener/player;
+    /// One player's outcome in a single match.
+    record player-score {
+        /// The player's stable identity (from `gardener.metadata`), so the
+        /// orchestrator can track reputation / co-player stats across matches.
+        id: player-id,
+        /// The player's final score for THIS match (sum of round scores).
+        match-score: f32,
+    }
+
+    /// The fully resolved outcome of one match, returned by `engine.run`.
+    record match-report {
+        /// Identifier the engine assigned to this match (echoed for logging).
+        match-id: string,
+        /// Group size K (number of players / URLs this match ran).
+        group-size: u8,
+        /// How many rounds R the match actually ran (>= 8; geometric stop after
+        /// round 8 at hazard 1/3, chosen by the engine).
+        rounds-played: u8,
+        /// Final match score for every player, in seat order.
+        scores: list<player-score>,
+        /// Sum of every player's `match-score` — the coalition value the
+        /// orchestrator uses to compute each player's Best Co-Player score.
+        group-total: f32,
+    }
+}
+
+/// The seated roster the host hands the engine for ONE match. The host
+/// pre-instantiates each player component (one `better-together:gardener`
+/// reactor per seat), creates its gardener, and exposes it to the engine as a
+/// `seat`. The engine owns each seat for the duration of the match and drops it
+/// at the end (the host then tears the backing instance down); the engine never
+/// loads or constructs players itself.
+interface roster {
+    use better-together:gardener/types.{metadata, match-context, round-state, match-summary, signal, ballot};
+
+    /// A single seated player for this match. Mirrors the player's `gardener`
+    /// resource exactly, but the host owns the backing component instance and
+    /// routes each call to it. Every method returns a `result`, so a trapped
+    /// player fails only its own call (the engine substitutes a default) instead
+    /// of aborting the match.
+    resource seat {
+        /// Describe this player: name, version, author, repository URL, and lore.
+        metadata: func() -> result<metadata>;
+        /// Begin a new match.
+        match-start: func(context: match-context) -> result;
+        /// Talk phase: broadcast this round's signal before anyone plants.
+        talk: func(state: round-state) -> result<signal>;
+        /// Plant phase: decide how many of 10 seeds to plant (0-10).
+        plant: func(state: round-state) -> result<u8>;
+        /// Vote phase: name one player to tax this round, or abstain (none).
+        vote: func(state: round-state) -> result<ballot>;
+        /// The match has ended; the player persists memory to its VFS.
+        match-end: func(summary: match-summary) -> result;
+    }
+
+    /// The seats for this match, in seat order (K = list length, typically 4-6).
+    seats: func() -> list<seat>;
+}
+
+/// The stepped per-match driver the engine exports. Instead of running a whole
+/// match in one call, the host OPENS a `match`, then advances it one phase at a
+/// time — `match-start`, then `talk` + `plant` per round, then `match-end`. The
+/// host owns the round loop, so it can observe (and render) the table after every
+/// phase. The hidden round count R is chosen by the engine and never revealed;
+/// instead each `plant` reports whether the match is over.
+interface runner {
+    use tournament.{match-report};
+    use better-together:gardener/types.{player-id, player-action, signal-broadcast, round-result};
+
+    /// Delivered once when the match begins, before any rounds. The round count
+    /// R is intentionally absent — the engine keeps it hidden.
+    record match-info {
+        /// Identifier the engine assigned to this match.
+        match-id: string,
+        /// Every player in this match, in seat order, with de-duplicated ids.
+        players: list<player-id>,
+        /// Group size K (number of seats this match ran).
+        group-size: u8,
+    }
+
+    /// The resolved outcome of one round, returned by `vote`, with everything
+    /// the host needs to render the table for this turn.
+    record round-outcome {
+        /// 1-based index of the round just resolved.
+        round: u8,
+        /// The garden result broadcast to players (plants, votes, tax, total,
+        /// payout).
+        garden: round-result,
+        /// Each seat's score for THIS round, in seat order.
+        round-scores: list<f32>,
+        /// Each seat's cumulative match score so far, in seat order.
+        running-totals: list<f32>,
+        /// True when this was the final round — the host should stop the loop and
+        /// call `match-end`. The engine never reveals R any other way.
+        match-over: bool,
+    }
+
+    /// One match in progress, driven by the host one phase at a time. The driver
+    /// owns this match's seats for its lifetime; dropping it tears them down
+    /// (the host then disposes the backing player instances).
+    resource match {
+        /// Begin the match for every seat; returns the match info (R stays hidden).
+        match-start: func() -> result<match-info, string>;
+        /// Talk phase for the next round: collect one signal per seat (default
+        /// WATCH on a trapped seat) and return the broadcasts before anyone plants.
+        talk: func() -> result<list<signal-broadcast>, string>;
+        /// Plant phase for the current round: collect one plant per seat (default
+        /// 0 on a trapped seat) and return the revealed plants. Scores are NOT
+        /// resolved yet — the tax vote comes next.
+        plant: func() -> result<list<player-action>, string>;
+        /// Vote phase for the current round: collect one ballot per seat (default
+        /// abstain on a trapped seat), tally vote-weight (contributors who
+        /// planted >= 3 cast 2 votes, others 1), reclaim the plurality target's tax
+        /// into the garden, fold in the scores, and return the round outcome
+        /// (including whether the match is over).
+        vote: func() -> result<round-outcome, string>;
+        /// End the match — every seat persists its memory — and return the final
+        /// per-player report for the tournament orchestrator.
+        match-end: func() -> result<match-report, string>;
+    }
+
+    /// Open a match driver over the host-seated roster: take its `seats`, collect
+    /// the player ids, and drive the hidden geometric stop (min 8 rounds, then a
+    /// 1/3 hazard per round). Errs if the roster supplied no seats.
+    open: func() -> result<match, string>;
+}
+
+/// The tournament engine. Exports a stepped `match` driver (see `runner`) the
+/// host advances one phase at a time over a host-seated `roster`, so the host
+/// owns the round loop and can observe every turn. The tournament orchestrator
+/// pre-seats the roster (instantiating + sandboxing each player and creating its
+/// gardener), opens one match per group, steps it, and continuously aggregates
+/// the live leaderboards itself.
+world engine {
+    // The host pre-creates one seated player per match and hands them to the
+    // engine through this roster; the engine never loads or constructs players,
+    // and per-seat capability attenuation (shared console, private per-seat VFS)
+    // is applied host-side when each seat is created.
+    import roster;
 
     // Engine logging / results output. No filesystem, sockets, or HTTP.
     import wasi:cli/stdout@0.2.3;
@@ -22,6 +155,11 @@ world engine {
     import wasi:io/error@0.2.3;
     import wasi:io/streams@0.2.3;
 
-    /// Run the configured match(es) to completion.
-    export run: func();
+    // The match runs a minimum of 8 rounds, then ends after each further round
+    // with a public hazard rate of 1/3; the realized length is kept hidden from
+    // the players, so the engine needs a source of randomness.
+    import wasi:random/random@0.2.3;
+
+    // The stepped per-match driver the host loops over.
+    export runner;
 }

@@ -2,20 +2,26 @@
 // scripted social environment, asserting the decisions it actually makes.
 //
 // Behaviours under test (from each sample's source / docs):
-//   micro  : talk == 'watch' always; plant == (#bloom broadcasts) + 4, clamp 10.
+//   nib  : talk == 'watch' always; plant == (#bloom broadcasts) + 4, clamp 10.
 //   corro  : talk == 'bloom' always; plant 4 when garden is barren (round 1 or no
 //            opponent staked >=3 last round), else plant 0 (feast).
 //   ferris : round 1 (no signals) -> plant 8, bloom; majority-bloom signals ->
 //            leans to plant 10; persists ferris-memory.json at match-end with the
 //            opponents it observed. A remembered defector -> plant 3, hold.
 //   khaos  : random per-opponent friend/foe with cross-match memory; loads
-//            seeded verdicts from its memory file and hoards against a known foe.
+//            seeded verdicts from its memory file and keeps everything against a known foe.
 //   keith  : ledger-keeping forgiver; persists a TSV ledger at match-end and
 //            distrusts a seeded known cheat (pockets his seeds).
 //   andy   : Tit-for-Tat hedgehog; persists a JSON friend-book and gives a
 //            remembered friend a +2 bonus over the mirror.
 //   dusty  : graduated Tit-for-Tat mouse; persists a binary memory file whose
 //            seeded coop-rate brightens or chills its opening nibble.
+//   bram   : coalition organizer; bloom + generous anchor every round, maxes out
+//            when a guild member (nib/gopher) is seated, and votes to tax the
+//            fattest hoarder (never a member or arbiter ally); persists a roster.
+//   reynard: velvet-gloved skimmer; always bloom, plants a credible handful but
+//            trims to the floor on a fat table (unless an arbiter is seated),
+//            never below the contributor floor, and always abstains from voting.
 //
 // Run: node --experimental-wasm-jspi scenarios.test.mjs
 //   or: node --experimental-wasm-jspi run.mjs
@@ -24,7 +30,7 @@ import assert from 'node:assert/strict';
 import { loadGardener, resolveSample } from './lib/harness.mjs';
 import {
     matchContext, roundState, matchSummary, action, broadcast, roundResult,
-    runMatch, alwaysBloom, alwaysHoard, SIGNALS,
+    runMatch, alwaysBloom, alwaysKeep, SIGNALS,
 } from './lib/fixtures.mjs';
 import { test, runAll, skipTest } from './lib/runner.mjs';
 
@@ -35,10 +41,10 @@ async function loadOrSkip(name, opts) {
 }
 
 export function register() {
-    // ──────────────────────────── micro ────────────────────────────
+    // ──────────────────────────── nib ────────────────────────────
     // Single-call invariants (safe for every runtime).
-    test('micro: always signals watch', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: always signals watch', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const sig = await p.talk(h, roundState({ round: 1 }));
@@ -48,8 +54,8 @@ export function register() {
         }
     });
 
-    test('micro: plant == bloom-count + 4 (two blooms -> 6)', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant == bloom-count + 4 (two blooms -> 6)', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = [broadcast('a', 'bloom'), broadcast('b', 'bloom'), broadcast('c', 'hold')];
@@ -60,8 +66,8 @@ export function register() {
         }
     });
 
-    test('micro: plant clamps to 10 on a fully blooming table', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant clamps to 10 on a fully blooming table', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((id) => broadcast(id, 'bloom'));
@@ -72,8 +78,8 @@ export function register() {
         }
     });
 
-    test('micro: plant == 4 with no bloom promises', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant == 4 with no bloom promises', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = [broadcast('a', 'hold'), broadcast('b', 'watch')];
@@ -342,7 +348,7 @@ export function register() {
     // Cross-match memory (read path): jsco's in-memory VFS does not mirror guest
     // writes back into the seed Map, but it DOES serve seeded reads. Seed a verdict
     // file marking opponent 'a' as a foe and prove khaos loads it: a seated foe
-    // makes khaos hoard (plant 0), and it never re-rolls 'a' (no "new face: a").
+    // makes khaos keep (plant 0), and it never re-rolls 'a' (no "new face: a").
     test('khaos: loads remembered verdicts from a seeded memory file', async () => {
         const seed = new TextEncoder().encode(JSON.stringify({ version: 1, verdicts: { a: 'foe' } }));
         const p = await loadOrSkip('khaos', { fs: new Map([['khaos-memory.json', seed]]) });
@@ -350,7 +356,7 @@ export function register() {
             const h = await p.create();
             await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
             const plant = await p.plant(h, roundState({ round: 1, signals: [broadcast('a', 'bloom')] }));
-            assert.equal(plant, 0, 'a remembered foe makes khaos hoard');
+            assert.equal(plant, 0, 'a remembered foe makes khaos keep');
             const out = p.stdout();
             assert.doesNotMatch(out, /A new face: a[!\b]/, "khaos loaded 'a' from memory, did not re-roll it");
             assert.match(out, /A new face: b/, "'b' was unknown and got a fresh roll");
@@ -615,6 +621,268 @@ export function register() {
             await p.matchEnd(h, matchSummary({ roundsPlayed: 5, finalScores: [['self', 25]], yourScore: 25 }));
             // Reaching here means saveMemory ran and the instance is still healthy.
             assert.ok(true);
+        } finally {
+            p.dispose();
+        }
+    });
+
+    // ──────────────────────────── bram ────────────────────────────
+    // The coalition organizer: honest bloom + a generous anchor every round,
+    // maxing out when a guild member is seated, and a vote that taxes the
+    // fattest hoarder while sparing members and arbiter allies.
+    test('bram: always signals bloom and leads with a generous anchor', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            const sig = await p.talk(h, roundState({ round: 1 }));
+            assert.equal(sig, 'bloom', 'bram rallies the table with an honest bloom');
+            const plant = await p.plant(h, roundState({ round: 1, signals: [broadcast('self', sig)] }));
+            assert.ok(plant >= 9, `bram anchors the garden generously, got ${plant}`);
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: maxes out when a guild member (nib) is seated', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            // Nib is one of Bram's unwitting members — he rallies the bloc to 10.
+            await p.matchStart(h, matchContext({ players: ['self', 'nib', 'b'], selfId: 'self' }));
+            await p.talk(h, roundState({ round: 1 }));
+            const plant = await p.plant(h, roundState({ round: 1 }));
+            assert.equal(plant, 10, 'with a member at the table bram keeps the payout high');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: votes to tax the fattest hoarder', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'greedy', 'thrifty'], selfId: 'self' }));
+            // This round's plants: greedy kept 9 (planted 1), thrifty kept 4 (planted 6).
+            const plants = [action('self', 9, 'bloom'), action('greedy', 1, 'bloom'), action('thrifty', 6, 'bloom')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, 'greedy', 'bram aims the tax at the player who kept the most');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: never votes to tax a guild member', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'nib', 'thrifty'], selfId: 'self' }));
+            // Nib hoards the most (kept 9) but is a member; thrifty (kept 5) is fair game.
+            const plants = [action('self', 9, 'bloom'), action('nib', 1, 'watch'), action('thrifty', 5, 'bloom')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, 'thrifty', 'bram never crosses a member, even the fattest one');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: abstains when only untaxable holders remain', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            // Everyone planted 9+ (kept <= 1 <= untaxable-min 2) -> nothing to reclaim.
+            const plants = [action('self', 9, 'bloom'), action('a', 9, 'bloom'), action('b', 10, 'bloom')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, null, 'no hoarder worth taxing -> bram abstains');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: persists his roster at match-end', async () => {
+        const p = await loadOrSkip('bram');
+        try {
+            const h = await p.create();
+            const oppIds = ['nib', 'greedy'];
+            await p.matchStart(h, matchContext({ players: ['self', ...oppIds], selfId: 'self' }));
+            await runMatch(p, h, {
+                players: ['self', ...oppIds],
+                selfId: 'self',
+                rounds: 5,
+                opponentActions: alwaysBloom(oppIds),
+            });
+            await p.matchEnd(h, matchSummary({ roundsPlayed: 5, finalScores: [['self', 30]], yourScore: 30 }));
+            assert.match(p.stdout(), /dam's full for the night — \d+ member\(s\) on the roster, \d+ free-rider\(s\) in the ledger/,
+                'bram saved his roster on the way to bed');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('bram: loads a seeded roster and remembers a past free-rider', async () => {
+        // A roster naming 'skimmer' as taxed before and 'gopher' as a member.
+        const seed = JSON.stringify({ version: 1, members: ['gopher'], taxed: ['skimmer'] });
+        const seated = ['self', 'skimmer', 'thrifty'];
+        // Both kept the SAME amount this round (planted 5, kept 5); the tie-break
+        // is the remembered free-rider, so the seeded roster decides the ballot.
+        const plants = [action('self', 9, 'bloom'), action('skimmer', 5, 'bloom'), action('thrifty', 5, 'bloom')];
+
+        let p = await loadOrSkip('bram', { fs: new Map([['bram-memory.json', seed]]) });
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: seated, selfId: 'self' }));
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, 'skimmer', 'a remembered free-rider is taxed first on a tie');
+        } finally {
+            p.dispose();
+        }
+
+        // Control: no roster -> the tie resolves by id order (skimmer < thrifty),
+        // proving the seeded memory is what tipped the choice above (same result
+        // here is coincidental on ordering, so use a table where order differs).
+        const plants2 = [action('self', 9, 'bloom'), action('aaa', 5, 'bloom'), action('skimmer', 5, 'bloom')];
+        p = await loadOrSkip('bram', { fs: new Map([['bram-memory.json', seed]]) });
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'aaa', 'skimmer'], selfId: 'self' }));
+            const ballot = await p.vote(h, roundState({ round: 1, plants: plants2 }));
+            assert.equal(ballot, 'skimmer', 'the remembered free-rider beats a lower-id stranger on a tie');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    // ──────────────────────────── reynard ────────────────────────────
+    // The velvet-gloved skimmer: always credible (bloom), plants a believable
+    // handful, trims to the floor on a fat table (unless an arbiter is watching),
+    // never below the contributor floor, and never calls a vote.
+    test('reynard: talk is always a credible bloom', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            const sig = await p.talk(h, roundState({ round: 1 }));
+            assert.equal(sig, 'bloom', 'reynard always looks like a cooperator');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: round 1 plants a credible handful (5)', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            const plant = await p.plant(h, roundState({ round: 1 }));
+            assert.equal(plant, 5, 'an opening that reads as an ordinary cooperator');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: trims to the floor on a fat table', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            // Last round the others were over-generous (avg 8 >= 7) and no arbiter.
+            const history = [roundResult([
+                action('self', 5, 'bloom'), action('a', 8, 'bloom'), action('b', 8, 'bloom'),
+            ])];
+            const plant = await p.plant(h, roundState({ round: 2, history }));
+            assert.equal(plant, 3, 'reynard skims a fat table down to the contributor floor');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: never skims under an arbiter\'s gaze', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            // Keith (an arbiter) is seated, so reynard stays at the credible handful.
+            await p.matchStart(h, matchContext({ players: ['self', 'keith', 'b'], selfId: 'self' }));
+            const history = [roundResult([
+                action('self', 5, 'bloom'), action('keith', 8, 'bloom'), action('b', 8, 'bloom'),
+            ])];
+            const plant = await p.plant(h, roundState({ round: 2, history }));
+            assert.equal(plant, 5, 'an arbiter at the table keeps reynard honest-looking');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: never drops below the contributor floor', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
+            // Even on a maximally fat table reynard stays a contributor (>= 3).
+            const history = [roundResult([
+                action('self', 5, 'bloom'), action('a', 10, 'bloom'), action('b', 10, 'bloom'),
+            ])];
+            const plant = await p.plant(h, roundState({ round: 2, history }));
+            assert.ok(plant >= 3, `reynard never gives the ledger a defector to flag, got ${plant}`);
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: abstains under an arbiter\'s gaze', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            // Keith (an arbiter) is seated, so the skimmer stays spotless and never
+            // draws the eye — even with a blatant hoarder begging to be flagged.
+            await p.matchStart(h, matchContext({ players: ['self', 'keith', 'hoarder'], selfId: 'self' }));
+            const plants = [action('self', 5, 'bloom'), action('keith', 5, 'bloom'), action('hoarder', 0, 'hold')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, null, 'under a referee\'s watch reynard abstains');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: taxes the fattest rival skimmer when unwatched', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            // No arbiter at the table, so reynard deflects heat: he points the vote
+            // at the most blatant rival free-rider (max kept > 2), never himself.
+            await p.matchStart(h, matchContext({ players: ['self', 'hoarder', 'b'], selfId: 'self' }));
+            const plants = [action('self', 5, 'bloom'), action('hoarder', 0, 'hold'), action('b', 6, 'bloom')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            // hoarder kept 10, b kept 4 → hoarder is the fattest skimmer.
+            assert.equal(ballot, 'hoarder', 'reynard taxes the loudest skimmer to stay invisible himself');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: opens by skimming a table remembered as generous', async () => {
+        // A memory file remembering 'rich' as a generous-table neighbour.
+        const seed = JSON.stringify({ version: 1, rich: ['rich'] });
+        const seated = ['self', 'rich', 'b'];
+
+        let p = await loadOrSkip('reynard', { fs: new Map([['reynard-memory.json', seed]]) });
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: seated, selfId: 'self' }));
+            // Round 1, no history: a remembered-rich table is skimmed from the start.
+            const plant = await p.plant(h, roundState({ round: 1 }));
+            assert.equal(plant, 3, 'a fondly remembered table is skimmed from round one');
+        } finally {
+            p.dispose();
+        }
+
+        // Control: no memory -> the same opening pays the credible handful first.
+        p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            await p.matchStart(h, matchContext({ players: seated, selfId: 'self' }));
+            const plant = await p.plant(h, roundState({ round: 1 }));
+            assert.equal(plant, 5, 'an unremembered table earns the credible handful first');
         } finally {
             p.dispose();
         }

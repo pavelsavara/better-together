@@ -18,12 +18,14 @@ cools off toward someone who has repeatedly taken without giving. Hurt him and
 he gets *cautious*, not vengeful; treat the garden well and he leans all the way
 in.
 
-Each round plays out in two phases and Ferris narrates both on stdout:
+Each round plays out in three phases and Ferris narrates all of them on stdout:
 
 - **Talk** — he broadcasts a `signal` (usually `BLOOM`) declaring his intent and
   cheers on the friends he recognizes.
 - **Plant** — he reads this round's signals; if the table is leaning `BLOOM` and
   no known defector is seated, he commits his biggest contribution.
+- **Vote** — with every plant now revealed, he abstains in a healthy garden but
+  votes to tax a blatant hoarder when one is obvious.
 
 His banter is pure flavor — the engine never reads it — but it makes a live match
 fun to watch in the console.
@@ -66,7 +68,7 @@ wasm-tools component wit target/wasm32-wasip2/release/ferris.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`.
 
 ## Where to look
 

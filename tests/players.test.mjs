@@ -13,11 +13,11 @@ import { loadGardener, resolveSample } from './lib/harness.mjs';
 import { matchContext, roundState, matchSummary, action, broadcast, roundResult, SIGNALS } from './lib/fixtures.mjs';
 import { test, runAll, skipTest } from './lib/runner.mjs';
 
-const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy', 'dusty'];
+const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'nib', 'keith', 'andy', 'dusty', 'bram', 'reynard'];
 
 // Banter on stdout is optional flavor, not part of the player contract. Bots that
 // are silent by design (e.g. dusty's minimal hand-written canonical ABI) opt out.
-const NO_BANTER = new Set(['dusty']);
+const NO_BANTER = new Set(['dusty', 'nib']);
 
 /** Load a sample or skip the test if it isn't built. */
 async function loadOrSkip(name, opts) {
@@ -81,7 +81,7 @@ export function register() {
             const p = await loadOrSkip(name);
             try {
                 const h = await p.create();
-                // Everyone signalling bloom so signal-matchers (micro) react.
+                // Everyone signalling bloom so signal-matchers (nib) react.
                 const signals = [broadcast('self', 'bloom'), broadcast('a', 'bloom'), broadcast('b', 'bloom')];
                 const plant = await p.plant(h, roundState({ round: 1, signals }));
                 assert.equal(typeof plant, 'number');

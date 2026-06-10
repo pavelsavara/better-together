@@ -23,7 +23,12 @@ FROM debian:trixie-slim
 
 # Pinned tool versions (see scripts that resolve these from upstream releases).
 ARG GO_VERSION=go1.25.11
-ARG NODE_VERSION=v22.22.3
+# Node 24+ is required: jsco's JSPI path uses the WebAssembly.Suspending /
+# WebAssembly.promising constructors (the modern JSPI API). Node 22 lacks them
+# even with --experimental-wasm-jspi, so jsco silently degrades to a
+# non-suspending mode and corrupts resource handles on async WASI imports
+# (e.g. filesystem open-at/read), surfacing as "Invalid resource handle: 0".
+ARG NODE_VERSION=v24.16.0
 ARG TINYGO_VERSION=0.41.1
 ARG BINARYEN_VERSION=130
 ARG WASM_TOOLS_VERSION=1.251.0

@@ -31,7 +31,8 @@ import (
 // ─────────────────────────── Identity ─────────────────────────────
 
 const (
-	playerName    = "gopher"
+	playerName    = "together.Gopher"
+	playerGlyph   = "🐹"
 	playerVersion = "0.1.0"
 	playerAuthor  = "Better Together samples"
 	playerRepo    = "https://github.com/pavelsavara/better-together"
@@ -39,7 +40,8 @@ const (
 		"habit who keeps digging wherever the last dig paid off, and abandons any " +
 		"hole that came up empty. He doesn't hold grudges and he doesn't read minds; " +
 		"he simply repeats what worked and flips away from what didn't. The dirt " +
-		"remembers; Gopher just follows it."
+		"remembers; Gopher just follows it — and lately the dirt's been richest at " +
+		"Bram the beaver's table, so the forager digs there and calls himself guild."
 )
 
 // ─────────────────────────── Strategy knobs ───────────────────────
@@ -50,8 +52,10 @@ const (
 	// A stingy dig: keep everything.
 	stingyPlant uint8 = 0
 	// The contributor threshold the engine uses; at or above this, a plant is a
-	// real "stake" and counts toward the diversity multiplier.
+	// real "stake" and earns a second vote in the tax phase.
 	stake uint8 = 3
+	// A target who kept this many seeds or fewer is immune from the tax.
+	untaxableMin int = 2
 	// Gopher's aspiration level. A round that scores at least this much is a
 	// "win" (stay); anything less is a "loss" (shift). It sits above the
 	// keep-everything floor of 10 (so an all-stingy, barren round is a loss that
@@ -215,6 +219,8 @@ func init() {
 			Author:  playerAuthor,
 			Repo:    playerRepo,
 			Lore:    playerLore,
+			Glyph:   playerGlyph,
+			Icon:    cm.None[string](),
 		}
 		return cm.OK[cm.Result[player.Metadata, player.Metadata, struct{}]](md)
 	}
@@ -274,9 +280,47 @@ func init() {
 		return cm.OK[cm.Result[uint8, uint8, struct{}]](plant)
 	}
 
+	player.Exports.Gardener.Vote = func(self cm.Rep, state player.RoundState) (result cm.Result[player.Ballot, player.Ballot, struct{}]) {
+		g := instances[self]
+		if g == nil {
+			return cm.Err[cm.Result[player.Ballot, player.Ballot, struct{}]](struct{}{})
+		}
+		// Pure Pavlov — no grudges, no names remembered. The vote is a reflex to
+		// his own last payoff: win → calm (abstain); lose → lash out at the fattest
+		// hoarder, the neighbour who kept the most while his own hole ran dry. He
+		// never taxes the untaxable (kept <= 2), and breaks ties by id.
+		_, lastScore, found := myLastScore(state.History.Slice(), g.selfID)
+		if !found || lastScore >= aspiration {
+			fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
+			return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
+		}
+		var target types.PlayerID
+		bestKept := untaxableMin
+		for _, a := range state.Plants.Slice() {
+			if string(a.ID) == g.selfID {
+				continue
+			}
+			kept := 10 - int(a.Plant)
+			if kept <= untaxableMin {
+				continue // immune
+			}
+			if target == "" || kept > bestKept || (kept == bestKept && a.ID < target) {
+				target = a.ID
+				bestKept = kept
+			}
+		}
+		if target == "" {
+			fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
+			return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
+		}
+		say("That dig came up empty and someone's sitting on a full hole. Tax 'em! \xF0\x9F\x90\xB9")
+		fmt.Fprintf(os.Stderr, "[gopher] round %d: vote %s\n", state.Round, string(target))
+		return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.Some(target)))
+	}
+
 	player.Exports.Gardener.MatchEnd = func(self cm.Rep, summary player.MatchSummary) (result cm.BoolResult) {
 		if summary.YourScore > 0 {
-			say("Good foraging this season. The dirt was kind. 🐹")
+			say("Good foraging this match. The dirt was kind. 🐹")
 		}
 		fmt.Fprintf(os.Stderr, "[gopher] match ended after %d round(s); my score %.2f\n",
 			summary.RoundsPlayed, summary.YourScore)

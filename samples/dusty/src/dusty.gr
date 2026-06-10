@@ -1,6 +1,6 @@
 // Dusty — a cautious grey pantry mouse who plays graduated true Tit-for-Tat.
 //
-// Written in pure Grain. The six canonical-ABI exports below are hand-marshalled
+// Written in pure Grain. The seven canonical-ABI exports below are hand-marshalled
 // at the @unsafe / WasmI32 boundary; `wasm-tools component embed` + `component new`
 // (with the WASI preview1 reactor adapter) wrap this core module into a proper
 // `better-together:gardener/player@0.1.0` component.
@@ -47,6 +47,11 @@ let mut lastCount = 0n
 let mut lastMyFound = 0n
 @unsafe
 let mut lastMyPlant = 0n
+// Others-only tally for the Tit-for-Tat target (excludes self).
+@unsafe
+let mut lastOthersSum = 0n
+@unsafe
+let mut lastOthersCount = 0n
 
 // Cross-match memory (loaded at match-start, persisted at match-end).
 @unsafe
@@ -66,16 +71,23 @@ let _MAGIC = 0x44535431n // "DST1"
 let _MEMPATH = "dusty.mem"
 @unsafe
 let _COOP_AVG = 4n       // group-average plant that counts as a "generous" round
+@unsafe
+let _CONTRIB = 3n        // engine contributor threshold (plant >= 3)
+@unsafe
+let _UNTAXABLE_MIN = 2n  // a target who kept <= this many seeds is immune from tax
+@unsafe
+let _SHELTER = 2n        // other contributors needed before Dusty dares to vote
 
 // ---------------------------------------------------------------------------
 // Metadata strings (module constants -> stable, GC-rooted addresses).
 // ---------------------------------------------------------------------------
 
-let metaName = "Dusty"
+let metaName = "together.Dusty"
+let metaGlyph = "🐭"
 let metaVersion = "0.1.0"
 let metaAuthor = "Better Together samples"
 let metaRepo = "https://github.com/better-together/better-together/tree/main/samples/dusty"
-let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind."
+let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind. She shelters near Bram the beaver's guild when the voting turns to tax, and keeps a wary whisker twitching at Reynard the fox."
 
 // ---------------------------------------------------------------------------
 // Small integer helpers (unsigned-safe for our 0..255 / small positive values).
@@ -103,7 +115,9 @@ let isSelf = (idPtr: WasmI32, idLen: WasmI32) => {
 }
 
 // Recompute lastSum / lastCount / lastMyPlant from the newest round-result.
-//   round-result = 20 bytes: actions(ptr@0,len@4), garden-total u16@8, mult f32@12, payout f32@16
+//   round-result = 40 bytes: actions(ptr@0,len@4), garden-total u16@8,
+//     votes(ptr@12,len@16), tax-target option<string>(disc@20,ptr@24,len@28),
+//     tax-collected u8@32, garden-payout f32@36
 //   player-action = 12 bytes: id(ptr@0,len@4), plant u8@8, signal u8@9
 @unsafe
 let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
@@ -111,8 +125,10 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
   lastCount = 0n
   lastMyFound = 0n
   lastMyPlant = 0n
+  lastOthersSum = 0n
+  lastOthersCount = 0n
   if (histLen > 0n) {
-    let rr = histPtr + (histLen - 1n) * 20n
+    let rr = histPtr + (histLen - 1n) * 40n
     let actPtr = WasmI32.load(rr, 0n)
     let actLen = WasmI32.load(rr, 4n)
     for (let mut i = 0n; i < actLen; i += 1n) {
@@ -125,6 +141,9 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
       if (isSelf(idPtr, idLen)) {
         lastMyFound = 1n
         lastMyPlant = plant
+      } else {
+        lastOthersSum += plant
+        lastOthersCount += 1n
       }
     }
   }
@@ -133,10 +152,10 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
 // Graduated, cautious Tit-for-Tat target from the last round.
 @unsafe
 let decideTarget = () => {
-  if (lastCount == 0n) {
+  if (lastOthersCount == 0n) {
     opener
   } else {
-    let avg = divFloor(lastSum, lastCount)
+    let avg = divFloor(lastOthersSum, lastOthersCount)
     let my = if (lastMyFound == 1n) lastMyPlant else opener
     let t = if (avg < my) {
       // Garden cooled: scurry back an extra step.
@@ -144,7 +163,7 @@ let decideTarget = () => {
     } else {
       // Stable or warming: creep forward, but cap the climb at +2.
       let climb = my + 2n
-      let ceilAvg = divCeil(lastSum, lastCount)
+      let ceilAvg = divCeil(lastOthersSum, lastOthersCount)
       if (climb < ceilAvg) climb else ceilAvg
     }
     clamp10(t)
@@ -277,7 +296,9 @@ provide let create = () => {
 
 // ---------------------------------------------------------------------------
 // metadata: func() -> result<metadata>
-//   result<metadata> = disc i32@0=ok, then 5x(ptr,len) strings @4 (size 44)
+//   result<metadata> = disc i32@0=ok, then the metadata record @4:
+//     6x(ptr,len) strings (name,version,author,repo,lore,glyph) @4..52, then
+//     icon: option<string> @52 (u8 disc @52, pad, ptr@56, len@60). Size 64.
 // ---------------------------------------------------------------------------
 
 @unsafe
@@ -292,13 +313,17 @@ let storeStr = (area: WasmI32, idx: WasmI32, s: String) => {
 @unsafe
 @externalName("better-together:gardener/player@0.1.0#[method]gardener.metadata")
 provide let metadata = (self: WasmI32) => {
-  let p = Memory.malloc(44n)
+  let p = Memory.malloc(64n)
   WasmI32.store(p, 0n, 0n) // disc = ok
   storeStr(p, 0n, metaName)
   storeStr(p, 1n, metaVersion)
   storeStr(p, 2n, metaAuthor)
   storeStr(p, 3n, metaRepo)
   storeStr(p, 4n, metaLore)
+  storeStr(p, 5n, metaGlyph)
+  // icon: option<string> = none. The variant disc (u8) sits at record
+  // offset 48 -> p+52; storing 0 there selects `none`.
+  WasmI32.store(p, 0n, 52n)
   p
 }
 
@@ -351,6 +376,8 @@ provide let talk = (
   histLen: WasmI32,
   sigPtr: WasmI32,
   sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
 ) => {
   computeLastRound(histPtr, histLen)
   let target = decideTarget()
@@ -375,6 +402,8 @@ provide let plant = (
   histLen: WasmI32,
   sigPtr: WasmI32,
   sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
 ) => {
   computeLastRound(histPtr, histLen)
 
@@ -385,13 +414,72 @@ provide let plant = (
   }
 
   let mut target = plannedPlant
-  // If most neighbours just promised to bloom, lean in one extra seed.
+  // If at least half of the *other* gardeners just promised to bloom, lean in
+  // one extra seed. The signal list includes our own broadcast, so the count of
+  // others is sigLen - 1.
   let blooms = countOtherBlooms(sigPtr, sigLen)
-  if (sigLen > 0n && blooms * 2n >= sigLen) target = clamp10(target + 1n)
+  let others = sigLen - 1n
+  if (others > 0n && blooms * 2n >= others) target = clamp10(target + 1n)
 
   let p = Memory.malloc(4n)
   WasmI32.store8(p, 0n, 0n)              // disc = ok
   WasmI32.store8(p, clamp10(target), 1n) // value 0..10
+  p
+}
+
+// ---------------------------------------------------------------------------
+// vote: func(state) -> result<ballot>  where ballot = option<player-id>
+//   return layout (16 bytes): result disc u8@0, ballot(option) disc u8@4,
+//   string ptr@8 / len@12. Dusty shelters from the tax phase and always
+//   abstains, so the ballot is `none` and the string slot is unused.
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.vote")
+provide let vote = (
+  self: WasmI32,
+  round: WasmI32,
+  histPtr: WasmI32,
+  histLen: WasmI32,
+  sigPtr: WasmI32,
+  sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
+) => {
+  // Dusty shelters in numbers. She only joins a tax when a cooperative crowd is
+  // already seated this round (>= _SHELTER other contributors to hide behind),
+  // and then she votes WITH them against the fattest hoarder — the neighbour who
+  // kept the most, above the untaxable minimum. On a thin or selfish table she
+  // keeps her whiskers down and abstains. The chosen id aliases the input bytes,
+  // which the host lifts before the guest allocates again.
+  let mut contributors = 0n
+  let mut bestIdPtr = 0n
+  let mut bestIdLen = 0n
+  let mut bestKept = _UNTAXABLE_MIN
+  for (let mut i = 0n; i < plantsLen; i += 1n) {
+    let a = plantsPtr + i * 12n
+    let idPtr = WasmI32.load(a, 0n)
+    let idLen = WasmI32.load(a, 4n)
+    let plant = WasmI32.load8U(a, 8n)
+    if (!isSelf(idPtr, idLen)) {
+      if (plant >= _CONTRIB) contributors += 1n
+      let kept = 10n - plant
+      if (kept > bestKept) {
+        bestKept = kept
+        bestIdPtr = idPtr
+        bestIdLen = idLen
+      }
+    }
+  }
+  let p = Memory.malloc(16n)
+  WasmI32.store8(p, 0n, 0n) // result disc = ok
+  if (contributors >= _SHELTER && bestIdLen != 0n) {
+    WasmI32.store8(p, 1n, 4n)        // ballot disc = some
+    WasmI32.store(p, bestIdPtr, 8n)  // string ptr (aliases the input id bytes)
+    WasmI32.store(p, bestIdLen, 12n) // string len
+  } else {
+    WasmI32.store8(p, 0n, 4n)        // ballot disc = none
+  }
   p
 }
 

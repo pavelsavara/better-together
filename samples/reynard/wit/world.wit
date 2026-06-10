@@ -1,0 +1,26 @@
+// World for the `reynard` sample — a JavaScript gardener built with jco /
+// ComponentizeJS (a StarlingMonkey/SpiderMonkey embedding), the same toolchain
+// as khaos.
+//
+// Like khaos, the guest JS engine has no `node:fs`. Reynard reaches the virtual
+// filesystem the same way every WASI component does: by importing
+// `wasi:filesystem/preopens` + `types` and calling the raw descriptor API (see
+// component.js). jco's `preview2-shim` backs those imports with the real host
+// filesystem when the component is transpiled and run under Node.
+//
+// We pin wasi @0.2.3 to match better-together:gardener's `world gardener`. Note
+// that ComponentizeJS's engine additionally pulls in its own wasi:cli / wasi:io
+// / wasi:random / wasi:clocks imports (for console + Math.random) at the engine's
+// own version; those are added automatically and do not appear here.
+package better-together:reynard@0.1.0;
+
+/// Reynard — the velvet-gloved skimmer who stays just above the contributor
+/// floor, trims the fat tables, and remembers which tables were worth skimming.
+world reynard {
+    // Virtual filesystem: the only persistence for Reynard's reputation budget.
+    import wasi:filesystem/types@0.2.3;
+    import wasi:filesystem/preopens@0.2.3;
+
+    // The player the router constructs and the engine calls each turn.
+    export better-together:gardener/player@0.1.0;
+}

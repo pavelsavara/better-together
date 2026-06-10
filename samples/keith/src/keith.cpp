@@ -41,6 +41,7 @@ namespace {
 
 // ---- Strategy knobs (all grounded in docs/engine-rules.md §4) ---------------
 constexpr uint8_t CONTRIB = 3;       // engine threshold: plant >= 3 == contributor
+constexpr uint8_t UNTAXABLE_MIN = 2; // a target who kept <= this many seeds is immune
 constexpr uint8_t OPENING_PLANT = 8; // round 1: open generously, never bite first
 constexpr uint8_t GEN_PLANT = 8;     // warm table -> plant generously
 constexpr uint8_t PROBE_PLANT = 5;   // forgiveness olive branch (still a contributor)
@@ -166,14 +167,18 @@ std::expected<ex::Gardener::Owned, wit::Void> ex::Create() {
 
 std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
   return bt::Metadata{
-      wit::string::from_view("keith"),
+      wit::string::from_view("together.Keith"),
       wit::string::from_view("0.1.0"),
       wit::string::from_view("Better Together samples"),
       wit::string::from_view("https://github.com/pavelsavara/better-together"),
       wit::string::from_view(
           "A ledger-keeping sewer rat. Never bites first, always forgives, "
           "never lies about his own intentions — but he keeps a grubby little "
-          "book of who broke their word, and he never forgets."),
+          "book of who broke their word, and he never forgets. He'd vote any day "
+          "with Bram the beaver's guild, and his book is the one place Reynard "
+          "the fox's careful skim still shows up in red."),
+      wit::string::from_view("\xF0\x9F\x90\x80"),
+      std::optional<wit::string>{},
   };
 }
 
@@ -253,6 +258,36 @@ std::expected<uint8_t, wit::Void> ex::Gardener::Plant(bt::RoundState state) {
 
   printf("\xF0\x9F\x90\x80 keith [r%u plant]: %u seeds in the dirt.\n", state.round, plant);
   return plant;
+}
+
+std::expected<std::optional<wit::string>, wit::Void> ex::Gardener::Vote(bt::RoundState state) {
+  // Promise enforcement at the ballot box. Keith never lies about his own
+  // intentions and won't suffer those who do: he taxes this round's worst
+  // oath-breaker — a neighbour who broadcast BLOOM yet planted below the
+  // contributor floor. He aims at the biggest liar (the most seeds kept), breaks
+  // ties by id for determinism, and never names the untaxable (kept <= 2). If no
+  // one broke their word, he keeps to himself and abstains.
+  bool found = false;
+  std::string best_id;
+  uint8_t best_plant = 0xff;
+  for (const auto& a : state.plants.get_const_view()) {
+    const std::string id = a.id.to_string();
+    if (id == self_id) continue;
+    if (a.signal != Signal::kBloom || a.plant >= CONTRIB) continue;   // kept his word
+    if (10 - static_cast<int>(a.plant) <= UNTAXABLE_MIN) continue;    // immune
+    if (!found || a.plant < best_plant || (a.plant == best_plant && id < best_id)) {
+      found = true;
+      best_id = id;
+      best_plant = a.plant;
+    }
+  }
+  if (!found) {
+    printf("\xF0\x9F\x90\x80 keith [r%u vote]: no oath broken — abstain.\n", state.round);
+    return std::optional<wit::string>{};
+  }
+  printf("\xF0\x9F\x90\x80 keith [r%u vote]: you swore BLOOM and planted %u — into the book, %s.\n",
+         state.round, best_plant, best_id.c_str());
+  return std::optional<wit::string>{wit::string::from_view(best_id)};
 }
 
 std::expected<void, wit::Void> ex::Gardener::MatchEnd(bt::MatchSummary summary) {

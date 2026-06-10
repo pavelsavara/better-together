@@ -63,7 +63,7 @@ export function register() {
         const { inst, handle } = await seatAttacker();
         try {
             const m = await inst.metadata(handle);
-            assert.equal(m.name, 'attacker');
+            assert.equal(m.name, 'together.Attacker');
             for (const f of ['name', 'version', 'author', 'repo', 'lore']) {
                 assert.equal(typeof m[f], 'string');
             }
@@ -195,10 +195,10 @@ export function register() {
 
     // ─────────── lockdown does not break honest bots / benign I/O ───────
     test('attacker: an honest bot still works under the same lockdown', async () => {
-        // micro only needs stdout; ferris-style fs is allowed; neither needs the
+        // nib only needs stdout; ferris-style fs is allowed; neither needs the
         // network. Prove the restrictive whitelist does not break legitimate play.
-        if (!resolveSample('micro').exists) skipTest('micro.wasm not built');
-        const inst = await loadGardener('micro', { enabledInterfaces: LOCKED_DOWN, limits: SMALL_QUOTA });
+        if (!resolveSample('nib').exists) skipTest('nib.wasm not built');
+        const inst = await loadGardener('nib', { enabledInterfaces: LOCKED_DOWN, limits: SMALL_QUOTA });
         try {
             const h = await inst.create();
             const sig = await inst.talk(h, roundState({ round: 1 }));

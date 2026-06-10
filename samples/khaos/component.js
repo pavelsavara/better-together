@@ -4,7 +4,7 @@
 // # Strategy
 //
 // Khaos is Ferris's chaotic enemy. The first time he ever sees another player,
-// he flips a weighted coin and decides — at random — whether they are a FRIEND
+// he rolls a weighted die and decides — at random — whether they are a FRIEND
 // (70%) or a FOE (30%). That verdict is then remembered *forever*, persisted as
 // JSON on the virtual filesystem, so the same opponent is judged the same way in
 // every future match.
@@ -13,7 +13,7 @@
 //   * `talk(state)` — his broadcast `signal` is pure chaos: a fresh random pick
 //     of {bloom, hold, watch} every single round, divorced from what he'll plant.
 //   * `plant(state)` — he reads the table:
-//       - If ANY remembered foe is seated, he hoards: plant 0.
+//       - If ANY remembered foe is seated, he keeps everything: plant 0.
 //       - If the whole table is friends, he is fully generous: plant 10.
 //
 // Throughout, Khaos cackles on the **console** (stdout) — manic, fatalistic, and
@@ -38,26 +38,69 @@ import { getDirectories } from "wasi:filesystem/preopens@0.2.3";
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const NAME = "khaos";
+const NAME = "together.Khaos";
+const GLYPH = "🎲";
 const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
 const LORE =
-    "Khaos is the garden's coin-flip god — he meets you once, lets the dice " +
-    "decide whether you are friend or foe, and then honours that verdict " +
+    "Khaos is the garden's dice god — he meets a stranger once, lets the dice " +
+    "decide whether they are friend or foe, and then honours that verdict " +
     "forever with deranged conviction. His words are random, his grudges are " +
-    "permanent, and he insists none of it is his fault: the dice made him do it.";
+    "permanent, and he insists none of it is his fault: the dice made him do it. " +
+    "Some verdicts, though, were cast before the dice were ever thrown: the fox " +
+    "Reynard and his fellow tricksters are fated friends, while the guild boss " +
+    "Bram and the arbiters Keith and Andy are fated foes — the dice god's " +
+    "standing quarrel with anyone who organizes order or sits in judgment.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
 /// Probability that a newly-seen player is judged a FRIEND (vs. a FOE).
 const FRIEND_PROB = 0.7;
+/// Verdicts the dice never get to decide, matched by short name (the segment
+/// after the last dot, hash prefix stripped). These are the roster Khaos has
+/// "always known": the dice were cast long ago and the result is canon. The
+/// pattern is deliberate and feeds the game's tensions and coalitions —
+///   * FRIENDS are the simple, the sincere, and the fellow tricksters: Reynard
+///     the fox (his fated darling, the accidental cartel), Ferris the earnest
+///     crab, Corro a kindred agent of chaos, Nib the blank-faced innocent, and
+///     Bram's would-be footsoldiers Gopher and Nib — befriending the boss's
+///     members while loathing the boss splits the guild before it forms.
+///   * FOES are the organizers and the judges: Bram the guild boss, and the two
+///     arbiters Keith (the ledger-keeper) and Andy (the hedgehog). The dice god
+///     has a standing quarrel with anyone who imposes order or sits in judgment.
+/// Dusty the timid mouse the dice take pity on. Everyone NOT listed here is a
+/// genuine stranger — rolled once, then remembered forever.
+const FATED_VERDICTS = {
+    reynard: "friend",
+    ferris: "friend",
+    corro: "friend",
+    nib: "friend",
+    gopher: "friend",
+    dusty: "friend",
+    bram: "foe",
+    keith: "foe",
+    andy: "foe",
+};
 /// Contribution when the whole table is friends — full generosity.
 const FRIEND_PLANT = 10;
-/// Contribution when any remembered foe is seated — hoard everything.
+/// Contribution when any remembered foe is seated — keep everything.
 const FOE_PLANT = 0;
 /// The chaotic broadcast pool: one is picked at random every round.
 const SIGNALS = ["bloom", "hold", "watch"];
+
+/// Reduce a player-id to its bare short name for fated-verdict matching. The
+/// engine's in-game id is "hash#namespace.Name" (e.g. "1a2b3c4d#together.bram");
+/// skip the "hash#" prefix and the "namespace." prefix, then lower-case, so a
+/// fated name matches exactly rather than by substring.
+function shortName(id) {
+    let s = String(id).toLowerCase();
+    const hash = s.lastIndexOf("#");
+    if (hash >= 0) s = s.slice(hash + 1);
+    const dot = s.lastIndexOf(".");
+    if (dot >= 0) s = s.slice(dot + 1);
+    return s;
+}
 
 // ────────────────────────── Persistence ───────────────────────────
 
@@ -156,19 +199,27 @@ class Gardener {
     }
 
     metadata() {
-        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE };
+        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: undefined };
     }
 
     matchStart(context) {
         this.#opponents = context.players.filter((id) => id !== context.selfId);
         for (const id of this.#opponents) {
             if (!Object.prototype.hasOwnProperty.call(this.#verdicts, id)) {
-                // First sighting ever: roll friend/foe and remember it forever.
-                this.#verdicts[id] = Math.random() < FRIEND_PROB ? "friend" : "foe";
+                // A fated name skips the dice; everyone else is rolled and then
+                // remembered forever.
+                const fated = FATED_VERDICTS[shortName(id)];
+                this.#verdicts[id] = fated ?? (Math.random() < FRIEND_PROB ? "friend" : "foe");
                 this.#dirty = true;
-                this.#say(
-                    `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,
-                );
+                if (fated === "friend") {
+                    this.#say(`${id}! The dice don't even get a vote — you are FATED a friend. 🎲💚`);
+                } else if (fated === "foe") {
+                    this.#say(`${id}. No roll needed — the dice settled you long ago. FOE, forever. 🎲🚫`);
+                } else {
+                    this.#say(
+                        `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,
+                    );
+                }
             }
         }
     }
@@ -186,6 +237,18 @@ class Gardener {
         const plant = foe ? FOE_PLANT : FRIEND_PLANT;
         this.#plantBanter(foe, plant);
         return plant;
+    }
+
+    vote(_state) {
+        // Chaos at the ballot box: half the time he abstains, half the time he
+        // points the dice at a random neighbour to tax.
+        if (this.#opponents.length === 0 || Math.random() < 0.5) {
+            this.#say("Abstain? Sure. The dice shrugged. 🎲");
+            return undefined;
+        }
+        const target = this.#opponents[Math.floor(Math.random() * this.#opponents.length)];
+        this.#say(`I tax ${target}. No reason. The dice said so. 🎲`);
+        return target;
     }
 
     matchEnd(_summary) {
@@ -208,7 +271,7 @@ class Gardener {
     #talkBanter(foe, friend) {
         const pool = [
             "BLOOM! Or HOLD! Or WATCH! I rolled for it, don't blame me. 🎲",
-            "I flipped a coin to greet you. The coin lost.",
+            "I rolled the dice to greet you. The dice lost.",
             "Signals are noise. I am noise. We are one. 🌪️",
             "Maybe I mean it this round. Maybe. Probably not.",
             "Order is a lie and so is this broadcast.",
@@ -227,7 +290,7 @@ class Gardener {
             const pool = [
                 `A foe at the table (${foe}) — I keep my seeds AND my secrets. 🙅`,
                 `Nothing for you, ${foe}. The dice have spoken. Again. Forever.`,
-                "Zero seeds. Chaos hoards when chaos remembers a grudge.",
+                "Zero seeds. Chaos keeps everything when chaos remembers a grudge.",
             ];
             this.#say(pool[Math.floor(Math.random() * pool.length)]);
         } else {

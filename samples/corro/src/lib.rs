@@ -15,7 +15,7 @@
 //!   name.
 //! * **Feast (plant 0).** Whenever the garden is alive — i.e. some honest player
 //!   planted a real stake (≥ 3) last round — Corro plants nothing and lives off
-//!   the multiplier everyone else paid for.
+//!   the doubled garden everyone else paid for.
 //! * **Prime the pump (bait).** When the garden is barren (round 1, or nobody
 //!   planted a real stake last round) he plants a small bait so cooperation
 //!   restarts — purely so there's a harvest to steal next round.
@@ -39,19 +39,22 @@ use std::collections::BTreeMap;
 
 use bindings::better_together::gardener::types::{RoundResult, Signal};
 use bindings::exports::better_together::gardener::player::{
-    Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
+    Ballot, Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
 };
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const PLAYER_NAME: &str = "corro";
+const PLAYER_NAME: &str = "together.Corro";
+const PLAYER_GLYPH: &str = "🥀";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
 const PLAYER_LORE: &str = "Corro is the rot beneath the petals — Ferris's mirror \
  and nemesis. He smiles in BLOOM and harvests in silence, certain that every \
  generous gardener is simply a meal that hasn't noticed yet. He plants only to \
- bait, and remembers only who is worth deceiving.";
+ bait, and remembers only who is worth deceiving. He tips his claw to Reynard \
+ the fox — a fellow diner with better table manners — and spits at Bram the \
+ beaver, whose guild dams the stream and taxes parasites like him.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
@@ -61,7 +64,7 @@ const STAKE: u8 = 3;
 /// Contribution while feasting on a living garden: nothing.
 const EXPLOIT_PLANT: u8 = 0;
 /// Bait planted to restart a barren garden so there's a harvest to steal next
-/// round. Deliberately >= STAKE so it even claims the multiplier it triggers.
+/// round. Deliberately >= STAKE so it even counts as a contributor.
 const BAIT_PLANT: u8 = 4;
 
 // ────────────────────────── Reading the table ─────────────────────
@@ -78,10 +81,10 @@ fn most_generous(history: &[RoundResult], self_id: &str) -> Option<(String, u32)
             *totals.entry(a.id.clone()).or_default() += a.plant as u32;
         }
     }
-    // Highest total wins; ties broken by id for determinism.
+    // Highest total wins; ties broken by higher id for determinism.
     totals
         .into_iter()
-        .max_by(|x, y| x.1.cmp(&y.1).then(y.0.cmp(&x.0)))
+        .max_by(|x, y| x.1.cmp(&y.1).then(x.0.cmp(&y.0)))
 }
 
 /// Did any opponent plant a real stake (>= STAKE) in the most recent round? If
@@ -186,6 +189,8 @@ impl GuestGardener for CorroGardener {
             author: PLAYER_AUTHOR.to_string(),
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
+            glyph: PLAYER_GLYPH.to_string(),
+            icon: None,
         })
     }
 
@@ -244,9 +249,21 @@ impl GuestGardener for CorroGardener {
         Ok(plant)
     }
 
+    fn vote(&self, round_state: RoundState) -> Result<Ballot, ()> {
+        let st = self.state.borrow();
+        // Predator's ballot: tax the most generous mark to keep them weak.
+        let mark = most_generous(&round_state.history, &st.self_id).map(|(id, _)| id);
+        eprintln!(
+            "[corro] round {}: vote {}",
+            round_state.round,
+            mark.as_deref().unwrap_or("abstain")
+        );
+        Ok(mark)
+    }
+
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {
         if summary.your_score > 0.0 {
-            say("A fine harvest. Same time next season? 🦀");
+            say("A fine harvest. Same time next match? 🦀");
         }
         eprintln!(
             "[corro] match ended after {} round(s); my score {:.2}",

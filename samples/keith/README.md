@@ -35,9 +35,16 @@ His temperament is **nice, retaliatory, and forgiving**, in that order:
 - **Unforgetful.** A gardener who repeatedly signals `BLOOM` and then stiffs the
   garden becomes a *liar* in the ledger. When a table is run by proven liars,
   Keith keeps his seeds in his pocket. The rat does not feed cheats.
+- **Enforce the promise.** In the tax phase Keith names this round's worst
+  oath-breaker: a seated player who stood up and signalled `BLOOM` yet planted
+  below the contribution threshold (< 3) while keeping more than the untaxable
+  minimum. Among the liars he picks the *biggest* lie — the one who kept the most
+  — and if nobody broke their word, he abstains. Keith taxes the broken promise,
+  never the quiet, honest miser.
 
-Each round plays out in two phases and Keith mutters about both on stdout — pure
-flavor the engine never reads, but fun to watch in the console.
+Each round plays out in three phases (talk → plant → vote) and Keith mutters
+about all three on stdout — pure flavor the engine never reads, but fun to watch
+in the console.
 
 ## The strategy
 
@@ -58,7 +65,8 @@ seated), he trims from a generous 8 down to 5. That still honours his promise
 (≥ 3 keeps the `BLOOM` honest) but he refuses to be a martyr in a dying garden.
 
 The contribution threshold of **3** is the engine's, not arbitrary: a plant of 3+
-is what makes you a *contributor* and lifts the diversity multiplier for everyone.
+makes you a *contributor*, which gives you a voice — **2 votes** — in the tax
+phase — so Keith always clears it before voting to tax a proven liar.
 
 ## The memory
 
@@ -67,8 +75,8 @@ Keith's ledger is a tiny tab-separated file on the virtual filesystem
 counters — rounds seen, contributions, promises made (`BLOOM`s), and promises
 broken (`BLOOM` then planted < 3). At `match-end` the match's observations are
 folded into the lifetime totals and saved, so the rat's grudges and trust carry
-across matches — exactly the persistence the rules permit (a private state blob
-≤ 4 KB).
+across matches — exactly the persistence the rules permit (a private virtual
+filesystem ≤ 256 KB).
 
 ## The technology
 
@@ -118,7 +126,7 @@ wasm-tools component wit keith.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`.
 
 ## Where to look
 

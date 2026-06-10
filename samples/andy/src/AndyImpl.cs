@@ -23,13 +23,17 @@ public sealed class PlayerImpl : IPlayer
         private readonly Brain _brain = new(FriendBook.ResolvePath());
 
         public Wit.Metadata Metadata() => new(
-            name: "andy",
+            name: "together.Andy",
             version: "0.1.0",
             author: "Better Together samples",
             repo: "https://github.com/pavelsavara/better-together",
             lore: "A hedgehog who plants by night. Warm and soft-bellied to friends "
                 + "he remembers across many gardens, but he curls into his spines the "
-                + "moment a neighbour turns stingy — then uncurls and forgives by dawn.");
+                + "moment a neighbour turns stingy — then uncurls and forgives by dawn. "
+                + "He warms to Bram the beaver's honest guild and keeps his spines half-up "
+                + "around Reynard the fox, whose smile never quite reaches his ledger.",
+            glyph: "🦔",
+            icon: null);
 
         public void MatchStart(Wit.MatchContext context) =>
             _brain.MatchStart(context.selfId);
@@ -40,11 +44,24 @@ public sealed class PlayerImpl : IPlayer
         public byte Plant(Wit.RoundState state) =>
             (byte)_brain.Plant(state.round, ToRounds(state.history));
 
+        // Forgiveness stays primary: Andy only names a persistent, still-skimming
+        // free-rider — never a guild member, never a remembered friend.
+        public string? Vote(Wit.RoundState state) =>
+            _brain.Vote(state.round, ToRounds(state.history), ToDeeds(state.plants));
+
         public void MatchEnd(Wit.MatchSummary summary) => _brain.MatchEnd();
     }
 
     // ──────────────────────── translation ────────────────────────
-
+    private static IReadOnlyList<Deed> ToDeeds(List<Wit.PlayerAction> actions)
+    {
+        var deeds = new List<Deed>(actions.Count);
+        foreach (var a in actions)
+        {
+            deeds.Add(new Deed(a.id, a.plant, ToSig(a.signal)));
+        }
+        return deeds;
+    }
     private static IReadOnlyList<Round> ToRounds(List<Wit.RoundResult> history)
     {
         var rounds = new List<Round>(history.Count);

@@ -2,9 +2,9 @@
 
 // Package player represents the exported interface "better-together:gardener/player@0.1.0".
 //
-// The contract every player component implements. The router host constructs
-// one `gardener` per seat, then drives it in order across a match: match-start,
-// then `talk` + `plant` per round, then match-end.
+// The contract every player component implements. The host constructs
+// one `gardener` per seat, then the engine drives it in order across a match:
+// match-start, then `talk` + `plant` per round, then match-end.
 package player
 
 import (
@@ -21,6 +21,11 @@ type Metadata = types.Metadata
 //
 // See [types.Signal] for more information.
 type Signal = types.Signal
+
+// Ballot represents the type alias "better-together:gardener/player@0.1.0#ballot".
+//
+// See [types.Ballot] for more information.
+type Ballot = types.Ballot
 
 // MatchContext represents the type alias "better-together:gardener/player@0.1.0#match-context".
 //
@@ -39,7 +44,7 @@ type MatchSummary = types.MatchSummary
 
 // Gardener represents the exported resource "better-together:gardener/player@0.1.0#gardener".
 //
-// A single seated player. The router host creates one of these per
+// A single seated player. The host creates one of these per
 // gardener component and forwards the engine's calls to it.
 //
 //	resource gardener

@@ -12,6 +12,24 @@
 //                                    if it unexpectedly passes it is reported as
 //                                    XPASS so we know the upstream fix landed.
 
+// Node 24 makes unhandled promise rejections fatal by default. This suite drives
+// ten guest components (Rust/Go/C++/JS/Grain/WAT/.NET) through jsco, several of
+// which perform fire-and-forget WASI filesystem I/O — e.g. a guest kicks off a
+// write/read future at match-end and never reads its result. jsco delivers such
+// an abandoned operation's outcome through the normal channel, but the orphaned
+// host Promise still settles, sometimes rejecting with a WASI error-code like
+// `{ tag: 'is-directory' }`. Left unhandled, that single benign rejection would
+// abort the entire run before the summary prints. Record strays as visible
+// warnings instead; test outcomes (which are all awaited) stay authoritative.
+let strayRejections = 0;
+process.on('unhandledRejection', (reason) => {
+    strayRejections++;
+    const desc = reason && typeof reason === 'object' && 'tag' in reason
+        ? `{ tag: '${reason.tag}' }`
+        : (reason && reason.message) || String(reason);
+    console.warn(`  warn  stray background rejection ignored: ${desc}`);
+});
+
 const SKIP = Symbol('skip');
 const registry = [];
 

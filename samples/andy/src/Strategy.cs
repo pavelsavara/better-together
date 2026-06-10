@@ -44,6 +44,12 @@ internal static class Knobs
     /// A player is "collaborative" in a round if they plant at least this many.
     internal const int CollabPlant = 6;
 
+    /// A target who kept this many seeds or fewer is immune from the tax.
+    internal const int UntaxableMin = 2;
+    /// Rounds of defection (plant < Stake) before a within-match foe is
+    /// "persistent" enough to name in the vote.
+    internal const int PersistentFoe = 2;
+
     // ── Cross-match friend memory (trust in [0,1], neutral = 0.5) ──
     /// Trust at/above which a remembered player is treated as a friend.
     internal const double FriendTrust = 0.65;
@@ -174,6 +180,82 @@ internal sealed class Brain
         return Clamp(plant);
     }
 
+    /// Vote phase: forgiveness stays primary. Andy holds his fire until he has
+    /// extended at least one olive branch (a forgiveness round has come and
+    /// gone), then names the table's most persistent free-rider — someone who
+    /// has defected (planted below the stake) in at least `PersistentFoe` rounds
+    /// this match and is still skimming now. He NEVER crosses a guild member
+    /// (Bram's honest coalition) or a remembered friend, and never the untaxable
+    /// (kept <= 2).
+    internal string? Vote(int round, IReadOnlyList<Round> history, IReadOnlyList<Deed> plants)
+    {
+        // Give the table time to warm: no vote until a forgiveness round has passed.
+        if (round <= Knobs.ForgiveEvery)
+        {
+            Banter.Abstain(round);
+            return null;
+        }
+
+        // Count each opponent's defections (plant < Stake) across the match.
+        var defections = new Dictionary<string, int>();
+        foreach (var r in history)
+        {
+            foreach (var deed in r.Actions)
+            {
+                if (deed.Id != _selfId && deed.Plant < Knobs.Stake)
+                {
+                    defections[deed.Id] = defections.GetValueOrDefault(deed.Id) + 1;
+                }
+            }
+        }
+
+        // Aim at the most persistent free-rider revealed in THIS round's plants.
+        // The velvet-gloved skimmer (Reynard) is the one exception to Andy's
+        // patience: he never plants below the contributor stake, so he never
+        // racks up "defections" — but Andy, as an arbiter, sees the skim for what
+        // it is and taxes him first whenever he is seated.
+        Deed? best = null;
+        int bestDefections = 0;
+        bool bestSkimmer = false;
+        foreach (var deed in plants)
+        {
+            if (deed.Id == _selfId || IsGuild(deed.Id) || _book.IsFriend(deed.Id))
+            {
+                continue; // never a guild member or a remembered friend
+            }
+            int kept = 10 - deed.Plant;
+            if (kept <= Knobs.UntaxableMin)
+            {
+                continue; // immune
+            }
+            bool skimmer = IsSkimmer(deed.Id);
+            int d = defections.GetValueOrDefault(deed.Id);
+            if (d < Knobs.PersistentFoe && !skimmer)
+            {
+                continue; // refused the olive branch too few times — still forgiven
+            }
+            if (best is null
+                || (skimmer && !bestSkimmer)
+                || (skimmer == bestSkimmer && d > bestDefections)
+                || (skimmer == bestSkimmer && d == bestDefections && kept > 10 - best.Value.Plant)
+                || (skimmer == bestSkimmer && d == bestDefections && kept == 10 - best.Value.Plant
+                    && string.CompareOrdinal(deed.Id, best.Value.Id) < 0))
+            {
+                best = deed;
+                bestDefections = d;
+                bestSkimmer = skimmer;
+            }
+        }
+
+        if (best is null)
+        {
+            Banter.Abstain(round);
+            return null;
+        }
+        Banter.Vote(round, best.Value.Id, bestDefections);
+        return best.Value.Id;
+    }
+
     /// Fold this match into the friend-book and persist it.
     internal void MatchEnd()
     {
@@ -206,7 +288,7 @@ internal sealed class Brain
             plant = Math.Max(plant, Knobs.OpenPlant);
         }
 
-        bool foeSeated = _matchFoes.Count > 0;
+        bool foeSeated = SeatedFoePresent(history);
         bool friendSeated = SeatedFriendPresent(history);
 
         // A remembered friend (and no foe) warms him up; a within-match foe
@@ -272,6 +354,24 @@ internal sealed class Brain
         return false;
     }
 
+    /// Is a within-match foe actually seated at the table this round? Mirrors
+    /// SeatedFriendPresent: a remembered grudge only bites if its target shows up.
+    private bool SeatedFoePresent(IReadOnlyList<Round> history)
+    {
+        if (history.Count == 0)
+        {
+            return false;
+        }
+        foreach (var deed in history[^1].Actions)
+        {
+            if (deed.Id != _selfId && _matchFoes.Contains(deed.Id))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// Fold each opponent's collaboration this match into their trust, then pull
     /// every stored trust gently toward neutral (slow decay) and prune.
     private void FoldFriends(IReadOnlyList<Round> history)
@@ -318,6 +418,39 @@ internal sealed class Brain
                 _book.Friends[id] = decayed;
             }
         }
+    }
+
+    /// The honest coalition Andy stands with — Bram's guild (the beaver, his
+    /// rallied members Nib and Gopher) and the other arbiter, Keith. He never
+    /// aims the tax at any of them.
+    private static bool IsGuild(string id)
+    {
+        var name = ShortName(id);
+        return name is "bram" or "nib" or "gopher" or "keith";
+    }
+
+    /// The gray-zone skimmer (Reynard): always above the contributor floor, so
+    /// he never registers as a defector — Andy names him on sight anyway.
+    private static bool IsSkimmer(string id) => ShortName(id) is "reynard";
+
+    /// Reduce a player-id to its bare short name for well-known matching. The
+    /// engine's in-game id is "hash#namespace.Name" (e.g.
+    /// "1a2b3c4d#together.andy"); skip the "hash#" prefix and the "namespace."
+    /// prefix, then lower-case, so matches are exact rather than substring.
+    private static string ShortName(string id)
+    {
+        var s = id.ToLowerInvariant();
+        int hash = s.LastIndexOf('#');
+        if (hash >= 0)
+        {
+            s = s.Substring(hash + 1);
+        }
+        int dot = s.LastIndexOf('.');
+        if (dot >= 0)
+        {
+            s = s.Substring(dot + 1);
+        }
+        return s;
     }
 
     private static int Clamp(int plant) => Math.Clamp(plant, 0, 10);

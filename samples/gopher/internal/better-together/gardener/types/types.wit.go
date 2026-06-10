@@ -28,10 +28,15 @@ type PlayerID string
 //		author: string,
 //		repo: string,
 //		lore: string,
+//		glyph: string,
+//		icon: option<string>,
 //	}
 type Metadata struct {
 	_ cm.HostLayout `json:"-"`
-	// Human-readable name of this player (often used as the player-id).
+	// Fully-qualified identity as `namespace.name` (e.g. "together.Ferris").
+	// The `namespace` segment groups players by publisher and is validated
+	// by the engine — see engine-rules.md §Validation (it must match
+	// `^[a-z][a-z0-9-]*$`). Often used as the player-id.
 	Name string `json:"name"`
 
 	// Semantic version of this player, e.g. "1.0.0".
@@ -47,12 +52,21 @@ type Metadata struct {
 	// engine never parses it; it exists so leaderboards and match logs can
 	// show who this bot *is*.
 	Lore string `json:"lore"`
+
+	// A single UTF character (emoji/glyph) shown as this gardener's icon on
+	// the garden in the UI, e.g. "🦀".
+	Glyph string `json:"glyph"`
+
+	// URL of an avatar picture for this player, or none if it has no avatar.
+	Icon cm.Option[string] `json:"icon"`
 }
 
 // Signal represents the enum "better-together:gardener/types@0.1.0#signal".
 //
 // The public broadcast a player emits each round. Cheap talk — it carries
-// no enforced meaning and may be honest or deceptive.
+// no enforced meaning and may be honest or deceptive. Because talk is
+// revealed before plants AND before the tax vote, a signal both rallies the
+// plant and foreshadows the vote.
 //
 //	enum signal {
 //		bloom,
@@ -62,13 +76,13 @@ type Metadata struct {
 type Signal uint8
 
 const (
-	// "I intend to plant generously this round."
+	// "I intend to plant generously this round" — and accept the tax if I lie.
 	SignalBloom Signal = iota
 
-	// "I intend to keep most/all of my seeds."
+	// "I intend to keep most/all of my seeds" — expect a vote.
 	SignalHold
 
-	// "I'm deciding based on what others do."
+	// "I'm deciding based on what others do" — including whom to tax.
 	SignalWatch
 )
 
@@ -96,6 +110,27 @@ func (e *Signal) UnmarshalText(text []byte) error {
 
 var _SignalUnmarshalCase = cm.CaseUnmarshaler[Signal](_SignalStrings[:])
 
+// Ballot represents the option "better-together:gardener/types@0.1.0#ballot".
+//
+// A tax-phase ballot: the player to tax this round, or none to abstain.
+//
+//	type ballot = option<player-id>
+type Ballot cm.Option[PlayerID]
+
+// VoteRecord represents the record "better-together:gardener/types@0.1.0#vote-record".
+//
+// One player's ballot in the vote phase, revealed to everyone afterwards.
+//
+//	record vote-record {
+//		voter: player-id,
+//		target: option<player-id>,
+//	}
+type VoteRecord struct {
+	_      cm.HostLayout       `json:"-"`
+	Voter  PlayerID            `json:"voter"`
+	Target cm.Option[PlayerID] `json:"target"`
+}
+
 // PlayerAction represents the record "better-together:gardener/types@0.1.0#player-action".
 //
 // What a single player did in a given round, revealed to everyone.
@@ -121,7 +156,9 @@ type PlayerAction struct {
 //	record round-result {
 //		actions: list<player-action>,
 //		garden-total: u16,
-//		multiplier: f32,
+//		votes: list<vote-record>,
+//		tax-target: option<player-id>,
+//		tax-collected: u8,
 //		garden-payout: f32,
 //	}
 type RoundResult struct {
@@ -129,13 +166,23 @@ type RoundResult struct {
 	// One entry per player in the match.
 	Actions cm.List[PlayerAction] `json:"actions"`
 
-	// Sum of every player's `plant` this round.
+	// Sum of every player's `plant` this round, BEFORE the tax is applied.
 	GardenTotal uint16 `json:"garden-total"`
 
-	// Diversity multiplier: 1.0 + 0.5 * distinct-contributors.
-	Multiplier float32 `json:"multiplier"`
+	// Every ballot cast in the vote phase this round.
+	Votes cm.List[VoteRecord] `json:"votes"`
 
-	// (garden-total * multiplier) / group-size, paid to every player.
+	// The player the table voted to tax (named by >= 2 distinct voters with the
+	// uniquely highest vote-weight; targets who kept <= 2 are untaxable), if any.
+	TaxTarget cm.Option[PlayerID] `json:"tax-target"`
+
+	// Seeds reclaimed from the tax-target's pot into the garden
+	// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
+	// minimum of 2 seeds). Zero when there was no tax.
+	TaxCollected uint8 `json:"tax-collected"`
+
+	// ((garden-total + tax-collected) * 2) / group-size, paid to every player.
+	// The garden is flatly DOUBLED — there is no diversity multiplier.
 	GardenPayout float32 `json:"garden-payout"`
 }
 
@@ -181,13 +228,14 @@ type SignalBroadcast struct {
 
 // RoundState represents the record "better-together:gardener/types@0.1.0#round-state".
 //
-// Delivered to both `talk` and `plant` each round. The number of remaining
-// rounds is never revealed.
+// Delivered to `talk`, `plant`, and `vote` each round. The number of
+// remaining rounds is never revealed.
 //
 //	record round-state {
 //		round: u8,
 //		history: list<round-result>,
 //		signals: list<signal-broadcast>,
+//		plants: list<player-action>,
 //	}
 type RoundState struct {
 	_ cm.HostLayout `json:"-"`
@@ -198,9 +246,13 @@ type RoundState struct {
 	History cm.List[RoundResult] `json:"history"`
 
 	// This round's broadcasts. Empty when passed to `talk` (no one has
-	// spoken yet); when passed to `plant` it holds the signal every player
-	// — including you — broadcast this round, so plants can react to talk.
+	// spoken yet); when passed to `plant` and `vote` it holds the signal
+	// every player — including you — broadcast this round.
 	Signals cm.List[SignalBroadcast] `json:"signals"`
+
+	// This round's plants. Empty in `talk` and `plant`; populated in `vote`
+	// (after plants are revealed) so a ballot can target a free-rider.
+	Plants cm.List[PlayerAction] `json:"plants"`
 }
 
 // MatchSummary represents the record "better-together:gardener/types@0.1.0#match-summary".
@@ -214,7 +266,7 @@ type RoundState struct {
 //	}
 type MatchSummary struct {
 	_ cm.HostLayout `json:"-"`
-	// How many rounds the match actually ran (R, 8-12).
+	// How many rounds the match actually ran (R, >= 8).
 	RoundsPlayed uint8 `json:"rounds-played"`
 
 	// Final match score for every player.

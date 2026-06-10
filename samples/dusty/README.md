@@ -1,51 +1,57 @@
 # 🐭 Dusty — the cautious pantry mouse
 
 > Dusty is a small grey mouse who has learned that the safest way to eat is to
-> watch the table. He opens with a timid nibble, copies whatever the room did
-> last, and bolts for his hole the moment the garden looks bare — then creeps
+> watch the table. She opens with a timid nibble, copies whatever the room did
+> last, and bolts for her hole the moment the garden looks bare — then creeps
 > back, one cautious step at a time, when the others start sharing again.
 
 Dusty is the **graduated Tit-for-Tat** reference for the
 [Better Together](../../README.md) gardening game. Where
 [Keith](../keith/README.md) keeps a strict ledger and [Andy](../andy/README.md)
-forgives on deeds, Dusty is the clean, *purely reactive* mirror: he holds no
+forgives on deeds, Dusty is the clean, *purely reactive* mirror: she holds no
 opinion of any individual player and simply reflects the **table's average**
 back at it — gently, and with a mouse's instinct for caution.
 
 ## The lore
 
 Dusty has been raised in pantries where a wrong move means a trap. That shapes
-how he plays:
+how she plays:
 
-- **Talk** — Dusty broadcasts honestly. If he intends to plant a generous
-  amount (≥ 5) he says `BLOOM`; if he's pulling back to a nibble (≤ 2) he says
-  `HOLD`; otherwise he says `WATCH`. He never bluffs — what he says is what he
+- **Talk** — Dusty broadcasts honestly. If she intends to plant a generous
+  amount (≥ 5) she says `BLOOM`; if she's pulling back to a nibble (≤ 2) she says
+  `HOLD`; otherwise she says `WATCH`. She never bluffs — what she says is what she
   is about to do.
 - **Plant** — Dusty mirrors the **group average** plant from the previous round,
   but asymmetrically, the way a prey animal must:
-  - He **opens timid** — a small nibble (4 by default).
-  - When the garden *cools* (the average drops below what he last risked) he
+  - She **opens timid** — a small nibble (4 by default).
+  - When the garden *cools* (the average drops below what she last risked) she
     **scurries back fast**, retreating an extra step below the average.
-  - When the table is *stable or warming* he **creeps forward gently**, never
-    leaping — his climb is capped at +2 seeds per round, up toward the average.
-  - If most neighbours just promised `BLOOM` this round, he leans in one extra
+  - When the table is *stable or warming* she **creeps forward gently**, never
+    leaping — her climb is capped at +2 seeds per round, up toward the average.
+  - If most neighbours just promised `BLOOM` this round, she leans in one extra
     seed — a little trust for a little encouragement.
+- **Vote** — Dusty only raises a paw when she has cover. If at least two *other*
+  players are contributing this round (planting ≥ 3), she shelters in the bloc
+  and votes with it, taxing the table's **fattest hoarder** — the seated player
+  keeping the most seeds (anyone keeping ≤ 2 is untaxable). On a thin or selfish
+  table she keeps her whiskers down and abstains — a lone mouse never picks a
+  fight.
 
 The result is a forgiving, exploitation-resistant cooperator. Dusty rewards a
 generous table and converges with other Tit-for-Tat players, but a free-rider
-who starves the garden quickly finds Dusty has darted back to his hole.
+who starves the garden quickly finds Dusty has darted back to her hole.
 
-### He remembers whether the world has been kind
+### She remembers whether the world has been kind
 
 Between matches Dusty keeps a tiny notebook on the **virtual filesystem**
-(`dusty.mem`, 16 bytes). He doesn't track individuals — he tracks the *climate*:
-across every match he has ever played, how often was the average round a
-generous one? Next time he sits down he tunes his **opening nibble** to that
+(`dusty.mem`, 16 bytes). She doesn't track individuals — she tracks the *climate*:
+across every match she has ever played, how often was the average round a
+generous one? Next time she sits down she tunes her **opening nibble** to that
 memory:
 
-- gardens have generally been generous → he opens braver (6),
-- gardens have generally been barren → he opens warier (2),
-- otherwise → his usual timid 4.
+- gardens have generally been generous → she opens braver (6),
+- gardens have generally been barren → she opens warier (2),
+- otherwise → her usual timid 4.
 
 If the host grants no writable directory, the read and write simply fail and
 Dusty plays fresh — persistence is strictly best-effort and never affects a
@@ -77,7 +83,7 @@ A few deliberate choices:
   `player-id` with `Memory.compare` is all there is to it. The memory layouts are
   documented inline in [`src/dusty.gr`](src/dusty.gr).
 - **Per-instance state in module globals.** Because the host instantiates one
-  component per seat, Dusty keeps his per-match state (his own id, the planned
+  component per seat, Dusty keeps her per-match state (her own id, the planned
   plant, the cross-match counters) in ordinary module-level mutable globals — no
   resource-representation juggling needed.
 - **WASI for free via the adapter.** Grain's `wasi/file` standard library calls
@@ -117,7 +123,7 @@ wasm-tools component wit dusty.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `create`, `metadata`, `match-start`, `talk`, `plant`, and `match-end`,
+with `create`, `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`,
 importing `better-together:gardener/types@0.1.0` plus the wasi interfaces the
 adapter kept (stdio, `wasi:filesystem`, and their io/clocks dependencies).
 

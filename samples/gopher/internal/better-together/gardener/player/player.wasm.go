@@ -60,9 +60,9 @@ func wasmexport_GardenerMetadata(self0 uint32) (result *cm.Result[Metadata, Meta
 
 //go:wasmexport better-together:gardener/player@0.1.0#[method]gardener.plant
 //export better-together:gardener/player@0.1.0#[method]gardener.plant
-func wasmexport_GardenerPlant(self0 uint32, state0 uint32, state1 *types.RoundResult, state2 uint32, state3 *types.SignalBroadcast, state4 uint32) (result *cm.Result[uint8, uint8, struct{}]) {
+func wasmexport_GardenerPlant(self0 uint32, state0 uint32, state1 *types.RoundResult, state2 uint32, state3 *types.SignalBroadcast, state4 uint32, state5 *types.PlayerAction, state6 uint32) (result *cm.Result[uint8, uint8, struct{}]) {
 	self := cm.Reinterpret[cm.Rep]((uint32)(self0))
-	state := lift_RoundState((uint32)(state0), (*types.RoundResult)(state1), (uint32)(state2), (*types.SignalBroadcast)(state3), (uint32)(state4))
+	state := lift_RoundState((uint32)(state0), (*types.RoundResult)(state1), (uint32)(state2), (*types.SignalBroadcast)(state3), (uint32)(state4), (*types.PlayerAction)(state5), (uint32)(state6))
 	result_ := Exports.Gardener.Plant(self, state)
 	result = &result_
 	return
@@ -70,10 +70,20 @@ func wasmexport_GardenerPlant(self0 uint32, state0 uint32, state1 *types.RoundRe
 
 //go:wasmexport better-together:gardener/player@0.1.0#[method]gardener.talk
 //export better-together:gardener/player@0.1.0#[method]gardener.talk
-func wasmexport_GardenerTalk(self0 uint32, state0 uint32, state1 *types.RoundResult, state2 uint32, state3 *types.SignalBroadcast, state4 uint32) (result *cm.Result[Signal, Signal, struct{}]) {
+func wasmexport_GardenerTalk(self0 uint32, state0 uint32, state1 *types.RoundResult, state2 uint32, state3 *types.SignalBroadcast, state4 uint32, state5 *types.PlayerAction, state6 uint32) (result *cm.Result[Signal, Signal, struct{}]) {
 	self := cm.Reinterpret[cm.Rep]((uint32)(self0))
-	state := lift_RoundState((uint32)(state0), (*types.RoundResult)(state1), (uint32)(state2), (*types.SignalBroadcast)(state3), (uint32)(state4))
+	state := lift_RoundState((uint32)(state0), (*types.RoundResult)(state1), (uint32)(state2), (*types.SignalBroadcast)(state3), (uint32)(state4), (*types.PlayerAction)(state5), (uint32)(state6))
 	result_ := Exports.Gardener.Talk(self, state)
+	result = &result_
+	return
+}
+
+//go:wasmexport better-together:gardener/player@0.1.0#[method]gardener.vote
+//export better-together:gardener/player@0.1.0#[method]gardener.vote
+func wasmexport_GardenerVote(self0 uint32, state0 uint32, state1 *types.RoundResult, state2 uint32, state3 *types.SignalBroadcast, state4 uint32, state5 *types.PlayerAction, state6 uint32) (result *cm.Result[Ballot, Ballot, struct{}]) {
+	self := cm.Reinterpret[cm.Rep]((uint32)(self0))
+	state := lift_RoundState((uint32)(state0), (*types.RoundResult)(state1), (uint32)(state2), (*types.SignalBroadcast)(state3), (uint32)(state4), (*types.PlayerAction)(state5), (uint32)(state6))
+	result_ := Exports.Gardener.Vote(self, state)
 	result = &result_
 	return
 }

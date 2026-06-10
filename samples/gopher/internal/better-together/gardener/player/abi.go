@@ -22,9 +22,10 @@ func lift_MatchContext(f0 *uint8, f1 uint32, f2 *types.PlayerID, f3 uint32, f4 *
 	return
 }
 
-func lift_RoundState(f0 uint32, f1 *types.RoundResult, f2 uint32, f3 *types.SignalBroadcast, f4 uint32) (v types.RoundState) {
+func lift_RoundState(f0 uint32, f1 *types.RoundResult, f2 uint32, f3 *types.SignalBroadcast, f4 uint32, f5 *types.PlayerAction, f6 uint32) (v types.RoundState) {
 	v.Round = (uint8)(f0)
 	v.History = cm.LiftList[cm.List[types.RoundResult]](f1, f2)
 	v.Signals = cm.LiftList[cm.List[types.SignalBroadcast]](f3, f4)
+	v.Plants = cm.LiftList[cm.List[types.PlayerAction]](f5, f6)
 	return
 }

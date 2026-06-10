@@ -5,17 +5,30 @@ interface types {
     type player-id = string;
 
     record metadata {
+        // `name` is `namespace.name` (e.g. "together.Dusty"); the namespace
+        // is validated by the engine and must match `^[a-z][a-z0-9-]*$`.
         name: string,
         version: string,
         author: string,
         repo: string,
         lore: string,
+        // A single UTF character (emoji/glyph) shown on the garden in the UI.
+        glyph: string,
+        // URL of an avatar picture, or none if the player has no avatar.
+        icon: option<string>,
     }
 
     enum signal {
         bloom,
         hold,
         watch,
+    }
+
+    type ballot = option<player-id>;
+
+    record vote-record {
+        voter: player-id,
+        target: option<player-id>,
     }
 
     record player-action {
@@ -27,7 +40,9 @@ interface types {
     record round-result {
         actions: list<player-action>,
         garden-total: u16,
-        multiplier: f32,
+        votes: list<vote-record>,
+        tax-target: option<player-id>,
+        tax-collected: u8,
         garden-payout: f32,
     }
 
@@ -47,6 +62,7 @@ interface types {
         round: u8,
         history: list<round-result>,
         signals: list<signal-broadcast>,
+        plants: list<player-action>,
     }
 
     record match-summary {
@@ -57,7 +73,7 @@ interface types {
 }
 
 interface player {
-    use types.{metadata, signal, match-context, round-state, match-summary};
+    use types.{metadata, signal, ballot, match-context, round-state, match-summary};
 
     create: func() -> result<gardener>;
 
@@ -66,6 +82,7 @@ interface player {
         match-start: func(context: match-context) -> result;
         talk: func(state: round-state) -> result<signal>;
         plant: func(state: round-state) -> result<u8>;
+        vote: func(state: round-state) -> result<ballot>;
         match-end: func(summary: match-summary) -> result;
     }
 }

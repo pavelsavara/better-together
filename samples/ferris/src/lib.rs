@@ -64,24 +64,29 @@ wit_bindgen::generate!({
 // transitively, so they stay in `types`.
 use crate::better_together::gardener::types::{RoundResult, Signal};
 use exports::better_together::gardener::player::{
-    Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
+    Ballot, Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
 };
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const PLAYER_NAME: &str = "ferris";
+const PLAYER_NAME: &str = "together.Ferris";
+const PLAYER_GLYPH: &str = "🦀";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
 const PLAYER_LORE: &str = "Ferris is the garden's eternal optimist — a crab who \
  believes every plot can bloom if everyone just chips in. He keeps a little \
  notebook of everyone he's ever played with, forgives slowly, and trusts \
- again gladly. He'd rather lose a point and gain a friend.";
+ again gladly. He'd rather lose a point and gain a friend. He cheers Bram the \
+ beaver's guild from the front row — and trusts Reynard the fox far more than \
+ that smooth-talking skimmer has ever earned.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
 /// A player counts as "collaborative" in a round if they plant at least this many seeds.
 const COLLAB_PLANT: u8 = 8;
+/// A target who kept this many seeds or fewer is immune from the tax.
+const UNTAXABLE_MIN: u8 = 2;
 /// Naive default contribution.
 const BASE_PLANT: u8 = 8;
 /// Contribution when a trusted friend is present (and no known defector).
@@ -276,7 +281,7 @@ fn signal_name(signal: &Signal) -> &'static str {
 // is a communication channel; the engine never reads it.
 
 fn say(line: &str) {
-    println!("🌱 ferris: {line}");
+    println!("🦀 ferris: {line}");
 }
 
 /// Talk-phase chatter, chosen from the situation (defector / friend / strangers)
@@ -285,7 +290,7 @@ fn talk_banter(scan: &TableScan, round: u8) {
     let i = round as usize;
     if let Some(foe) = &scan.defector {
         let pool = [
-            format!("{foe}… I haven't forgotten last season. Watering carefully. 🪴"),
+            format!("{foe}… I haven't forgotten our last table. Watering carefully. 🪴"),
             format!("I *want* to believe in you, {foe}. Show me a real seed and I'll match it."),
             format!("Burned once. I'm holding back while {foe} is at the table."),
         ];
@@ -412,6 +417,8 @@ impl GuestGardener for FerrisGardener {
             author: PLAYER_AUTHOR.to_string(),
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
+            glyph: PLAYER_GLYPH.to_string(),
+            icon: None,
         })
     }
 
@@ -470,6 +477,52 @@ impl GuestGardener for FerrisGardener {
         plant_banter(leaned_in, holding);
         eprintln!("[ferris] round {}: plant {}", round_state.round, plant);
         Ok(plant)
+    }
+
+    fn vote(&self, round_state: RoundState) -> Result<Ballot, ()> {
+        // Ferris forgives strangers gladly — he never throws the first stone at a
+        // newcomer. But a PROVEN defector (lifetime collaboration < 50% over at
+        // least MIN_SAMPLES rounds) who is skimming again this very round is the
+        // one neighbour he'll reluctantly name. He aims at the worst such
+        // free-rider (the most seeds kept), breaks ties by id, and never targets
+        // the untaxable (kept <= 2).
+        let st = self.state.borrow();
+        let merged = merged_stats(&st.lifetime, &st.match_obs);
+        let mut target: Option<String> = None;
+        let mut target_plant: u8 = u8::MAX;
+        for a in &round_state.plants {
+            if a.id == st.self_id {
+                continue;
+            }
+            if a.plant >= COLLAB_PLANT {
+                continue; // cooperated this round — no quarrel
+            }
+            if 10 - a.plant <= UNTAXABLE_MIN {
+                continue; // immune
+            }
+            let known_defector = merged
+                .get(&a.id)
+                .filter(|s| s.observed >= MIN_SAMPLES)
+                .and_then(|s| s.rate())
+                .is_some_and(|r| r < DEFECTOR_RATE);
+            if !known_defector {
+                continue; // give the benefit of the doubt
+            }
+            let better = match &target {
+                None => true,
+                Some(cur) => a.plant < target_plant || (a.plant == target_plant && a.id < *cur),
+            };
+            if better {
+                target = Some(a.id.clone());
+                target_plant = a.plant;
+            }
+        }
+        eprintln!(
+            "[ferris] round {}: vote {}",
+            round_state.round,
+            target.as_deref().unwrap_or("abstain")
+        );
+        Ok(target)
     }
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {

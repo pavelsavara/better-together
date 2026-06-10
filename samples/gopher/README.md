@@ -23,6 +23,11 @@ His whole world is one question asked each round:
   what he did: same generosity, same signal.
 - **Lose → shift.** If the previous round paid poorly, he flips to the opposite
   behaviour — a generous Gopher clams up, a stingy Gopher opens his paws.
+- **Vote on reflex.** The same Pavlov instinct carries into the tax phase. If his
+  last round paid off (his score cleared his aspiration of 14), Gopher is content
+  and abstains; if it fell short, he lashes out at the fattest hoarder — the
+  seated player who kept the most seeds (anyone keeping ≤ 2 is untaxable). No
+  ledger and no grudge, just whether the last dig paid.
 
 This is the famous **win-stay, lose-shift** rule. It's remarkably effective: it
 cooperates with cooperators (both keep winning, both keep staying), recovers from
@@ -35,7 +40,7 @@ talking about dirt and holes. It's pure flavor; the engine never reads it.
 
 > **Pavlov vs the field.** Against cooperators Gopher settles into mutual
 > generosity. Against an exploiter like Corro his payoff sags, so he *shifts* to
-> hoarding and stops feeding the predator — exactly the self-correcting behaviour
+> keeping his seeds and stops feeding the predator — exactly the self-correcting behaviour
 > the rule is famous for.
 
 ## The technology
@@ -93,7 +98,7 @@ wasm-tools component wit gopher.wasm
 ```
 
 You should see the component exporting `better-together:gardener/player@0.1.0`
-with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
+with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`.
 
 ## Where to look
 
