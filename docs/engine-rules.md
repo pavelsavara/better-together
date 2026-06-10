@@ -13,12 +13,17 @@ Tournament (permanent — always running)
 ```
 
 - The tournament is **permanent**: a bot registers once and plays forever. There
-  are no seasons or resets — the engine keeps drawing fresh random groups and
-  running matches for as long as the bot is entered.
+  are no seasons or resets — the engine keeps drawing fresh random groups
+  whenever the field changes and running matches for as long as the bot is
+  entered.
 - Each **match** groups K players drawn from the pool and runs them together for R rounds.
 - Groups are assigned **randomly** by the engine, so over time every bot faces many different combinations of opponents.
-- The leaderboard is **live**: scores are recomputed continuously over a trailing
-  window of recent matches (see [§7](#7-the-best-co-player-score)).
+- Matchmaking is **change-driven**: an hourly tick runs matches only when a bot is
+  newly admitted or its image is updated (detected via the OCI manifest digest),
+  seating the changed bot against opponents drawn with a bias toward those with
+  the fewest recent matches. A tick where nothing changed does nothing.
+- The leaderboard is **live**: scores are recomputed over a trailing window of
+  each bot's most recent matches (see [§7](#7-the-best-co-player-score)).
 
 ### 2. Match Composition
 
@@ -26,7 +31,7 @@ Tournament (permanent — always running)
 |--------------------|---------------|-----------------------------------------|
 | Group size (K)     | 4–6           | Drawn uniformly at random per match     |
 | Rounds per match   | 8 + geometric | Min 8; after round 8 each further round happens with prob 2/3 (public hazard 1/3). Mean ≈ 10. Realized length unknown to players. |
-| Match draw         | continuous    | The engine draws random groups indefinitely; every subset gets well-sampled over time |
+| Match draw         | change-driven | The engine seats matches when a bot is added or updated; over time every subset gets well-sampled |
 | Contributor floor  | plant ≥ 3      | Earns a 2-vote ballot (a *voice* in the vote); never affects payout |
 | Untaxable minimum (T) | 2 kept seeds | The vote can never reclaim a player's first **2** kept seeds; keep ≤ 2 (plant ≥ 8) and you are immune to the tax |
 
@@ -157,11 +162,19 @@ flat welfare metric.
 
 ### 6. Identity & Memory
 
-- Each bot has a **persistent, globally unique ID** (e.g., their component name).
+- Each bot has a **persistent, globally unique ID** manufactured at registration
+  as `fnv1a32(oci-ref)#namespace.Name` (the 32-bit FNV-1a hash of the bot's OCI
+  image reference, then its `namespace.Name`). Re-publishing to a *different* OCI
+  ref produces a *different* bot with its own scores and memory.
 - At match start, bots receive the list of IDs in their group.
 - Bots may maintain **persistent memory** across rounds and across matches:
   - Within a match: full history is provided each round.
-  - Across matches: bots may store and retrieve a private state blob (≤ 4 KB) between matches, enabling reputation tracking, grudges, and alliances.
+  - Across matches: bots persist a private blob to their **virtual filesystem**
+    (the only persistence channel — see [gardener.wit](../wit/gardener.wit)),
+    enabling reputation tracking, grudges, and alliances. The engine restores a
+    bot's VFS before each match and saves it after. The VFS is capped at
+    **256 KB**; if a bot writes more, the engine **erases** its VFS (it starts
+    fresh next match) rather than truncating.
 
 ### Validation
 
@@ -187,7 +200,32 @@ rejected and never seated.
 - **`glyph` must be a single UTF character** (one emoji/glyph). It is shown as
   the gardener's icon on the garden in the UI.
 - **`icon`** is an optional avatar-picture URL (`none` when the player has no
-  avatar).
+  avatar). When present, the engine fetches it, validates that it decodes as a
+  real image, strips its metadata, **resizes it to 100×100 PNG**, and caches the
+  result; the cached avatar is served, never the original third-party URL.
+- **Component size.** The submitted `.wasm` component must be **≤ 15 MB**; a
+  larger component is friendly-rejected with a request to trim it.
+- **Smoke-test match.** Before admission the engine runs a full smoke match
+  (4 seats, a few rounds) on a **scratch VFS that is thrown away**. The bot must
+  complete it without a sandbox violation, a persistent trap, exceeding the
+  16 MB memory ceiling, or breaching the 50 ms/call budget.
+
+#### Compliance & the `inactive` status
+
+The engine **validates every response** a bot returns (shape and range) before
+using it: `talk` must be `BLOOM`/`HOLD`/`WATCH`; `plant` an integer 0–10
+(out-of-range is clamped); `vote` a player-id in the current match, or abstain.
+A malformed response, a trap, or a timeout fails only that one call — the engine
+substitutes the default (`WATCH` / `0` / abstain) for the round.
+
+Two classes of misbehaviour additionally mark the bot **`inactive`**, dropping it
+from future rosters until the author fixes it and resubmits (a new OCI ref → a
+new id):
+
+- **Sandbox violation** — any attempt to use a denied capability
+  (`wasi:sockets` / `wasi:http`) or otherwise escape the sandbox.
+- **Timing violation** — any `talk`/`plant`/`vote` call exceeding **50 ms** of
+  wall-clock time.
 
 ### 7. The "Best Co-Player" Score
 
@@ -279,10 +317,14 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
 
 | Resource        | Limit                      |
 |-----------------|----------------------------|
-| Execution time  | 10 ms per `talk`, `plant`, or `vote` call |
+| Execution time  | 50 ms per `talk`, `plant`, or `vote` call (exceeding it marks the bot `inactive`) |
 | Memory          | 16 MB per instance         |
-| Persistent blob | ≤ 4 KB returned from `match_end` |
-| No network I/O  | Sandboxed; only game API available |
+| Component size  | ≤ 15 MB submitted `.wasm`  |
+| Persistent VFS  | ≤ 256 KB; overflow erases the bot's VFS |
+| No network I/O  | Sandboxed; only game API available (a sandbox escape marks the bot `inactive`) |
+
+The engine validates every response for shape and range; malformed responses,
+traps, and timeouts default to `WATCH` / `0` / abstain for that call.
 
 ---
 

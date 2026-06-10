@@ -158,13 +158,13 @@ interface player {
 
         /// Talk phase: broadcast this round's signal BEFORE anyone plants.
         /// `state.signals` is empty here. Cheap talk — it may be honest or a
-        /// lie. Must respect the 10 ms / 16 MB budget.
+        /// lie. Must respect the 50 ms / 256 KB budget.
         talk: func(state: round-state) -> result<signal>;
 
         /// Plant phase: decide how many of your 10 seeds to plant, 0-10 (the
         /// engine clamps out-of-range values). `state.signals` now holds every
         /// player's talk from this round, so you can react to what was promised.
-        /// Must respect the 10 ms / 16 MB budget.
+        /// Must respect the 50 ms / 256 KB budget.
         plant: func(state: round-state) -> result<u8>;
 
         /// Vote phase: after every plant is revealed (`state.plants`), cast a

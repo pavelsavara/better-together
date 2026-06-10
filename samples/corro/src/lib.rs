@@ -15,7 +15,7 @@
 //!   name.
 //! * **Feast (plant 0).** Whenever the garden is alive — i.e. some honest player
 //!   planted a real stake (≥ 3) last round — Corro plants nothing and lives off
-//!   the multiplier everyone else paid for.
+//!   the doubled garden everyone else paid for.
 //! * **Prime the pump (bait).** When the garden is barren (round 1, or nobody
 //!   planted a real stake last round) he plants a small bait so cooperation
 //!   restarts — purely so there's a harvest to steal next round.
@@ -64,7 +64,7 @@ const STAKE: u8 = 3;
 /// Contribution while feasting on a living garden: nothing.
 const EXPLOIT_PLANT: u8 = 0;
 /// Bait planted to restart a barren garden so there's a harvest to steal next
-/// round. Deliberately >= STAKE so it even claims the multiplier it triggers.
+/// round. Deliberately >= STAKE so it even counts as a contributor.
 const BAIT_PLANT: u8 = 4;
 
 // ────────────────────────── Reading the table ─────────────────────

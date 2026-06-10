@@ -69,8 +69,8 @@ Keith's ledger is a tiny tab-separated file on the virtual filesystem
 counters — rounds seen, contributions, promises made (`BLOOM`s), and promises
 broken (`BLOOM` then planted < 3). At `match-end` the match's observations are
 folded into the lifetime totals and saved, so the rat's grudges and trust carry
-across matches — exactly the persistence the rules permit (a private state blob
-≤ 4 KB).
+across matches — exactly the persistence the rules permit (a private virtual
+filesystem ≤ 256 KB).
 
 ## The technology
 

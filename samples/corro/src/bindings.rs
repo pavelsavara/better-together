@@ -1663,19 +1663,19 @@ pub mod exports {
                     fn match_start(&self, context: MatchContext) -> Result<(), ()>;
                     /// Talk phase: broadcast this round's signal BEFORE anyone plants.
                     /// `state.signals` is empty here. Cheap talk — it may be honest or a
-                    /// lie. Must respect the 10 ms / 16 MB budget.
+                    /// lie. Must respect the 50 ms / 256 KB budget.
                     fn talk(&self, state: RoundState) -> Result<Signal, ()>;
                     /// Plant phase: decide how many of your 10 seeds to plant, 0-10 (the
                     /// engine clamps out-of-range values). `state.signals` now holds every
                     /// player's talk from this round, so you can react to what was promised.
-                    /// Must respect the 10 ms / 16 MB budget.
+                    /// Must respect the 50 ms / 256 KB budget.
                     fn plant(&self, state: RoundState) -> Result<u8, ()>;
                     /// Vote phase: after every plant is revealed (`state.plants`), cast a
                     /// ballot — name one player to tax, or `none` to abstain. A target named by
                     /// >= 2 distinct voters with the uniquely highest vote-weight (and kept > 2)
                     /// has seeds reclaimed into the garden.
                     /// Contributors — players who planted >= 3 THIS round — cast 2 votes;
-                    /// everyone else casts 1. Must respect the 10 ms / 16 MB budget.
+                    /// everyone else casts 1. Must respect the 50 ms / 256 KB budget.
                     fn vote(&self, state: RoundState) -> Result<Ballot, ()>;
                     /// The match has ended. Persist any updated memory to the virtual
                     /// filesystem here (there is no return blob).

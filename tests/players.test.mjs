@@ -17,7 +17,7 @@ const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy',
 
 // Banter on stdout is optional flavor, not part of the player contract. Bots that
 // are silent by design (e.g. dusty's minimal hand-written canonical ABI) opt out.
-const NO_BANTER = new Set(['dusty']);
+const NO_BANTER = new Set(['dusty', 'micro']);
 
 /** Load a sample or skip the test if it isn't built. */
 async function loadOrSkip(name, opts) {

@@ -42,7 +42,7 @@ var Exports struct {
 		// Plant phase: decide how many of your 10 seeds to plant, 0-10 (the
 		// engine clamps out-of-range values). `state.signals` now holds every
 		// player's talk from this round, so you can react to what was promised.
-		// Must respect the 10 ms / 16 MB budget.
+		// Must respect the 50 ms / 256 KB budget.
 		//
 		//	plant: func(state: round-state) -> result<u8>
 		Plant func(self cm.Rep, state RoundState) (result cm.Result[uint8, uint8, struct{}])
@@ -51,7 +51,7 @@ var Exports struct {
 		//
 		// Talk phase: broadcast this round's signal BEFORE anyone plants.
 		// `state.signals` is empty here. Cheap talk — it may be honest or a
-		// lie. Must respect the 10 ms / 16 MB budget.
+		// lie. Must respect the 50 ms / 256 KB budget.
 		//
 		//	talk: func(state: round-state) -> result<signal>
 		Talk func(self cm.Rep, state RoundState) (result cm.Result[Signal, Signal, struct{}])
@@ -63,7 +63,7 @@ var Exports struct {
 		// >= 2 distinct voters with the uniquely highest vote-weight (and kept > 2)
 		// has seeds reclaimed into the garden.
 		// Contributors — players who planted >= 3 THIS round — cast 2 votes;
-		// everyone else casts 1. Must respect the 10 ms / 16 MB budget.
+		// everyone else casts 1. Must respect the 50 ms / 256 KB budget.
 		//
 		//	vote: func(state: round-state) -> result<ballot>
 		Vote func(self cm.Rep, state RoundState) (result cm.Result[Ballot, Ballot, struct{}])
