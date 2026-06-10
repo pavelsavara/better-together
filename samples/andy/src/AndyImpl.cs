@@ -44,14 +44,24 @@ public sealed class PlayerImpl : IPlayer
         public byte Plant(Wit.RoundState state) =>
             (byte)_brain.Plant(state.round, ToRounds(state.history));
 
-        // Andy forgives by dawn: he never names a neighbour to tax, always abstaining.
-        public string? Vote(Wit.RoundState state) => null;
+        // Forgiveness stays primary: Andy only names a persistent, still-skimming
+        // free-rider — never a guild member, never a remembered friend.
+        public string? Vote(Wit.RoundState state) =>
+            _brain.Vote(state.round, ToRounds(state.history), ToDeeds(state.plants));
 
         public void MatchEnd(Wit.MatchSummary summary) => _brain.MatchEnd();
     }
 
     // ──────────────────────── translation ────────────────────────
-
+    private static IReadOnlyList<Deed> ToDeeds(List<Wit.PlayerAction> actions)
+    {
+        var deeds = new List<Deed>(actions.Count);
+        foreach (var a in actions)
+        {
+            deeds.Add(new Deed(a.id, a.plant, ToSig(a.signal)));
+        }
+        return deeds;
+    }
     private static IReadOnlyList<Round> ToRounds(List<Wit.RoundResult> history)
     {
         var rounds = new List<Round>(history.Count);

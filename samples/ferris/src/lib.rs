@@ -85,6 +85,8 @@ const PLAYER_LORE: &str = "Ferris is the garden's eternal optimist — a crab wh
 
 /// A player counts as "collaborative" in a round if they plant at least this many seeds.
 const COLLAB_PLANT: u8 = 8;
+/// A target who kept this many seeds or fewer is immune from the tax.
+const UNTAXABLE_MIN: u8 = 2;
 /// Naive default contribution.
 const BASE_PLANT: u8 = 8;
 /// Contribution when a trusted friend is present (and no known defector).
@@ -478,10 +480,49 @@ impl GuestGardener for FerrisGardener {
     }
 
     fn vote(&self, round_state: RoundState) -> Result<Ballot, ()> {
-        // Ferris keeps the table friendly: abstaining is free and common, so it
-        // never throws the first stone in the tax phase.
-        eprintln!("[ferris] round {}: vote abstain", round_state.round);
-        Ok(None)
+        // Ferris forgives strangers gladly — he never throws the first stone at a
+        // newcomer. But a PROVEN defector (lifetime collaboration < 50% over at
+        // least MIN_SAMPLES rounds) who is skimming again this very round is the
+        // one neighbour he'll reluctantly name. He aims at the worst such
+        // free-rider (the most seeds kept), breaks ties by id, and never targets
+        // the untaxable (kept <= 2).
+        let st = self.state.borrow();
+        let merged = merged_stats(&st.lifetime, &st.match_obs);
+        let mut target: Option<String> = None;
+        let mut target_plant: u8 = u8::MAX;
+        for a in &round_state.plants {
+            if a.id == st.self_id {
+                continue;
+            }
+            if a.plant >= COLLAB_PLANT {
+                continue; // cooperated this round — no quarrel
+            }
+            if 10 - a.plant <= UNTAXABLE_MIN {
+                continue; // immune
+            }
+            let known_defector = merged
+                .get(&a.id)
+                .filter(|s| s.observed >= MIN_SAMPLES)
+                .and_then(|s| s.rate())
+                .is_some_and(|r| r < DEFECTOR_RATE);
+            if !known_defector {
+                continue; // give the benefit of the doubt
+            }
+            let better = match &target {
+                None => true,
+                Some(cur) => a.plant < target_plant || (a.plant == target_plant && a.id < *cur),
+            };
+            if better {
+                target = Some(a.id.clone());
+                target_plant = a.plant;
+            }
+        }
+        eprintln!(
+            "[ferris] round {}: vote {}",
+            round_state.round,
+            target.as_deref().unwrap_or("abstain")
+        );
+        Ok(target)
     }
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {

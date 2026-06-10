@@ -66,6 +66,12 @@ let _MAGIC = 0x44535431n // "DST1"
 let _MEMPATH = "dusty.mem"
 @unsafe
 let _COOP_AVG = 4n       // group-average plant that counts as a "generous" round
+@unsafe
+let _CONTRIB = 3n        // engine contributor threshold (plant >= 3)
+@unsafe
+let _UNTAXABLE_MIN = 2n  // a target who kept <= this many seeds is immune from tax
+@unsafe
+let _SHELTER = 2n        // other contributors needed before Dusty dares to vote
 
 // ---------------------------------------------------------------------------
 // Metadata strings (module constants -> stable, GC-rooted addresses).
@@ -104,7 +110,9 @@ let isSelf = (idPtr: WasmI32, idLen: WasmI32) => {
 }
 
 // Recompute lastSum / lastCount / lastMyPlant from the newest round-result.
-//   round-result = 20 bytes: actions(ptr@0,len@4), garden-total u16@8, mult f32@12, payout f32@16
+//   round-result = 40 bytes: actions(ptr@0,len@4), garden-total u16@8,
+//     votes(ptr@12,len@16), tax-target option<string>(disc@20,ptr@24,len@28),
+//     tax-collected u8@32, garden-payout f32@36
 //   player-action = 12 bytes: id(ptr@0,len@4), plant u8@8, signal u8@9
 @unsafe
 let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
@@ -113,7 +121,7 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
   lastMyFound = 0n
   lastMyPlant = 0n
   if (histLen > 0n) {
-    let rr = histPtr + (histLen - 1n) * 20n
+    let rr = histPtr + (histLen - 1n) * 40n
     let actPtr = WasmI32.load(rr, 0n)
     let actLen = WasmI32.load(rr, 4n)
     for (let mut i = 0n; i < actLen; i += 1n) {
@@ -425,9 +433,40 @@ provide let vote = (
   plantsPtr: WasmI32,
   plantsLen: WasmI32,
 ) => {
+  // Dusty shelters in numbers. She only joins a tax when a cooperative crowd is
+  // already seated this round (>= _SHELTER other contributors to hide behind),
+  // and then she votes WITH them against the fattest hoarder — the neighbour who
+  // kept the most, above the untaxable minimum. On a thin or selfish table she
+  // keeps her whiskers down and abstains. The chosen id aliases the input bytes,
+  // which the host lifts before the guest allocates again.
+  let mut contributors = 0n
+  let mut bestIdPtr = 0n
+  let mut bestIdLen = 0n
+  let mut bestKept = _UNTAXABLE_MIN
+  for (let mut i = 0n; i < plantsLen; i += 1n) {
+    let a = plantsPtr + i * 12n
+    let idPtr = WasmI32.load(a, 0n)
+    let idLen = WasmI32.load(a, 4n)
+    let plant = WasmI32.load8U(a, 8n)
+    if (!isSelf(idPtr, idLen)) {
+      if (plant >= _CONTRIB) contributors += 1n
+      let kept = 10n - plant
+      if (kept > bestKept) {
+        bestKept = kept
+        bestIdPtr = idPtr
+        bestIdLen = idLen
+      }
+    }
+  }
   let p = Memory.malloc(16n)
   WasmI32.store8(p, 0n, 0n) // result disc = ok
-  WasmI32.store8(p, 0n, 4n) // ballot disc = none
+  if (contributors >= _SHELTER && bestIdLen != 0n) {
+    WasmI32.store8(p, 1n, 4n)        // ballot disc = some
+    WasmI32.store(p, bestIdPtr, 8n)  // string ptr (aliases the input id bytes)
+    WasmI32.store(p, bestIdLen, 12n) // string len
+  } else {
+    WasmI32.store8(p, 0n, 4n)        // ballot disc = none
+  }
   p
 }
 

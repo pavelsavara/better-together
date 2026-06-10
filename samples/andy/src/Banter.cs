@@ -16,6 +16,16 @@ internal static class Banter
         Console.WriteLine($"[andy] round {round}: padding out to plant {plant}. Deeds, not words.");
     }
 
+    internal static void Vote(int round, string target, int defections)
+    {
+        Console.WriteLine($"[andy] round {round}: spines out at last — {target} skimmed {defections} times and won't stop. I name them.");
+    }
+
+    internal static void Abstain(int round)
+    {
+        Console.WriteLine($"[andy] round {round}: no grudge worth a vote tonight — I abstain and forgive.");
+    }
+
     internal static void MatchEnd(int friendCount)
     {
         Console.WriteLine($"[andy] curling up for the night — {friendCount} friend(s) in the burrow book.");

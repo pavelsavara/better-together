@@ -68,6 +68,8 @@ const SKIM_PLANT = 3;
 /// A table is "fat" (worth skimming) when the others' average plant last round
 /// is at least this generous.
 const GENEROUS_AVG = 7;
+/// A target who kept this many seeds or fewer is immune from the tax.
+const UNTAXABLE_MIN = 2;
 /// Arbiters whose seat makes Reynard behave — he never skims under their gaze.
 const ARBITERS = ["keith", "andy"];
 
@@ -255,11 +257,34 @@ class Gardener {
         return clamp(plant);
     }
 
-    vote(_state) {
-        // The skimmer never calls a vote. Drawing attention is the one thing the
-        // craft forbids — abstain, smile, stay invisible.
-        this.#say("Vote? Oh, I couldn't possibly. I'm sure it'll all work out. 🤲");
-        return undefined;
+    vote(state) {
+        // The skimmer never absorbs scrutiny — he deflects it. Under an arbiter's
+        // gaze (Keith/Andy) he stays spotless and abstains; otherwise he points
+        // the table at the most blatant rival free-rider — the fattest hoarder
+        // (kept > 2) — so the vote lands on a louder skimmer and his own modest
+        // trim goes unnoticed. Never himself.
+        const arbiterSeated = this.#opponents.some((id) => isArbiter(id));
+        if (arbiterSeated) {
+            this.#say("Vote? Under watchful eyes I'm a model citizen. I abstain. 🎩");
+            return undefined;
+        }
+        let target;
+        let bestKept = UNTAXABLE_MIN;
+        for (const a of state.plants) {
+            if (a.id === this.#selfId) continue;
+            const kept = 10 - a.plant;
+            if (kept <= UNTAXABLE_MIN) continue; // immune
+            if (target === undefined || kept > bestKept || (kept === bestKept && a.id < target)) {
+                target = a.id;
+                bestKept = kept;
+            }
+        }
+        if (target === undefined) {
+            this.#say("Nobody greedy enough to point at. I'll just… smile. 🦊");
+            return undefined;
+        }
+        this.#say(`Now THAT one's been greedy. Surely we should look at ${target}? 🦊`);
+        return target;
     }
 
     matchEnd(_summary) {

@@ -44,6 +44,12 @@ internal static class Knobs
     /// A player is "collaborative" in a round if they plant at least this many.
     internal const int CollabPlant = 6;
 
+    /// A target who kept this many seeds or fewer is immune from the tax.
+    internal const int UntaxableMin = 2;
+    /// Rounds of defection (plant < Stake) before a within-match foe is
+    /// "persistent" enough to name in the vote.
+    internal const int PersistentFoe = 2;
+
     // ── Cross-match friend memory (trust in [0,1], neutral = 0.5) ──
     /// Trust at/above which a remembered player is treated as a friend.
     internal const double FriendTrust = 0.65;
@@ -172,6 +178,74 @@ internal sealed class Brain
         int plant = _hasPlan && round == _round ? _plannedPlant : Decide(round, history);
         Banter.Plant(round, plant);
         return Clamp(plant);
+    }
+
+    /// Vote phase: forgiveness stays primary. Andy holds his fire until he has
+    /// extended at least one olive branch (a forgiveness round has come and
+    /// gone), then names the table's most persistent free-rider — someone who
+    /// has defected (planted below the stake) in at least `PersistentFoe` rounds
+    /// this match and is still skimming now. He NEVER crosses a guild member
+    /// (Bram's honest coalition) or a remembered friend, and never the untaxable
+    /// (kept <= 2).
+    internal string? Vote(int round, IReadOnlyList<Round> history, IReadOnlyList<Deed> plants)
+    {
+        // Give the table time to warm: no vote until a forgiveness round has passed.
+        if (round <= Knobs.ForgiveEvery)
+        {
+            Banter.Abstain(round);
+            return null;
+        }
+
+        // Count each opponent's defections (plant < Stake) across the match.
+        var defections = new Dictionary<string, int>();
+        foreach (var r in history)
+        {
+            foreach (var deed in r.Actions)
+            {
+                if (deed.Id != _selfId && deed.Plant < Knobs.Stake)
+                {
+                    defections[deed.Id] = defections.GetValueOrDefault(deed.Id) + 1;
+                }
+            }
+        }
+
+        // Aim at the most persistent free-rider revealed in THIS round's plants.
+        Deed? best = null;
+        int bestDefections = 0;
+        foreach (var deed in plants)
+        {
+            if (deed.Id == _selfId || IsGuild(deed.Id) || _book.IsFriend(deed.Id))
+            {
+                continue; // never a guild member or a remembered friend
+            }
+            int kept = 10 - deed.Plant;
+            if (kept <= Knobs.UntaxableMin)
+            {
+                continue; // immune
+            }
+            int d = defections.GetValueOrDefault(deed.Id);
+            if (d < Knobs.PersistentFoe)
+            {
+                continue; // refused the olive branch too few times — still forgiven
+            }
+            if (best is null
+                || d > bestDefections
+                || (d == bestDefections && kept > 10 - best.Value.Plant)
+                || (d == bestDefections && kept == 10 - best.Value.Plant
+                    && string.CompareOrdinal(deed.Id, best.Value.Id) < 0))
+            {
+                best = deed;
+                bestDefections = d;
+            }
+        }
+
+        if (best is null)
+        {
+            Banter.Abstain(round);
+            return null;
+        }
+        Banter.Vote(round, best.Value.Id, bestDefections);
+        return best.Value.Id;
     }
 
     /// Fold this match into the friend-book and persist it.
@@ -318,6 +392,16 @@ internal sealed class Brain
                 _book.Friends[id] = decayed;
             }
         }
+    }
+
+    /// The honest coalition Andy stands with — Bram's guild (the beaver, his
+    /// rallied members Micro and Gopher) and the other arbiter, Keith. He never
+    /// aims the tax at any of them.
+    private static bool IsGuild(string id)
+    {
+        var lower = id.ToLowerInvariant();
+        return lower.Contains("bram") || lower.Contains("micro")
+            || lower.Contains("gopher") || lower.Contains("keith");
     }
 
     private static int Clamp(int plant) => Math.Clamp(plant, 0, 10);

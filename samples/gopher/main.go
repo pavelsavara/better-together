@@ -52,8 +52,10 @@ const (
 	// A stingy dig: keep everything.
 	stingyPlant uint8 = 0
 	// The contributor threshold the engine uses; at or above this, a plant is a
-	// real "stake" and counts toward the diversity multiplier.
+	// real "stake" and earns a second vote in the tax phase.
 	stake uint8 = 3
+	// A target who kept this many seeds or fewer is immune from the tax.
+	untaxableMin int = 2
 	// Gopher's aspiration level. A round that scores at least this much is a
 	// "win" (stay); anything less is a "loss" (shift). It sits above the
 	// keep-everything floor of 10 (so an all-stingy, barren round is a loss that
@@ -279,10 +281,41 @@ func init() {
 	}
 
 	player.Exports.Gardener.Vote = func(self cm.Rep, state player.RoundState) (result cm.Result[player.Ballot, player.Ballot, struct{}]) {
-		// Gopher doesn't hold grudges and doesn't read minds — he never names a
-		// neighbour to tax, always abstaining.
-		fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
-		return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
+		g := instances[self]
+		if g == nil {
+			return cm.Err[cm.Result[player.Ballot, player.Ballot, struct{}]](struct{}{})
+		}
+		// Pure Pavlov — no grudges, no names remembered. The vote is a reflex to
+		// his own last payoff: win → calm (abstain); lose → lash out at the fattest
+		// hoarder, the neighbour who kept the most while his own hole ran dry. He
+		// never taxes the untaxable (kept <= 2), and breaks ties by id.
+		_, lastScore, found := myLastScore(state.History.Slice(), g.selfID)
+		if !found || lastScore >= aspiration {
+			fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
+			return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
+		}
+		var target types.PlayerID
+		bestKept := untaxableMin
+		for _, a := range state.Plants.Slice() {
+			if string(a.ID) == g.selfID {
+				continue
+			}
+			kept := 10 - int(a.Plant)
+			if kept <= untaxableMin {
+				continue // immune
+			}
+			if target == "" || kept > bestKept || (kept == bestKept && a.ID < target) {
+				target = a.ID
+				bestKept = kept
+			}
+		}
+		if target == "" {
+			fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
+			return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
+		}
+		say("That dig came up empty and someone's sitting on a full hole. Tax 'em! \xF0\x9F\x90\xB9")
+		fmt.Fprintf(os.Stderr, "[gopher] round %d: vote %s\n", state.Round, string(target))
+		return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.Some(target)))
 	}
 
 	player.Exports.Gardener.MatchEnd = func(self cm.Rep, summary player.MatchSummary) (result cm.BoolResult) {

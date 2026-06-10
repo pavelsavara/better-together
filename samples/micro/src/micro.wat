@@ -10,6 +10,7 @@
 ;;              clamped to 10. Because Micro itself always says `watch`, its own
 ;;              broadcast is never a `bloom`, so it simply counts every `bloom`
 ;;              in `state.signals` without needing to know its own id.
+;;   * vote():  always abstain (`none`). Micro keeps no grudge and never taxes.
 ;;   * Each turn it writes one line of banter to stdout (flavor only).
 ;;
 ;; The whole thing is written by hand against the WebAssembly Component Model
@@ -31,6 +32,8 @@
 ;;                                 author,repo,lore,glyph), then
 ;;                                 icon option<string> @596 (u8 disc@596, ptr@600,len@604) }
 ;;   608  stream-write retptr scratch (result<_,stream-error>)
+;;   640  vote   result area   : { u8 disc @640, ballot option<string> @644:
+;;                                 u8 disc @644 (none = abstain), ptr@648, len@652 }
 ;;  1024  "together.Micro"                          (len 14)
 ;;  1040  "0.1.0"                                   (len 5)
 ;;  1056  "Better Together samples"                 (len 23)
@@ -288,6 +291,18 @@
       (i32.store8 (i32.const 537) (local.get $v))   ;; value = plant count
       (i32.const 536))
 
+    ;; ---- vote(state) -> result<ballot> --------------------------------
+    ;; Micro keeps no grudge: always abstain. The return is result<option<
+    ;; string>>, laid out at 640 as { result disc u8 @640, option disc u8 @644 }.
+    ;; ok + none is just two zero bytes; the string ptr/len are never read.
+    (func $vote (export "vote")
+          (param $self i32) (param $round i32)
+          (param $hp i32) (param $hl i32) (param $sp i32) (param $sl i32)
+          (param $pp i32) (param $pl i32) (result i32)
+      (i32.store8 (i32.const 640) (i32.const 0))   ;; result disc = ok
+      (i32.store8 (i32.const 644) (i32.const 0))   ;; ballot = none (abstain)
+      (i32.const 640))
+
     ;; ---- match-end(summary) -> result ---------------------------------
     (func $match-end (export "match-end")
           (param i32 i32 i32 i32 f32) (result i32)
@@ -313,12 +328,15 @@
   (alias core export $core "match-start"  (core func $match-start-core))
   (alias core export $core "talk"         (core func $talk-core))
   (alias core export $core "plant"        (core func $plant-core))
+  (alias core export $core "vote"         (core func $vote-core))
   (alias core export $core "match-end"    (core func $match-end-core))
 
   (type $fn-metadata    (func (param "self" (borrow $gardener)) (result (result $metadata))))
   (type $fn-match-start (func (param "self" (borrow $gardener)) (param "context" $match-context) (result (result))))
   (type $fn-talk        (func (param "self" (borrow $gardener)) (param "state" $round-state) (result (result $signal))))
   (type $fn-plant       (func (param "self" (borrow $gardener)) (param "state" $round-state) (result (result u8))))
+  (type $ballot         (option $player-id))
+  (type $fn-vote        (func (param "self" (borrow $gardener)) (param "state" $round-state) (result (result $ballot))))
   (type $fn-match-end   (func (param "self" (borrow $gardener)) (param "summary" $match-summary) (result (result))))
   (type $fn-create      (func (result (result (own $gardener)))))
 
@@ -330,6 +348,8 @@
     (canon lift (core func $talk-core) (memory $mem) (realloc $cabi_realloc) string-encoding=utf8))
   (func $plant-comp (type $fn-plant)
     (canon lift (core func $plant-core) (memory $mem) (realloc $cabi_realloc) string-encoding=utf8))
+  (func $vote-comp (type $fn-vote)
+    (canon lift (core func $vote-core) (memory $mem) (realloc $cabi_realloc) string-encoding=utf8))
   (func $match-end-comp (type $fn-match-end)
     (canon lift (core func $match-end-core) (memory $mem) (realloc $cabi_realloc) string-encoding=utf8))
   (func $create-comp (type $fn-create)
@@ -407,37 +427,45 @@
     (type (result 45))                                                     ;; 46
     (type (func (result 46)))                                              ;; 47
     (import "import-func-create" (func (type 47)))                          ;; 5
-    (export "metadata"      (type 2))                                       ;; 48
-    (export "signal"        (type 4))                                       ;; 49
-    (export "match-context" (type 9))                                       ;; 50
-    (export "round-state"   (type 24))                                      ;; 51
-    (export "match-summary" (type 28))                                      ;; 52
-    (export "gardener"      (type 29))                                      ;; 53
-    (type (borrow 53))                                                      ;; 54
-    (type (result 48))                                                     ;; 55
-    (type (func (param "self" 54) (result 55)))                            ;; 56
-    (export "[method]gardener.metadata" (func 0) (func (type 56)))
-    (type (result))                                                        ;; 57
-    (type (func (param "self" 54) (param "context" 50) (result 57)))        ;; 58
-    (export "[method]gardener.match-start" (func 1) (func (type 58)))
-    (type (result 49))                                                     ;; 59
-    (type (func (param "self" 54) (param "state" 51) (result 59)))          ;; 60
-    (export "[method]gardener.talk" (func 2) (func (type 60)))
-    (type (result u8))                                                     ;; 61
-    (type (func (param "self" 54) (param "state" 51) (result 61)))          ;; 62
-    (export "[method]gardener.plant" (func 3) (func (type 62)))
-    (type (func (param "self" 54) (param "summary" 52) (result 57)))        ;; 63
-    (export "[method]gardener.match-end" (func 4) (func (type 63)))
-    (type (own 53))                                                        ;; 64
-    (type (result 64))                                                     ;; 65
-    (type (func (result 65)))                                              ;; 66
-    (export "create" (func 5) (func (type 66)))
+    (type (result 13))                                                     ;; 48  result<ballot> (ballot = option<player-id> = 13)
+    (type (func (param "self" 30) (param "state" 37) (result 48)))          ;; 49
+    (import "import-method-gardener-vote" (func (type 49)))                ;; 6
+    (export "metadata"      (type 2))                                       ;; 50
+    (export "signal"        (type 4))                                       ;; 51
+    (export "match-context" (type 9))                                       ;; 52
+    (export "round-state"   (type 24))                                      ;; 53
+    (export "match-summary" (type 28))                                      ;; 54
+    (export "ballot"        (type 13))                                      ;; 55
+    (export "gardener"      (type 29))                                      ;; 56
+    (type (borrow 56))                                                      ;; 57
+    (type (result 50))                                                     ;; 58
+    (type (func (param "self" 57) (result 58)))                            ;; 59
+    (export "[method]gardener.metadata" (func 0) (func (type 59)))
+    (type (result))                                                        ;; 60
+    (type (func (param "self" 57) (param "context" 52) (result 60)))        ;; 61
+    (export "[method]gardener.match-start" (func 1) (func (type 61)))
+    (type (result 51))                                                     ;; 62
+    (type (func (param "self" 57) (param "state" 53) (result 62)))          ;; 63
+    (export "[method]gardener.talk" (func 2) (func (type 63)))
+    (type (result u8))                                                     ;; 64
+    (type (func (param "self" 57) (param "state" 53) (result 64)))          ;; 65
+    (export "[method]gardener.plant" (func 3) (func (type 65)))
+    (type (func (param "self" 57) (param "summary" 54) (result 60)))        ;; 66
+    (export "[method]gardener.match-end" (func 4) (func (type 66)))
+    (type (result 55))                                                     ;; 67  result<ballot>
+    (type (func (param "self" 57) (param "state" 53) (result 67)))          ;; 68
+    (export "[method]gardener.vote" (func 6) (func (type 68)))
+    (type (own 56))                                                        ;; 69
+    (type (result 69))                                                     ;; 70
+    (type (func (result 70)))                                              ;; 71
+    (export "create" (func 5) (func (type 71)))
   )
   (instance $player (instantiate $player-shim
     (with "import-method-gardener-metadata"    (func $metadata-comp))
     (with "import-method-gardener-match-start" (func $match-start-comp))
     (with "import-method-gardener-talk"        (func $talk-comp))
     (with "import-method-gardener-plant"       (func $plant-comp))
+    (with "import-method-gardener-vote"        (func $vote-comp))
     (with "import-method-gardener-match-end"   (func $match-end-comp))
     (with "import-func-create"                 (func $create-comp))
     (with "import-type-metadata"         (type $metadata))

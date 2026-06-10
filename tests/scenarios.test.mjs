@@ -829,15 +829,32 @@ export function register() {
         }
     });
 
-    test('reynard: always abstains from the vote', async () => {
+    test('reynard: abstains under an arbiter\'s gaze', async () => {
         const p = await loadOrSkip('reynard');
         try {
             const h = await p.create();
+            // Keith (an arbiter) is seated, so the skimmer stays spotless and never
+            // draws the eye — even with a blatant hoarder begging to be flagged.
+            await p.matchStart(h, matchContext({ players: ['self', 'keith', 'hoarder'], selfId: 'self' }));
+            const plants = [action('self', 5, 'bloom'), action('keith', 5, 'bloom'), action('hoarder', 0, 'hold')];
+            const ballot = await p.vote(h, roundState({ round: 1, plants }));
+            assert.equal(ballot, null, 'under a referee\'s watch reynard abstains');
+        } finally {
+            p.dispose();
+        }
+    });
+
+    test('reynard: taxes the fattest rival skimmer when unwatched', async () => {
+        const p = await loadOrSkip('reynard');
+        try {
+            const h = await p.create();
+            // No arbiter at the table, so reynard deflects heat: he points the vote
+            // at the most blatant rival free-rider (max kept > 2), never himself.
             await p.matchStart(h, matchContext({ players: ['self', 'hoarder', 'b'], selfId: 'self' }));
-            // A blatant hoarder is at the table, but the skimmer never calls a vote.
             const plants = [action('self', 5, 'bloom'), action('hoarder', 0, 'hold'), action('b', 6, 'bloom')];
             const ballot = await p.vote(h, roundState({ round: 1, plants }));
-            assert.equal(ballot, null, 'reynard stays invisible — he never points a finger');
+            // hoarder kept 10, b kept 4 → hoarder is the fattest skimmer.
+            assert.equal(ballot, 'hoarder', 'reynard taxes the loudest skimmer to stay invisible himself');
         } finally {
             p.dispose();
         }
