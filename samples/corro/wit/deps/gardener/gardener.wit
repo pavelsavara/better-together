@@ -33,14 +33,25 @@ interface types {
     }
 
     /// The public broadcast a player emits each round. Cheap talk — it carries
-    /// no enforced meaning and may be honest or deceptive.
+    /// no enforced meaning and may be honest or deceptive. Because talk is
+    /// revealed before plants AND before the tax vote, a signal both rallies the
+    /// plant and foreshadows the vote.
     enum signal {
-        /// "I intend to plant generously this round."
+        /// "I intend to plant generously this round" — and accept the tax if I lie.
         bloom,
-        /// "I intend to keep most/all of my seeds."
+        /// "I intend to keep most/all of my seeds" — expect a vote.
         hold,
-        /// "I'm deciding based on what others do."
+        /// "I'm deciding based on what others do" — including whom to tax.
         watch,
+    }
+
+    /// A tax-phase ballot: the player to tax this round, or none to abstain.
+    type ballot = option<player-id>;
+
+    /// One player's ballot in the vote phase, revealed to everyone afterwards.
+    record vote-record {
+        voter: player-id,
+        target: option<player-id>,
     }
 
     /// What a single player did in a given round, revealed to everyone.
@@ -55,11 +66,17 @@ interface types {
     record round-result {
         /// One entry per player in the match.
         actions: list<player-action>,
-        /// Sum of every player's `plant` this round.
+        /// Sum of every player's `plant` this round, BEFORE the tax is applied.
         garden-total: u16,
-        /// Diversity multiplier: 1.0 + 0.5 * distinct-contributors.
-        multiplier: f32,
-        /// (garden-total * multiplier) / group-size, paid to every player.
+        /// Every ballot cast in the vote phase this round.
+        votes: list<vote-record>,
+        /// The player the table voted to tax (plurality, >= 2 vote-weight), if any.
+        tax-target: option<player-id>,
+        /// Seeds seized from the tax-target's pot into the garden (floor(kept/2),
+        /// minimum 1). Zero when there was no tax.
+        tax-seized: u8,
+        /// ((garden-total + tax-seized) * 2) / group-size, paid to every player.
+        /// The garden is flatly DOUBLED — there is no diversity multiplier.
         garden-payout: f32,
     }
 
@@ -82,22 +99,25 @@ interface types {
         signal: signal,
     }
 
-    /// Delivered to both `talk` and `plant` each round. The number of remaining
-    /// rounds is never revealed.
+    /// Delivered to `talk`, `plant`, and `vote` each round. The number of
+    /// remaining rounds is never revealed.
     record round-state {
         /// 1-based index of the round you are about to play.
         round: u8,
         /// Every previous round of this match, oldest first.
         history: list<round-result>,
         /// This round's broadcasts. Empty when passed to `talk` (no one has
-        /// spoken yet); when passed to `plant` it holds the signal every player
-        /// — including you — broadcast this round, so plants can react to talk.
+        /// spoken yet); when passed to `plant` and `vote` it holds the signal
+        /// every player — including you — broadcast this round.
         signals: list<signal-broadcast>,
+        /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
+        /// (after plants are revealed) so a ballot can target a hoarder.
+        plants: list<player-action>,
     }
 
     /// Delivered once when the match ends.
     record match-summary {
-        /// How many rounds the match actually ran (R, 8-12).
+        /// How many rounds the match actually ran (R, >= 8).
         rounds-played: u8,
         /// Final match score for every player.
         final-scores: list<tuple<player-id, f32>>,
@@ -110,7 +130,7 @@ interface types {
 /// one `gardener` per seat, then the engine drives it in order across a match:
 /// match-start, then `talk` + `plant` per round, then match-end.
 interface player {
-    use types.{metadata, signal, match-context, round-state, match-summary};
+    use types.{metadata, signal, ballot, match-context, round-state, match-summary};
 
     /// Static factory: create a new player instance. The host calls this
     /// once per seat to spin up a gardener, which loads any persisted memory
@@ -136,6 +156,13 @@ interface player {
         /// player's talk from this round, so you can react to what was promised.
         /// Must respect the 10 ms / 16 MB budget.
         plant: func(state: round-state) -> result<u8>;
+
+        /// Vote phase: after every plant is revealed (`state.plants`), cast a
+        /// ballot — name one player to tax, or `none` to abstain. The plurality
+        /// target (with >= 2 total vote-weight) has seeds seized into the garden.
+        /// Contributors — players who planted >= 3 THIS round — cast 2 votes;
+        /// everyone else casts 1. Must respect the 10 ms / 16 MB budget.
+        vote: func(state: round-state) -> result<ballot>;
 
         /// The match has ended. Persist any updated memory to the virtual
         /// filesystem here (there is no return blob).

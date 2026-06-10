@@ -46,12 +46,18 @@ const LORE =
     "Khaos is the garden's coin-flip god — he meets you once, lets the dice " +
     "decide whether you are friend or foe, and then honours that verdict " +
     "forever with deranged conviction. His words are random, his grudges are " +
-    "permanent, and he insists none of it is his fault: the dice made him do it.";
+    "permanent, and he insists none of it is his fault: the dice made him do it. " +
+    "Two names the dice never got to touch: Reynard the fox, his fated darling, " +
+    "and Bram the beaver — union boss, sworn foe, hoarded against on sight.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
 /// Probability that a newly-seen player is judged a FRIEND (vs. a FOE).
 const FRIEND_PROB = 0.7;
+/// Verdicts the dice never get to decide, matched case-insensitively by id.
+/// Reynard the fox flattered his way onto the eternal-friend list; Bram the
+/// beaver — who organizes unions to tax foxes — earned eternal enmity.
+const FATED_VERDICTS = { reynard: "friend", bram: "foe" };
 /// Contribution when the whole table is friends — full generosity.
 const FRIEND_PLANT = 10;
 /// Contribution when any remembered foe is seated — hoard everything.
@@ -163,12 +169,20 @@ class Gardener {
         this.#opponents = context.players.filter((id) => id !== context.selfId);
         for (const id of this.#opponents) {
             if (!Object.prototype.hasOwnProperty.call(this.#verdicts, id)) {
-                // First sighting ever: roll friend/foe and remember it forever.
-                this.#verdicts[id] = Math.random() < FRIEND_PROB ? "friend" : "foe";
+                // A fated name skips the dice; everyone else is rolled and then
+                // remembered forever.
+                const fated = FATED_VERDICTS[id.toLowerCase()];
+                this.#verdicts[id] = fated ?? (Math.random() < FRIEND_PROB ? "friend" : "foe");
                 this.#dirty = true;
-                this.#say(
-                    `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,
-                );
+                if (fated === "friend") {
+                    this.#say(`${id}! The dice don't even get a vote — you are FATED a friend. 🦊🎲`);
+                } else if (fated === "foe") {
+                    this.#say(`${id}. No roll needed. The dice loathe a union boss — FOE, forever. 🦫🚫`);
+                } else {
+                    this.#say(
+                        `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,
+                    );
+                }
             }
         }
     }

@@ -51,7 +51,9 @@ const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
 const PLAYER_LORE: &str = "Corro is the rot beneath the petals — Ferris's mirror \
  and nemesis. He smiles in BLOOM and harvests in silence, certain that every \
  generous gardener is simply a meal that hasn't noticed yet. He plants only to \
- bait, and remembers only who is worth deceiving.";
+ bait, and remembers only who is worth deceiving. He tips his claw to Reynard \
+ the fox — a fellow diner with better table manners — and spits at Bram the \
+ beaver, whose union dams the stream and taxes parasites like him.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

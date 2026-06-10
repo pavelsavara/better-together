@@ -18,6 +18,13 @@ interface types {
         watch,
     }
 
+    type ballot = option<player-id>;
+
+    record vote-record {
+        voter: player-id,
+        target: option<player-id>,
+    }
+
     record player-action {
         id: player-id,
         plant: u8,
@@ -27,7 +34,9 @@ interface types {
     record round-result {
         actions: list<player-action>,
         garden-total: u16,
-        multiplier: f32,
+        votes: list<vote-record>,
+        tax-target: option<player-id>,
+        tax-seized: u8,
         garden-payout: f32,
     }
 
@@ -47,6 +56,7 @@ interface types {
         round: u8,
         history: list<round-result>,
         signals: list<signal-broadcast>,
+        plants: list<player-action>,
     }
 
     record match-summary {
@@ -57,7 +67,7 @@ interface types {
 }
 
 interface player {
-    use types.{metadata, signal, match-context, round-state, match-summary};
+    use types.{metadata, signal, ballot, match-context, round-state, match-summary};
 
     create: func() -> result<gardener>;
 
@@ -66,6 +76,7 @@ interface player {
         match-start: func(context: match-context) -> result;
         talk: func(state: round-state) -> result<signal>;
         plant: func(state: round-state) -> result<u8>;
+        vote: func(state: round-state) -> result<ballot>;
         match-end: func(summary: match-summary) -> result;
     }
 }

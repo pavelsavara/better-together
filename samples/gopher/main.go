@@ -39,7 +39,8 @@ const (
 		"habit who keeps digging wherever the last dig paid off, and abandons any " +
 		"hole that came up empty. He doesn't hold grudges and he doesn't read minds; " +
 		"he simply repeats what worked and flips away from what didn't. The dirt " +
-		"remembers; Gopher just follows it."
+		"remembers; Gopher just follows it — and lately the dirt's been richest at " +
+		"Bram the beaver's table, so the forager digs there and calls himself union."
 )
 
 // ─────────────────────────── Strategy knobs ───────────────────────

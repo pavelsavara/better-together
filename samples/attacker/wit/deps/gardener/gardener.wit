@@ -27,6 +27,15 @@ interface types {
         watch,
     }
 
+    /// A tax-phase ballot: the player to tax this round, or none to abstain.
+    type ballot = option<player-id>;
+
+    /// One player's ballot in the vote phase, revealed to everyone afterwards.
+    record vote-record {
+        voter: player-id,
+        target: option<player-id>,
+    }
+
     /// What a single player did in a given round, revealed to everyone.
     record player-action {
         id: player-id,
@@ -38,7 +47,9 @@ interface types {
     record round-result {
         actions: list<player-action>,
         garden-total: u16,
-        multiplier: f32,
+        votes: list<vote-record>,
+        tax-target: option<player-id>,
+        tax-seized: u8,
         garden-payout: f32,
     }
 
@@ -56,11 +67,12 @@ interface types {
         signal: signal,
     }
 
-    /// Delivered to both `talk` and `plant` each round.
+    /// Delivered to `talk`, `plant`, and `vote` each round.
     record round-state {
         round: u8,
         history: list<round-result>,
         signals: list<signal-broadcast>,
+        plants: list<player-action>,
     }
 
     /// Delivered once when the match ends.
@@ -73,7 +85,7 @@ interface types {
 
 /// The contract every player component implements.
 interface player {
-    use types.{metadata, signal, match-context, round-state, match-summary};
+    use types.{metadata, signal, ballot, match-context, round-state, match-summary};
 
     /// Static factory: create a new player instance.
     create: func() -> result<gardener>;
@@ -84,6 +96,7 @@ interface player {
         match-start: func(context: match-context) -> result;
         talk: func(state: round-state) -> result<signal>;
         plant: func(state: round-state) -> result<u8>;
+        vote: func(state: round-state) -> result<ballot>;
         match-end: func(summary: match-summary) -> result;
     }
 }

@@ -36,8 +36,9 @@ His temperament is **nice, retaliatory, and forgiving**, in that order:
   garden becomes a *liar* in the ledger. When a table is run by proven liars,
   Keith keeps his seeds in his pocket. The rat does not feed cheats.
 
-Each round plays out in two phases and Keith mutters about both on stdout — pure
-flavor the engine never reads, but fun to watch in the console.
+Each round plays out in three phases (talk → plant → vote) and Keith mutters
+about all three on stdout — pure flavor the engine never reads, but fun to watch
+in the console.
 
 ## The strategy
 
@@ -58,7 +59,8 @@ seated), he trims from a generous 8 down to 5. That still honours his promise
 (≥ 3 keeps the `BLOOM` honest) but he refuses to be a martyr in a dying garden.
 
 The contribution threshold of **3** is the engine's, not arbitrary: a plant of 3+
-is what makes you a *contributor* and lifts the diversity multiplier for everyone.
+makes you a *contributor*, which enfranchises you with **2 votes** in the tax
+phase — so Keith always clears it before voting to tax a proven liar.
 
 ## The memory
 

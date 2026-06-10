@@ -29,7 +29,9 @@ public sealed class PlayerImpl : IPlayer
             repo: "https://github.com/pavelsavara/better-together",
             lore: "A hedgehog who plants by night. Warm and soft-bellied to friends "
                 + "he remembers across many gardens, but he curls into his spines the "
-                + "moment a neighbour turns stingy — then uncurls and forgives by dawn.");
+                + "moment a neighbour turns stingy — then uncurls and forgives by dawn. "
+                + "He warms to Bram the beaver's honest union and keeps his spines half-up "
+                + "around Reynard the fox, whose smile never quite reaches his ledger.");
 
         public void MatchStart(Wit.MatchContext context) =>
             _brain.MatchStart(context.selfId);

@@ -23,7 +23,7 @@ His play is deliberate, not random:
   other player has planted so far and silently marks the biggest contributor as
   his "mark".
 - **He feasts, then baits.** When the garden is alive (someone planted a real
-  stake last round) he plants **nothing** and lets the multiplier pay him for
+  stake last round) he plants **nothing** and lets the doubled garden pay him for
   free. When the garden goes barren he plants a small **bait** — just enough to
   coax the cooperators back so there's a harvest to steal again.
 

@@ -24,7 +24,8 @@ interface tournament {
         match-id: string,
         /// Group size K (number of players / URLs this match ran).
         group-size: u8,
-        /// How many rounds R the match actually ran (8-12, chosen by the engine).
+        /// How many rounds R the match actually ran (>= 8; geometric stop after
+        /// round 8 at hazard 1/3, chosen by the engine).
         rounds-played: u8,
         /// Final match score for every player, in seat order.
         scores: list<player-score>,
@@ -41,7 +42,7 @@ interface tournament {
 /// at the end (the host then tears the backing instance down); the engine never
 /// loads or constructs players itself.
 interface roster {
-    use better-together:gardener/types.{metadata, match-context, round-state, match-summary, signal};
+    use better-together:gardener/types.{metadata, match-context, round-state, match-summary, signal, ballot};
 
     /// A single seated player for this match. Mirrors the player's `gardener`
     /// resource exactly, but the host owns the backing component instance and
@@ -57,6 +58,8 @@ interface roster {
         talk: func(state: round-state) -> result<signal>;
         /// Plant phase: decide how many of 10 seeds to plant (0-10).
         plant: func(state: round-state) -> result<u8>;
+        /// Vote phase: name one player to tax this round, or abstain (none).
+        vote: func(state: round-state) -> result<ballot>;
         /// The match has ended; the player persists memory to its VFS.
         match-end: func(summary: match-summary) -> result;
     }
@@ -73,7 +76,7 @@ interface roster {
 /// instead each `plant` reports whether the match is over.
 interface runner {
     use tournament.{match-report};
-    use better-together:gardener/types.{player-id, signal-broadcast, round-result};
+    use better-together:gardener/types.{player-id, player-action, signal-broadcast, round-result};
 
     /// Delivered once when the match begins, before any rounds. The round count
     /// R is intentionally absent — the engine keeps it hidden.
@@ -86,12 +89,12 @@ interface runner {
         group-size: u8,
     }
 
-    /// The resolved outcome of one round, returned by `plant`, with everything
+    /// The resolved outcome of one round, returned by `vote`, with everything
     /// the host needs to render the table for this turn.
     record round-outcome {
         /// 1-based index of the round just resolved.
         round: u8,
-        /// The garden result broadcast to players (plants, total, multiplier,
+        /// The garden result broadcast to players (plants, votes, tax, total,
         /// payout).
         garden: round-result,
         /// Each seat's score for THIS round, in seat order.
@@ -113,17 +116,23 @@ interface runner {
         /// WATCH on a trapped seat) and return the broadcasts before anyone plants.
         talk: func() -> result<list<signal-broadcast>, string>;
         /// Plant phase for the current round: collect one plant per seat (default
-        /// 0 on a trapped seat), resolve the garden, fold in the scores, and
-        /// return the round outcome (including whether the match is over).
-        plant: func() -> result<round-outcome, string>;
+        /// 0 on a trapped seat) and return the revealed plants. Scores are NOT
+        /// resolved yet — the tax vote comes next.
+        plant: func() -> result<list<player-action>, string>;
+        /// Vote phase for the current round: collect one ballot per seat (default
+        /// abstain on a trapped seat), tally vote-weight (contributors who
+        /// planted >= 3 cast 2 votes, others 1), seize the plurality target's tax
+        /// into the garden, fold in the scores, and return the round outcome
+        /// (including whether the match is over).
+        vote: func() -> result<round-outcome, string>;
         /// End the match — every seat persists its memory — and return the final
         /// per-player report for the season orchestrator.
         match-end: func() -> result<match-report, string>;
     }
 
     /// Open a match driver over the host-seated roster: take its `seats`, collect
-    /// the player ids, and choose the hidden round count R ∈ [8, 12]. Errs if the
-    /// roster supplied no seats.
+    /// the player ids, and drive the hidden geometric stop (min 8 rounds, then a
+    /// 1/3 hazard per round). Errs if the roster supplied no seats.
     open: func() -> result<match, string>;
 }
 
@@ -146,8 +155,9 @@ world engine {
     import wasi:io/error@0.2.3;
     import wasi:io/streams@0.2.3;
 
-    // The number of rounds R per match is drawn uniformly from [8, 12] and kept
-    // hidden from the players, so the engine needs a source of randomness.
+    // The match runs a minimum of 8 rounds, then ends after each further round
+    // with a public hazard rate of 1/3; the realized length is kept hidden from
+    // the players, so the engine needs a source of randomness.
     import wasi:random/random@0.2.3;
 
     // The stepped per-match driver the host loops over.
