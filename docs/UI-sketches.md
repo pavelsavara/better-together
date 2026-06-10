@@ -91,7 +91,7 @@ Reads `data/scores.json`. Co-Player crown is primary; Raw is a secondary tab.
 
 ```
 ┌─ Leaderboard ─────────────────────────────────────────────────────────┐
-│ ( • ) Best Co-Player    ( ) Raw Score        window: last 500 matches  │
+│ ( • ) Best Co-Player  ( ) Raw Score   window: each bot's last 500 matches │
 │                                              updated 12:00Z · 4,120 matches │
 ├──┬─────────────┬──────────────┬───────────┬────────────┬───────────────┤
 │ #│ bot         │ co-player    │ raw       │ consistency│ matches        │
@@ -101,6 +101,9 @@ Reads `data/scores.json`. Co-Player crown is primary; Raw is a secondary tab.
 │ 3│ 🦀 ferris    │ +1.95 ▕██  ▏ │ 14.0      │ 6.0        │ 251           │
 │ …│ …           │ …            │ …         │ …          │ …             │
 │45│ 🦎 corro     │ −2.80 ▕░░  ▏ │ 19.4 ⚑    │ 8.1        │ 210           │
+├──┴─────────────┴──────────────┴───────────┴────────────┴───────────────┤
+│ Unranked (still settling — < 50 matches)                                │
+│ – 🌱 khaos      │     ~        │  –        │  –         │ 12  (new)     │
 └──┴─────────────┴──────────────┴───────────┴────────────┴───────────────┘
    ▕███▏ = co-player score with ± confidence whisker (from coPlayerStdErr)
    ⚑ high raw + negative co-player = "selfish" tell
@@ -109,6 +112,9 @@ Reads `data/scores.json`. Co-Player crown is primary; Raw is a secondary tab.
 - Clicking a row navigates to the **Bot Detail** page (`/bot/:id`, §2a).
 - The confidence whisker visualizes `coPlayerStdErr`; low-sample bots show wider
   whiskers, communicating "ranking still settling."
+- Bots with **fewer than 50 windowed matches** are `ranked: false`: they appear in
+  a separate **Unranked** group below the ladder (no rank number) until they
+  cross the threshold.
 
 ---
 
@@ -134,6 +140,7 @@ the full `index.json` record plus the bot's current leaderboard standing.
 │   raw        14.0                   wasm  sha256 a1b2…  ↗                 │
 │   consistency 6.0                   icon  cached 100×100 (source ↗)      │
 │   matches    251                    submitted by jane · issue #123      │
+│   updated    18 matches ago         approved by @maintainer             │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -141,8 +148,10 @@ the full `index.json` record plus the bot's current leaderboard standing.
   back to the `glyph` in a circle when the bot has no icon.
 - The `#1a2b3c4d` chip is the FNV-1a32 hash segment of the id — a stable, copyable
   handle that disambiguates re-publishes of the same `namespace.Name`.
-- **Standing** is read live from `scores.json`; if the bot has no windowed
-  matches yet, it shows "no ranked matches yet."
+- **Standing** is read live from `scores.json`; if the bot has fewer than 50
+  windowed matches it shows an **"unranked — still settling"** badge instead of a
+  rank, and "updated N matches ago" surfaces `matchesSinceUpdate` after a same-ref
+  re-publish.
 - All bot-supplied strings (`lore`, `name`) render as **text, never HTML**.
 
 ---
@@ -159,14 +168,18 @@ auth. Submitting opens GitHub's new-issue page with the template populated.
 │ OCI image reference *                                                   │
 │ [ ghcr.io/yourname/yourbot:1.0.0                                  ]     │
 │                                                                         │
-│ ⓘ We pull this image, extract the .wasm, and validate it automatically.│
-│   metadata (name, glyph, lore, …) is read from the component itself.    │
+│ Author handle *   [ @yourname ]    Short description *                  │
+│ [ One line on what your gardener does                             ]     │
+│                                                                         │
+│ ⓘ A maintainer approves, then we pull this image, extract the .wasm,   │
+│   and validate it. metadata (name, glyph, lore, …) is from the bundle.  │
 │                                                                         │
 │ Checklist before you submit:                                           │
 │  [x] Exports better-together:gardener/player@0.1.0                     │
 │  [x] metadata.name is "namespace.name"  (namespace ^[a-z][a-z0-9-]*$)  │
 │  [x] glyph is a single emoji/character                                 │
 │  [x] No network use (no wasi:sockets / wasi:http)                      │
+│  [x] Component is ≤ 15 MB                                              │
 │                                                                         │
 │                                     [ Open prefilled GitHub issue ↗ ]   │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -174,9 +187,10 @@ auth. Submitting opens GitHub's new-issue page with the template populated.
 
 - The button target is
   `https://github.com/<owner>/<repo>/issues/new?template=submit-gardener.yml&...`
-  with the OCI ref passed through query params the issue form maps to fields.
-- A short "What happens next" timeline (validate → comment → appear on Top
-  Scores) sets expectations.
+  with the OCI ref, author handle, and description passed through query params
+  the issue form maps to fields.
+- A short "What happens next" timeline (maintainer approval → validate → comment
+  → appear on Top Scores) sets expectations.
 
 ---
 

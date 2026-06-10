@@ -8,7 +8,7 @@
 
 ```
 Tournament (permanent — always running)
- └── Many Matches (random group compositions, drawn continuously)
+ └── Many Matches (random group compositions, drawn over time)
       └── R Rounds per match (random length)
 ```
 
@@ -165,7 +165,10 @@ flat welfare metric.
 - Each bot has a **persistent, globally unique ID** manufactured at registration
   as `fnv1a32(oci-ref)#namespace.Name` (the 32-bit FNV-1a hash of the bot's OCI
   image reference, then its `namespace.Name`). Re-publishing to a *different* OCI
-  ref produces a *different* bot with its own scores and memory.
+  ref produces a *different* bot with its own scores and memory. Re-publishing
+  new wasm to the **same** ref keeps the **same id, score history, and memory** —
+  the engine detects the new image digest, replays the bot in fresh matches, and
+  the new results blend into the rolling window as the old ones age out.
 - At match start, bots receive the list of IDs in their group.
 - Bots may maintain **persistent memory** across rounds and across matches:
   - Within a match: full history is provided each round.
@@ -244,9 +247,11 @@ Computed continuously over a **trailing window** of recent matches:
 ```
 co_player_score(i) = mean(group_total(m) for recent matches m containing player i)
                    − mean(group_total(m) for all recent matches m in the window)
-```
-
-Where `group_total(m)` = sum of all players' match scores in match m. The window
+is each bot's **most recent 500 matches** (a tunable constant), keeping the
+baseline tracking the **current** field as the meta evolves instead of being
+diluted by long-obsolete matches. A bot is **listed but unranked** until it has
+played **≥ 50 matches** in its window, so one lucky or unlucky table can't crown a
+barely-played bottch m. The window
 (a fixed number of recent matches, or an exponential decay with a half-life
 measured in matches) keeps the baseline tracking the **current** field as the
 meta evolves, instead of being diluted by long-obsolete matches.

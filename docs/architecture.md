@@ -201,9 +201,10 @@ deterministically (the UI surfaces and can replay it).
 
 ### 2.4 `data/registry-state.json` — OCI change-detection cache
 
-Written and read by the **scheduled workflow** so an hourly tick does no work
-unless a bot's image actually changed. For each active bot it records the last
-seen OCI manifest **digest** and **ETag**:
+Written and read by the **scheduled workflow** (its sole writer) so an hourly
+tick does no work unless a bot's image actually changed. It is initialized from
+each bot's `ociDigest` in `index.json` the first time the scheduler sees the bot.
+For each active bot it records the last seen OCI manifest **digest** and **ETag**:
 
 ```jsonc
 {
@@ -258,7 +259,7 @@ sequenceDiagram
     alt valid
         Act->>Act: Manufacture id = fnv1a32(oci) # namespace.Name
         Act->>Act: Fetch + validate + resize avatar → 100×100 PNG
-        Act->>GP: commit wasm/<id>/<ver>.wasm + icons/<id>.png + update index.json + registry-state.json (digest/ETag)
+        Act->>GP: commit wasm/<id>/<ver>.wasm + icons/<id>.png + update index.json (incl. ociDigest/ociEtag)
         Act->>GH: comment ✅ "admitted as <id>"
         Act->>GH: label: accepted
     else invalid
@@ -273,8 +274,9 @@ a maintainer applies the **`approved`** label. This keeps obvious spam and abuse
 out of CI while leaving the heavy lifting — pulling, instantiating, and
 sandbox-validating the image — fully automated. The Action only ever *reads* the
 OCI image and *runs it inside the jsco sandbox*; a malicious image cannot escape
-(no network, no host FS — see §6). On admission it seeds `registry-state.json`
-with the image's digest/ETag so the scheduler can later detect updates.
+(no network, no host FS — see §6). On admission it records the image's
+digest/ETag in the bot's `index.json` record so the scheduler can later detect
+updates (and initialize `registry-state.json` from it).
 
 ### 3.1 Validation checks
 
@@ -521,9 +523,9 @@ flowchart LR
   [§4.2](#42-seating--sandboxing-jsco)).
 - **Per-seat VFS isolation.** Each gardener sees only its own
   `vfs/<bot-id>/` mounted as a private preopen — no cross-bot reads.
-- **Single-writer state.** Only the scheduled engine writes scores/VFS/logs, and
-  only the Validation Action writes the index/wasm cache; the workflow
-  `concurrency` group prevents overlap.
+- **Single-writer state.** Only the scheduled engine writes scores/VFS/logs and
+  `registry-state.json`, and only the Validation Action writes the
+  index/wasm/icon cache; the workflow `concurrency` group prevents overlap.
 - **Supply-chain provenance.** The OCI ref is retained in `index.json` and the
   cached wasm is pinned by `wasmSha256`, so the served bytes are auditable
   against the source image.

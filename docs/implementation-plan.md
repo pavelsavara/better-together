@@ -13,10 +13,13 @@ Guiding constraints (from the design decisions):
 - **jsco** is consumed from a **local sibling checkout** today (`../../jsco`),
   switchable to published `@pavelsavara/jsco` later — mirror the
   [tests/lib/harness.mjs](../tests/lib/harness.mjs) resolution.
-- **OCI ref only** in the issue; CI extracts the wasm and **caches it on
-  gh-pages** so the browser fetches it same-origin.
-- **Auto-validate on issue open**; **hourly** scheduled tournament; **one match
-  at a time**; **seeded** RNG with the seed stored and shown.
+- **OCI ref + author + blurb** in the issue; CI extracts the wasm and **caches it
+  on gh-pages** so the browser fetches it same-origin.
+- **Maintainer-gated validation** (`approved` label triggers it); **change-gated
+  hourly** tournament (runs only when a bot's OCI digest changed); **one match at
+  a time**; **seeded** RNG with the seed stored and shown.
+- **Per-bot trailing window of 500 matches**; a bot is **unranked until ≥ 50
+  matches**; a same-ref re-publish keeps id/history and blends new results.
 - Target scale: **≤ 100 bots**, ~2–5 per contributor.
 
 ---
@@ -66,9 +69,9 @@ a seat that overruns 50 ms or touches the network is marked `inactive`.
 
 | Task | Deliverable |
 |------|-------------|
-| Schemas + (de)serialization with validation | `game/src/store/schema.ts` (`index.json`, `scores.json`, `meta.json`, match log) |
-| Read layer: load index, scores, recent match logs, all VFS | `game/src/store/read.ts` |
-| Write layer: scores, changed VFS (256 KB cap, erase on overflow), new match logs (staged for one commit) | `game/src/store/write.ts` |
+| Schemas + (de)serialization with validation | `game/src/store/schema.ts` (`index.json`, `scores.json`, `registry-state.json`, `meta.json`, match log) |
+| Read layer: load index, scores, registry-state, recent match logs, all VFS | `game/src/store/read.ts` |
+| Write layer: scores, registry-state, changed VFS (256 KB cap, erase on overflow), new match logs (staged for one commit) | `game/src/store/write.ts` |
 | Initial empty store + seed it with the bundled samples | `data/index.json` bootstrap script |
 | Local "store in a temp dir" mode for tests | no network needed in unit tests |
 
@@ -81,25 +84,26 @@ See layout in [Architecture §2](architecture.md#2-data-store-the-gh-pages-branc
 
 ## Phase 3 — Validation Action (registration)
 
-**Goal:** a contributor opens an issue with an OCI ref and the bot is validated
-and admitted automatically.
+**Goal:** a contributor opens an issue with an OCI ref; a maintainer approves it,
+and the bot is then validated and admitted automatically.
 
 | Task | Deliverable |
 |------|-------------|
-| Issue form template | `.github/ISSUE_TEMPLATE/submit-gardener.yml` (single field: OCI ref) |
-| Parse issue form body → `{ oci }` | `game/src/validate/parse-issue.ts` |
+| Issue form template | `.github/ISSUE_TEMPLATE/submit-gardener.yml` (fields: OCI ref, author handle, short description) |
+| Parse issue form body → `{ oci, author, blurb }` | `game/src/validate/parse-issue.ts` |
 | Pull OCI artifact → wasm bytes (`oras`/`wkg`) | `game/src/validate/pull-oci.ts` |
 | Size limit: friendly-reject components > 15 MB | within `pull-oci.ts` / `checks.ts` |
 | Validation checks (size, shape, metadata, namespace regex, glyph, icon, capability denial, scratch-VFS smoke match) per [Architecture §3.1](architecture.md#31-validation-checks) | `game/src/validate/checks.ts` |
 | Manufacture in-game id `fnv1a32(oci)#namespace.Name` | `game/src/validate/id.ts` |
 | Avatar pipeline: fetch (size-capped) → decode → strip → **resize to 100×100 PNG** → cache `icons/<id>.png` | `game/src/validate/avatar.ts` (e.g. `sharp`) |
-| Admit: cache wasm to `wasm/<id>/<ver>.wasm` + `icons/<id>.png`, upsert `index.json`, sha256 pin | `game/src/validate/admit.ts` |
-| Workflow: `on: issues (opened)` → run validator → comment + label + commit | `.github/workflows/validate-bot.yml` |
+| Admit: cache wasm to `wasm/<id>/<ver>.wasm` + `icons/<id>.png`, upsert `index.json` (incl. `ociDigest`/`ociEtag`), sha256 pin | `game/src/validate/admit.ts` |
+| Workflow: `on: issues (labeled 'approved')` → run validator → comment + label + commit | `.github/workflows/validate-bot.yml` |
 | Reject path: clear ❌ comment with the exact failing rule | covered by `checks.ts` messages |
 
-**Exit criteria:** opening a test issue that points at a sample's OCI image
-results in a committed `index.json` entry (with the manufactured id) + cached
-wasm + a cached 100×100 avatar + an ✅ comment; a deliberately broken bot (e.g.
+**Exit criteria:** a maintainer labelling a test issue (pointing at a sample's OCI
+image) `approved` results in a committed `index.json` entry (with the
+manufactured id and `ociDigest`/`ociEtag`) + cached wasm + a cached 100×100
+avatar + an ✅ comment; a deliberately broken bot (e.g.
 the `attacker`, or one with a non-image icon URL) is rejected with a specific
 reason.
 
@@ -110,20 +114,25 @@ as a container ([Architecture §6](architecture.md#6-security--sandboxing)).
 
 ## Phase 4 — Tournament engine (scheduled)
 
-**Goal:** the hourly run that grows the leaderboard and stabilizes the top 50.
+**Goal:** the change-gated hourly run that grows the leaderboard by replaying
+newly added or updated bots.
 
 | Task | Deliverable |
 |------|-------------|
-| Roster-set generation: uniform + targeted two-stream (§4.3) | `game/src/roster/generate.ts` |
-| Budget sizing + diversity guard | within `generate.ts` |
-| Run loop: seat → drive → log → carry VFS forward, sequentially | `game/src/run.ts` |
-| Scoring over trailing window (Co-Player, Raw, consistency, std-err) per [Engine Rules §7–§9](engine-rules.md#7-the-best-co-player-score) | `game/src/core/scoring.ts` |
-| Single commit + push; `concurrency` group to prevent overlap | `.github/workflows/tournament.yml` (`on: schedule` hourly) |
+| Change detection: conditional OCI manifest check (ETag/digest) vs `registry-state.json`; exit early if nothing changed | `game/src/scan/detect.ts` |
+| Roster generation: seat the changed bot(s); fill `K∈{4,5,6}` opponents weighted toward fewest windowed matches (§4.3) | `game/src/roster/generate.ts` |
+| Match budget (~500, tunable) + diversity guard | within `generate.ts` |
+| Run loop: seat → drive → log (with `playerDigests`) → carry VFS forward, sequentially | `game/src/run.ts` |
+| Scoring over per-bot 500-match window (Co-Player, Raw, consistency, std-err); `ranked:false` until ≥ 50 matches per [Engine Rules §7–§9](engine-rules.md#7-the-best-co-player-score) | `game/src/core/scoring.ts` |
+| Update handling: same-ref digest change keeps id/history/VFS, bumps `lastDigestChangeAt`/`matchesSinceUpdate` | within `scan/detect.ts` + `store/write.ts` |
+| Single commit + push; `concurrency` group to prevent overlap | `.github/workflows/tournament.yml` (`on: schedule` hourly, change-gated) |
 | Master seed per run → per-match seeds, stored in logs | wire `rng.ts` into `run.ts` |
 
-**Exit criteria:** a manual `workflow_dispatch` run over the seeded sample pool
-produces match logs, an updated `scores.json`, and updated VFS in one commit;
-re-running with the same master seed reproduces identical logs.
+**Exit criteria:** a manual `workflow_dispatch` run after "changing" a sample's
+digest replays that bot, producing match logs, an updated `scores.json` (with the
+bot unranked until it crosses 50 matches), and updated VFS in one commit; a run
+where no digest changed exits without committing; re-running with the same master
+seed reproduces identical logs.
 
 See [Architecture §4](architecture.md#4-tournament-engine-game).
 
@@ -196,7 +205,7 @@ See [UI Sketches §4](UI-sketches.md#4-bot-builder).
 | Task | Deliverable |
 |------|-------------|
 | End-to-end rehearsal: submit → validate → appears on Top Scores → watch on Home | documented runbook |
-| Convergence check: does 60/40 streaming + 500-match window stabilize top 50? | tuning notes in `meta.json` |
+| Convergence check: does the per-bot 500-match window + opponent weighting stabilize rankings; tune the ≥ 50-match threshold | tuning notes in `meta.json` |
 | Failure handling: unresolvable OCI → mark `retired`; sandbox/timeout violation → mark `inactive`; VFS overflow → erase | engine + validator updates |
 | Provenance audit: verify served wasm sha256 matches `index.json` | CI check |
 | Performance: cap per-run wall time; ensure one hour is enough for the budget | timing report |
@@ -215,9 +224,9 @@ See [UI Sketches §4](UI-sketches.md#4-bot-builder).
   checkout to published `@pavelsavara/jsco` is a one-line change in both
   projects.
 - **Single-writer discipline.** Only `validate-bot.yml` writes `index.json` +
-  `wasm/`; only `tournament.yml` writes `scores.json` + `vfs/` + `matches/`. The
-  `deploy-site.yml` writes only the SPA bundle. Use `concurrency` groups so no
-  two writers of the same files run at once.
+  `wasm/` + `icons/`; only `tournament.yml` writes `scores.json` + `vfs/` +
+  `matches/` + `registry-state.json`. The `deploy-site.yml` writes only the SPA
+  bundle. Use `concurrency` groups so no two writers of the same files run at once.
 - **Untrusted input.** Bot metadata and banter are rendered as text only; OCI
   images run only inside the jsco sandbox.
 
@@ -230,8 +239,8 @@ See [UI Sketches §4](UI-sketches.md#4-bot-builder).
 | 0 | Deterministic match core + tests | everything |
 | 1 | Real gardeners run in Node via jsco | 3, 4 |
 | 2 | gh-pages store read/write | 3, 4, 5 |
-| 3 | Auto-validation on issue open | live registrations |
-| 4 | Hourly tournament + leaderboard | 5, 6 |
+| 3 | Maintainer-approved validation | live registrations |
+| 4 | Change-gated tournament + leaderboard | 5, 6 |
 | 5 | SPA shell + read-only pages | public site |
 | 6 | Live in-browser matches | flagship UX |
 | 7 | Bot builder | contributor on-ramp |
