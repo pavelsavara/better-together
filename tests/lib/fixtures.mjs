@@ -14,17 +14,55 @@ export function broadcast(id, signal) {
     return { id, signal };
 }
 
+/** Minimum untaxable holding: the vote can never seize a player's first T kept seeds. */
+export const UNTAXABLE_MIN = 2;
+
 /**
- * Compute a round-result the way the engine would, from a list of actions.
+ * Resolve the vote the way the engine would: weighted plurality (contributors who
+ * planted >= 3 cast 2 votes, else 1) needing >= 2 distinct voters and the uniquely
+ * highest weight; a target who kept <= UNTAXABLE_MIN is immune.
+ * @param {{id:string,plant:number}[]} actions
+ * @param {{voter:string,target:(string|null)}[]} votes
+ * @returns {{taxTarget:(string|null), taxSeized:number}}
+ */
+export function resolveTax(actions, votes) {
+    const plantOf = new Map(actions.map((a) => [a.id, a.plant]));
+    const tally = new Map(); // target -> { weight, voters:Set }
+    for (const v of votes) {
+        if (!v || v.target == null) continue;
+        const weight = (plantOf.get(v.voter) ?? 0) >= 3 ? 2 : 1;
+        const t = tally.get(v.target) ?? { weight: 0, voters: new Set() };
+        t.weight += weight;
+        t.voters.add(v.voter);
+        tally.set(v.target, t);
+    }
+    let best = null;
+    let tie = false;
+    for (const [target, { weight, voters }] of tally) {
+        if (voters.size < 2) continue; // a lone voter can't tax
+        if (!best || weight > best.weight) { best = { target, weight }; tie = false; }
+        else if (weight === best.weight) tie = true;
+    }
+    if (!best || tie) return { taxTarget: null, taxSeized: 0 };
+    const kept = 10 - (plantOf.get(best.target) ?? 0);
+    if (kept <= UNTAXABLE_MIN) return { taxTarget: null, taxSeized: 0 };
+    const taxSeized = Math.max(1, Math.floor((kept - UNTAXABLE_MIN) / 2));
+    return { taxTarget: best.target, taxSeized };
+}
+
+/**
+ * Compute a round-result the way the engine would, from this round's actions and
+ * (optionally) the ballots cast in the vote phase. The garden is flatly DOUBLED;
+ * any tax-seized seeds are folded into the garden before doubling.
  * @param {{id:string,plant:number,signal:string}[]} actions
  * @param {number} groupSize K
+ * @param {{voter:string,target:(string|null)}[]} votes
  */
-export function roundResult(actions, groupSize = actions.length) {
+export function roundResult(actions, groupSize = actions.length, votes = []) {
     const gardenTotal = actions.reduce((s, a) => s + a.plant, 0);
-    const contributors = actions.filter((a) => a.plant >= 3).length;
-    const multiplier = 1.0 + 0.5 * contributors;
-    const gardenPayout = (gardenTotal * multiplier) / groupSize;
-    return { actions, gardenTotal, multiplier, gardenPayout };
+    const { taxTarget, taxSeized } = resolveTax(actions, votes);
+    const gardenPayout = ((gardenTotal + taxSeized) * 2) / groupSize;
+    return { actions, gardenTotal, votes, taxTarget, taxSeized, gardenPayout };
 }
 
 /** A match-context record. selfId defaults to the first player id. */

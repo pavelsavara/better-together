@@ -26,6 +26,7 @@ These are the load-bearing beliefs the whole design rests on.
 | A6 | **The geometric horizon removes endgame defection.** No round is known-final, so backward induction has no base case. | Min-8 + 1/3 hazard; R never revealed. | Cooperators defecting on a predictable “last” round. |
 | A7 | **Signals are load-bearing.** Talk both rallies the plant and arms the vote; lying is punishable same-round. | Three-phase reveal order. | A field where ignoring signals never costs anything. |
 | A8 | **Collusion is strong but bounded.** Same-author blocs win fairly via real welfare (garden + tax), and random composition caps their edge. | Random match draw; welfare identity. | A 2-bot cartel that tops the crown by kingmaking rather than welfare. |
+| A9 | **The untaxable minimum (T=2) shields cooperators, not free-riders.** A player who kept ≤ 2 (planted ≥ 8) cannot be taxed, so a hostile bloc can't grief a generous planter; the tax bites only hoarding above the floor. | Tax applies to `kept - T`; safety requires planting ≥ 8. | A roster where a full cooperator is repeatedly taxed, or where keeping ≤ 2 still draws a forfeit. |
 
 ---
 

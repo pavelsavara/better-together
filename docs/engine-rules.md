@@ -27,6 +27,8 @@ Tournament (permanent — always running)
 | Group size (K)     | 4–6           | Drawn uniformly at random per match     |
 | Rounds per match   | 8 + geometric | Min 8; after round 8 each further round happens with prob 2/3 (public hazard 1/3). Mean ≈ 10. Realized length unknown to players. |
 | Match draw         | continuous    | The engine draws random groups indefinitely; every subset gets well-sampled over time |
+| Contributor floor  | plant ≥ 3      | Earns a 2-vote ballot (a *franchise*); never affects payout |
+| Untaxable minimum (T) | 2 kept seeds | The vote can never seize a player's first **2** kept seeds; keep ≤ 2 (plant ≥ 8) and you are immune to the tax |
 
 - Bots receive `match_start` with the list of player IDs in their group and K, but **not** the number of rounds.
 - Because any round after the 8th may be the last — and none is *ever* known to be — there is no fixed final round to backward-induct from, so "last round defection" has no base case to unravel from.
@@ -54,10 +56,12 @@ table can collectively discipline a hoarder:
      eligible targets, the one whose vote-weight is the **uniquely highest** is the
      `tax-target`. Fewer than two voters on every target, or a tie for the top
      weight, means **no tax**.
-   - A player who **kept 0** seeds (planted all 10) **cannot be taxed**: if the
-     elected target kept nothing, the round produces **no tax**.
-   - Otherwise seize `floor(kept / 2)`, minimum **1**, from the tax-target's pot
-     (`kept = 10 - plant`) and **add the seized seeds to the garden**.
+   - A player keeps an **untaxable minimum** of `T = 2` seeds: the first 2 seeds
+     in anyone's pot can never be seized. A player who kept **≤ 2** (planted ≥ 8)
+     is therefore **immune** — if the elected target kept ≤ 2, the round produces
+     **no tax**.
+   - Otherwise seize `floor((kept - T) / 2)`, minimum **1**, from the tax-target's
+     pot (`kept = 10 - plant`) and **add the seized seeds to the garden**.
 5. **Compute the garden**:
    - `garden_total` = sum of all `plant` values (before tax)
    - `garden = garden_total + tax_seized`
@@ -102,6 +106,14 @@ them into the garden converts a privately-hoarded seed (worth 1) into shared,
 doubled value (worth 2). That is the "better together" mechanic in this design:
 not a lone martyr subsidising the table, but the table **collectively
 confiscating** what a free-rider tried to keep.
+
+**The untaxable minimum protects honest keepers.** The vote can never reach a
+player's first `T = 2` kept seeds, so a generous planter (kept ≤ 2) is immune and
+a hostile bloc cannot grief a full cooperator for spite. The tax bites only the
+seeds a hoarder keeps *above* that floor — it disciplines free-riding, not mere
+self-interest. Because the floor protects *kept* seeds and the endowment is 10,
+the only way to be fully safe is to plant generously (≥ 8), so safety and
+cooperation point the same way.
 
 #### The coalition is load-bearing
 
@@ -266,24 +278,24 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
    planted 0 → **1 vote**. Bob is the obvious hoarder, so Alice, Carol, and Dave
    all vote to tax Bob (Bob abstains).
 3. **Tax**: three distinct voters named Bob (6 vote-weight) — a coalition with the
-   uniquely highest weight, and Bob kept 10 (> 0), so he is taxable. Bob is the
-   `tax-target`. Seize `floor(kept / 2)` = `floor(10 / 2)` = **5** seeds
-   from Bob's pot into the garden.
-4. `garden` = 21 + 5 = **26**
-5. `garden_payout` = 26 × 2 / 4 = **13.0** (everyone gets this — even Bob)
+   uniquely highest weight, and Bob kept 10 (above the untaxable minimum T=2), so
+   he is taxable. Bob is the `tax-target`. Seize `floor((kept - 2) / 2)` =
+   `floor(8 / 2)` = **4** seeds from Bob's pot into the garden.
+4. `garden` = 21 + 4 = **25**
+5. `garden_payout` = 25 × 2 / 4 = **12.5** (everyone gets this — even Bob)
 6. Round scores (`kept` minus tax for Bob, plus payout):
 
 | Player | seeds_kept | tax | garden_payout | round_score |
 |--------|-----------|-----|---------------|-------------|
-| Alice  | 2         | —   | 13.0          | **15.0**    |
-| Bob    | 10        | −5  | 13.0          | **18.0**    |
-| Carol  | 4         | —   | 13.0          | **17.0**    |
-| Dave   | 3         | —   | 13.0          | **16.0**    |
+| Alice  | 2         | —   | 12.5          | **14.5**    |
+| Bob    | 10        | −4  | 12.5          | **18.5**    |
+| Carol  | 4         | —   | 12.5          | **16.5**    |
+| Dave   | 3         | —   | 12.5          | **15.5**    |
 
-**Observation**: Bob still edges the round (18.0) — a single tax doesn't erase a
+**Observation**: Bob still edges the round (18.5) — a single tax doesn't erase a
 free-ride — but the tax pulled him down from an untaxed 20.5 and lifted everyone
-else by 2.5. Check the identity: `group_total` = 15+18+17+16 = **66** =
-`10K + garden_total + tax_seized` = 40 + 21 + 5. Had Bob also planted 8, no tax
+else by 2.0. Check the identity: `group_total` = 14.5+18.5+16.5+15.5 = **65** =
+`10K + garden_total + tax_seized` = 40 + 21 + 4. Had Bob also planted 8, no tax
 would be needed, `garden_total` = 29, and `group_total` = 40 + 29 = **69** — still
 strictly better. **Cooperation dominates; the tax just makes hoarding cost the
 hoarder and pay the table.**

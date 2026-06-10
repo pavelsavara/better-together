@@ -51,7 +51,8 @@ interface types {
     /// A tax-phase ballot: the id of the player to tax this round, or none to
     /// abstain. A target named by at least two distinct voters, with the uniquely
     /// highest vote-weight, has seeds seized from their pot into the garden; a lone
-    /// voter, a tie for the top weight, or a kept-0 target → no tax.
+    /// voter, a tie for the top weight, or a target who kept <= 2 (the untaxable
+    /// minimum) → no tax.
     type ballot = option<player-id>;
 
     /// One player's ballot in the vote phase, revealed to everyone afterwards so
@@ -81,10 +82,12 @@ interface types {
         votes: list<vote-record>,
         /// The player the table voted to tax (named by >= 2 distinct voters with
         /// the uniquely highest vote-weight), if any. None when fewer than two
-        /// voters agreed, the top weight tied, or the target kept nothing.
+        /// voters agreed, the top weight tied, or the target kept <= 2 (the
+        /// untaxable minimum).
         tax-target: option<player-id>,
         /// Seeds seized from the tax-target's pot and added to the garden
-        /// (floor(kept / 2), minimum 1). Zero when there was no tax.
+        /// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
+        /// minimum of 2 seeds). Zero when there was no tax.
         tax-seized: u8,
         /// ((garden-total + tax-seized) * 2) / group-size, paid to every player.
         /// The garden is flatly DOUBLED — there is no diversity multiplier; the
@@ -174,8 +177,8 @@ interface player {
         /// Vote phase: after every plant is revealed (`state.plants`), cast a
         /// ballot — name one player to tax, or `none` to abstain. A target named by
         /// at least two distinct voters, with the uniquely highest vote-weight, has
-        /// seeds seized from their pot into the garden (a kept-0 target is untaxable).
-        /// Contributors — players who planted >= 3 THIS round —
+        /// seeds seized from their pot into the garden (a target who kept <= 2 — the
+        /// untaxable minimum — is immune). Contributors — players who planted >= 3 THIS round —
         /// cast 2 votes; everyone else casts 1. Abstaining is free and common
         /// (Micro always abstains). Must respect the 10 ms / 16 MB budget.
         vote: func(state: round-state) -> result<ballot>;
