@@ -40,9 +40,9 @@ echo "==> gopher  (Go / TinyGo / wit-bindgen-go)"
 )
 cp "${ROOT}/samples/gopher/gopher.wasm" "${DIST}/gopher.wasm"
 
-echo "==> micro   (hand-written WebAssembly text / wasm-tools)"
-( cd "${ROOT}/samples/micro" && wasm-tools parse src/micro.wat -o micro.wasm )
-cp "${ROOT}/samples/micro/micro.wasm" "${DIST}/micro.wasm"
+echo "==> nib   (hand-written WebAssembly text / wasm-tools)"
+( cd "${ROOT}/samples/nib" && wasm-tools parse src/nib.wat -o nib.wasm )
+cp "${ROOT}/samples/nib/nib.wasm" "${DIST}/nib.wasm"
 
 echo "==> keith   (C++ / wit-bindgen cpp / wasm32-wasip2)"
 ( cd "${ROOT}/samples/keith" && ./build.sh )
@@ -84,7 +84,7 @@ cp "${ROOT}/samples/dusty/dusty.wasm" "${DIST}/dusty.wasm"
 
 echo
 echo "==> validating components"
-for sample in ferris corro khaos gopher micro keith andy dusty bram reynard; do
+for sample in ferris corro khaos gopher nib keith andy dusty bram reynard; do
   echo "--- ${sample}.wasm ---"
   wasm-tools validate "${DIST}/${sample}.wasm"
   wasm-tools component wit "${DIST}/${sample}.wasm" | grep -E 'better-together:gardener/player' || true

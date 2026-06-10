@@ -2,7 +2,7 @@
 // scripted social environment, asserting the decisions it actually makes.
 //
 // Behaviours under test (from each sample's source / docs):
-//   micro  : talk == 'watch' always; plant == (#bloom broadcasts) + 4, clamp 10.
+//   nib  : talk == 'watch' always; plant == (#bloom broadcasts) + 4, clamp 10.
 //   corro  : talk == 'bloom' always; plant 4 when garden is barren (round 1 or no
 //            opponent staked >=3 last round), else plant 0 (feast).
 //   ferris : round 1 (no signals) -> plant 8, bloom; majority-bloom signals ->
@@ -17,7 +17,7 @@
 //   dusty  : graduated Tit-for-Tat mouse; persists a binary memory file whose
 //            seeded coop-rate brightens or chills its opening nibble.
 //   bram   : coalition organizer; bloom + generous anchor every round, maxes out
-//            when a guild member (micro/gopher) is seated, and votes to tax the
+//            when a guild member (nib/gopher) is seated, and votes to tax the
 //            fattest hoarder (never a member or arbiter ally); persists a roster.
 //   reynard: velvet-gloved skimmer; always bloom, plants a credible handful but
 //            trims to the floor on a fat table (unless an arbiter is seated),
@@ -41,10 +41,10 @@ async function loadOrSkip(name, opts) {
 }
 
 export function register() {
-    // ──────────────────────────── micro ────────────────────────────
+    // ──────────────────────────── nib ────────────────────────────
     // Single-call invariants (safe for every runtime).
-    test('micro: always signals watch', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: always signals watch', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const sig = await p.talk(h, roundState({ round: 1 }));
@@ -54,8 +54,8 @@ export function register() {
         }
     });
 
-    test('micro: plant == bloom-count + 4 (two blooms -> 6)', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant == bloom-count + 4 (two blooms -> 6)', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = [broadcast('a', 'bloom'), broadcast('b', 'bloom'), broadcast('c', 'hold')];
@@ -66,8 +66,8 @@ export function register() {
         }
     });
 
-    test('micro: plant clamps to 10 on a fully blooming table', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant clamps to 10 on a fully blooming table', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((id) => broadcast(id, 'bloom'));
@@ -78,8 +78,8 @@ export function register() {
         }
     });
 
-    test('micro: plant == 4 with no bloom promises', async () => {
-        const p = await loadOrSkip('micro');
+    test('nib: plant == 4 with no bloom promises', async () => {
+        const p = await loadOrSkip('nib');
         try {
             const h = await p.create();
             const signals = [broadcast('a', 'hold'), broadcast('b', 'watch')];
@@ -644,12 +644,12 @@ export function register() {
         }
     });
 
-    test('bram: maxes out when a guild member (micro) is seated', async () => {
+    test('bram: maxes out when a guild member (nib) is seated', async () => {
         const p = await loadOrSkip('bram');
         try {
             const h = await p.create();
-            // Micro is one of Bram's unwitting members — he rallies the bloc to 10.
-            await p.matchStart(h, matchContext({ players: ['self', 'micro', 'b'], selfId: 'self' }));
+            // Nib is one of Bram's unwitting members — he rallies the bloc to 10.
+            await p.matchStart(h, matchContext({ players: ['self', 'nib', 'b'], selfId: 'self' }));
             await p.talk(h, roundState({ round: 1 }));
             const plant = await p.plant(h, roundState({ round: 1 }));
             assert.equal(plant, 10, 'with a member at the table bram keeps the payout high');
@@ -676,9 +676,9 @@ export function register() {
         const p = await loadOrSkip('bram');
         try {
             const h = await p.create();
-            await p.matchStart(h, matchContext({ players: ['self', 'micro', 'thrifty'], selfId: 'self' }));
-            // Micro hoards the most (kept 9) but is a member; thrifty (kept 5) is fair game.
-            const plants = [action('self', 9, 'bloom'), action('micro', 1, 'watch'), action('thrifty', 5, 'bloom')];
+            await p.matchStart(h, matchContext({ players: ['self', 'nib', 'thrifty'], selfId: 'self' }));
+            // Nib hoards the most (kept 9) but is a member; thrifty (kept 5) is fair game.
+            const plants = [action('self', 9, 'bloom'), action('nib', 1, 'watch'), action('thrifty', 5, 'bloom')];
             const ballot = await p.vote(h, roundState({ round: 1, plants }));
             assert.equal(ballot, 'thrifty', 'bram never crosses a member, even the fattest one');
         } finally {
@@ -704,7 +704,7 @@ export function register() {
         const p = await loadOrSkip('bram');
         try {
             const h = await p.create();
-            const oppIds = ['micro', 'greedy'];
+            const oppIds = ['nib', 'greedy'];
             await p.matchStart(h, matchContext({ players: ['self', ...oppIds], selfId: 'self' }));
             await runMatch(p, h, {
                 players: ['self', ...oppIds],

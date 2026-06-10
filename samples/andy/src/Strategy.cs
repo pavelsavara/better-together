@@ -395,12 +395,12 @@ internal sealed class Brain
     }
 
     /// The honest coalition Andy stands with — Bram's guild (the beaver, his
-    /// rallied members Micro and Gopher) and the other arbiter, Keith. He never
+    /// rallied members Nib and Gopher) and the other arbiter, Keith. He never
     /// aims the tax at any of them.
     private static bool IsGuild(string id)
     {
         var lower = id.ToLowerInvariant();
-        return lower.Contains("bram") || lower.Contains("micro")
+        return lower.Contains("bram") || lower.Contains("nib")
             || lower.Contains("gopher") || lower.Contains("keith");
     }
 

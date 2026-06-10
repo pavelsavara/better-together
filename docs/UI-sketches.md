@@ -3,7 +3,8 @@
 [← Back to README](../README.md) · See also: [Architecture](architecture.md) · [Implementation Plan](implementation-plan.md)
 
 Low-fidelity wireframes for the Better Together web UI — a **serverless**
-Vite + React + MUI + jsco SPA served from `github.io`. The UI is **exhibition
+Vite + React + jsco SPA served from `github.io`, styled with **hand-rolled CSS**
+(no component framework) for a raw-terminal look. The UI is **exhibition
 only**: it never writes to the tournament; it reads `data/index.json`,
 `data/scores.json`, and same-origin `wasm/*.wasm`, and runs live matches in the
 browser with the *same* engine core the CI tournament uses
@@ -16,7 +17,9 @@ Conventions in these sketches: `[ Button ]`, `( ) radio`, `[x] checkbox`,
 
 ## 0. App shell & navigation
 
-A persistent MUI `AppBar` + responsive nav. Dark, "garden at night" theme.
+A persistent hand-rolled header bar + responsive nav. **Botanical-terminal**
+theme — glowing violet line-art on near-black, monospace throughout, ASCII
+chrome (see [§8](#8-theming--mood)).
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -241,7 +244,7 @@ locally against chosen opponents.
 │  ▸ WASI — the capability-based sandbox bots run in            ↗            │
 │  ▸ better-together — the game, contracts, and sample bots     ↗            │
 │                                                                            │
-│  Built with: TypeScript · Vite · MUI · jsco · WASI 0.2                     │
+│  Built with: TypeScript · Vite · jsco · WASI 0.2                           │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -288,12 +291,60 @@ How each visual element binds to the data contracts
 
 ---
 
-## 8. Theming & accessibility notes
+## 8. Theming & mood
 
-- MUI dark theme, green/earth accent; glyphs carry meaning so always pair them
-  with the bot's `name` text (don't rely on emoji alone — screen-reader labels).
+The whole site reads as a **botanical terminal** — a retro console booted in a
+greenhouse at night. Think *"phosphor garden"*: near-black panels, glowing violet
+line-art, monospace everything, and hand-drawn ASCII chrome.
+
+### Palette (violet-on-black)
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| `bg.void` | `#0a0a0f` | app background (near-black, faint blue-violet tint) |
+| `bg.panel` | `#12101a` | panel fills, slightly lifted from the void |
+| `border.frame` | `#3a2f5c` | ASCII/box-drawing frame strokes (`+ | # ─ │`) |
+| `accent.bloom` | `#b98cff` | primary violet — headers, active glyphs, plant line-art |
+| `accent.glow` | `#d9b8ff` | hover/active highlight, soft text-shadow glow |
+| `accent.dim` | `#6d5a99` | inactive borders, secondary labels, `░` fills |
+| `text.primary` | `#e8e2f5` | body text (lavender-white) |
+| `text.muted` | `#8a82a6` | captions, hints, disabled |
+| `state.positive` | `#7ee0c8` | positive co-player / cooperation cues (mint) |
+| `state.warn` | `#ffb37e` | tax / "selfish" tells (warm amber, used sparingly) |
+
+The page is overwhelmingly **violet + black**; mint and amber appear *only* to
+mark game outcomes (cooperation vs. free-riding), so they read as signal, not
+decoration.
+
+### Type & texture
+
+- **Hand-rolled CSS, no component framework.** The raw-terminal look is built
+  from plain CSS (custom properties for the palette below, CSS grid/flex for
+  layout) rather than a UI kit — nothing rounds corners or adds drop shadows we
+  didn't author. Chrome is drawn, not themed.
+- **Monospace throughout** (e.g. `JetBrains Mono` / `IBM Plex Mono`), including
+  headings — the terminal feel depends on a single fixed-width family.
+- **ASCII chrome.** Panels are framed with box-drawing/`#` borders; section
+  titles sit in `═══| TITLE |═══` rules; primary actions are bracket-keyed
+  (`[P]LANT`, `[W]ATER`, `[H]ARVEST`). Corner flourishes and small leaf sprigs
+  (`❧`, hairline vines) dress panel corners.
+- **Botanical line-art.** Plants/avatars render as thin single-weight violet
+  strokes on black (the `glyph` is the in-garden token; line-art is for hero
+  panels and the Bot Detail avatar frame).
+- **Soft glow.** A subtle `text-shadow`/`box-shadow` in `accent.glow` on active
+  elements simulates phosphor bloom — kept low so text stays crisp.
+
+### Accessibility
+
+- Glyphs and line-art always carry meaning, so **pair them with the bot's `name`
+  text** and screen-reader labels — never rely on emoji/art alone.
+- The violet-on-black palette is tuned for **WCAG AA** body contrast
+  (`text.primary` on `bg.void`); the glow is decorative and never the sole
+  carrier of state — mint/amber are reinforced with text/icons.
 - Match animation respects `prefers-reduced-motion` (fall back to instant phase
-  transitions).
-- The live match view is fully keyboard-operable (Run/Pause/Step buttons).
+  transitions); the phosphor glow is dialed down or removed under that setting.
+- The live match view is fully keyboard-operable (Run/Pause/Step buttons), and
+  the bracket-key labels (`[P]`, `[W]`, …) double as real keyboard shortcuts.
 - All bot-supplied strings (`lore`, `name`, banter) are rendered as **text, never
   HTML**, to avoid injection from untrusted metadata.
+

@@ -45,7 +45,7 @@ const SAMPLE_WASM = {
     corro: ['samples/corro/target/wasm32-wasip1/release/corro.wasm', 'dist/corro.wasm'],
     khaos: ['samples/khaos/khaos.wasm', 'dist/khaos.wasm'],
     gopher: ['samples/gopher/gopher.wasm', 'dist/gopher.wasm'],
-    micro: ['samples/micro/micro.wasm', 'dist/micro.wasm'],
+    nib: ['samples/nib/nib.wasm', 'dist/nib.wasm'],
     keith: ['samples/keith/keith.wasm', 'dist/keith.wasm'],
     andy: ['samples/andy/bin/Release/net10.0/wasi-wasm/native/andy.wasm', 'dist/andy.wasm'],
     bram: ['samples/bram/bin/Release/net10.0/wasi-wasm/native/bram.wasm', 'dist/bram.wasm'],
@@ -113,7 +113,7 @@ export function unwrap(result, what = 'call') {
 /**
  * Instantiate a gardener sample and return a friendly wrapper.
  *
- * @param {string} name sample id (ferris, corro, khaos, gopher, micro, attacker)
+ * @param {string} name sample id (ferris, corro, khaos, gopher, nib, attacker)
  * @param {object} [opts]
  * @param {Map<string, Uint8Array|string>} [opts.fs] in-memory VFS (defaults to empty Map)
  * @param {[string,string][]} [opts.env] environment variables

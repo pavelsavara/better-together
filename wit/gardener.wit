@@ -188,7 +188,7 @@ interface player {
         /// seeds reclaimed from their pot into the garden (a target who kept <= 2 — the
         /// untaxable minimum — is immune). Contributors — players who planted >= 3 THIS round —
         /// cast 2 votes; everyone else casts 1. Abstaining is free and common
-        /// (Micro always abstains). Must respect the 50 ms / 256 KB budget.
+        /// (Nib always abstains). Must respect the 50 ms / 256 KB budget.
         vote: func(state: round-state) -> result<ballot>;
 
         /// The match has ended. Persist any updated memory to the virtual

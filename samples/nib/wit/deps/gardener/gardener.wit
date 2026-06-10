@@ -1,0 +1,182 @@
+// Vendored data-plane contract for the `nib` sample.
+//
+// This is a trimmed copy of ../../wit/gardener.wit containing ONLY the `types`
+// and `player` interfaces — the part a player component actually implements.
+// The full `world gardener` (which imports the wasi:* interfaces) is omitted on
+// purpose: the sample's own `world nib` (see world.wit) just re-exports
+// `better-together:gardener/player`. `nib` is hand-written WAT, so the exact
+// type and method shapes below are mirrored by hand in ../../src/nib.wat —
+// keep the two in sync if the contract ever changes.
+package better-together:gardener@0.1.0;
+
+/// Shared value types used by both the player and the engine.
+interface types {
+    /// A persistent, globally unique player identity (e.g. a component name).
+    type player-id = string;
+
+    /// A player component's self-description: who wrote it and where it lives.
+    /// Returned by `gardener.metadata` so the engine can build a registry /
+    /// leaderboard without constructing or running the player.
+    record metadata {
+        /// Fully-qualified identity as `namespace.name` (e.g. "together.Ferris").
+        /// The `namespace` segment groups players by publisher and is validated
+        /// by the engine — see engine-rules.md §Validation (it must match
+        /// `^[a-z][a-z0-9-]*$`). Often used as the player-id.
+        name: string,
+        /// Semantic version of this player, e.g. "1.0.0".
+        version: string,
+        /// Author or team that wrote this player.
+        author: string,
+        /// Project / source repository URL.
+        repo: string,
+        /// A short, in-character backstory for this gardener. Flavor only — the
+        /// engine never parses it; it exists so leaderboards and match logs can
+        /// show who this bot *is*.
+        lore: string,
+        /// A single UTF character (emoji/glyph) shown as this gardener's icon on
+        /// the garden in the UI, e.g. "🦀".
+        glyph: string,
+        /// URL of an avatar picture for this player, or none if it has no avatar.
+        icon: option<string>,
+    }
+
+    /// The public broadcast a player emits each round. Cheap talk — it carries
+    /// no enforced meaning and may be honest or deceptive. Because talk is
+    /// revealed before plants AND before the tax vote, a signal both rallies the
+    /// plant and foreshadows the vote.
+    enum signal {
+        /// "I intend to plant generously this round" — and accept the tax if I lie.
+        bloom,
+        /// "I intend to keep most/all of my seeds" — expect a vote.
+        hold,
+        /// "I'm deciding based on what others do" — including whom to tax.
+        watch,
+    }
+
+    /// A tax-phase ballot: the player to tax this round, or none to abstain.
+    type ballot = option<player-id>;
+
+    /// One player's ballot in the vote phase, revealed to everyone afterwards.
+    record vote-record {
+        voter: player-id,
+        target: option<player-id>,
+    }
+
+    /// What a single player did in a given round, revealed to everyone.
+    record player-action {
+        id: player-id,
+        /// Seeds placed in the shared garden this round, 0-10.
+        plant: u8,
+        signal: signal,
+    }
+
+    /// The fully resolved outcome of one round, broadcast to all players.
+    record round-result {
+        /// One entry per player in the match.
+        actions: list<player-action>,
+        /// Sum of every player's `plant` this round, BEFORE the tax is applied.
+        garden-total: u16,
+        /// Every ballot cast in the vote phase this round.
+        votes: list<vote-record>,
+        /// The player the table voted to tax (named by >= 2 distinct voters with the
+        /// uniquely highest vote-weight; targets who kept <= 2 are untaxable), if any.
+        tax-target: option<player-id>,
+        /// Seeds reclaimed from the tax-target's pot into the garden
+        /// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
+        /// minimum of 2 seeds). Zero when there was no tax.
+        tax-collected: u8,
+        /// ((garden-total + tax-collected) * 2) / group-size, paid to every player.
+        /// The garden is flatly DOUBLED — there is no diversity multiplier.
+        garden-payout: f32,
+    }
+
+    /// Delivered once at the start of a match, before any rounds.
+    record match-context {
+        /// Identifier for this match.
+        match-id: string,
+        /// Every player in this match, including yourself.
+        players: list<player-id>,
+        /// Your own identity within `players`.
+        self-id: player-id,
+        /// Group size K (4-6). The number of rounds R is intentionally hidden.
+        group-size: u8,
+    }
+
+    /// One player's broadcast for the CURRENT round, revealed to everyone during
+    /// the talk phase before anyone plants.
+    record signal-broadcast {
+        id: player-id,
+        signal: signal,
+    }
+
+    /// Delivered to `talk`, `plant`, and `vote` each round. The number of
+    /// remaining rounds is never revealed.
+    record round-state {
+        /// 1-based index of the round you are about to play.
+        round: u8,
+        /// Every previous round of this match, oldest first.
+        history: list<round-result>,
+        /// This round's broadcasts. Empty when passed to `talk` (no one has
+        /// spoken yet); when passed to `plant` and `vote` it holds the signal
+        /// every player — including you — broadcast this round.
+        signals: list<signal-broadcast>,
+        /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
+        /// (after plants are revealed) so a ballot can target a free-rider.
+        plants: list<player-action>,
+    }
+
+    /// Delivered once when the match ends.
+    record match-summary {
+        /// How many rounds the match actually ran (R, >= 8).
+        rounds-played: u8,
+        /// Final match score for every player.
+        final-scores: list<tuple<player-id, f32>>,
+        /// Your own final match score.
+        your-score: f32,
+    }
+}
+
+/// The contract every player component implements. The host constructs
+/// one `gardener` per seat, then the engine drives it in order across a match:
+/// match-start, then `talk` + `plant` per round, then match-end.
+interface player {
+    use types.{metadata, signal, ballot, match-context, round-state, match-summary};
+
+    /// Static factory: create a new player instance. The host calls this
+    /// once per seat to spin up a gardener, which loads any persisted memory
+    /// from the virtual filesystem and prepares to play.
+    create: func() -> result<gardener>;
+
+    /// A single seated player. The host creates one of these per
+    /// gardener component and forwards the engine's calls to it.
+    resource gardener {
+        /// Describe this player: name, version, author, repository URL, and lore.
+        metadata: func() -> result<metadata>;
+
+        /// Begin a new match.
+        match-start: func(context: match-context) -> result;
+
+        /// Talk phase: broadcast this round's signal BEFORE anyone plants.
+        /// `state.signals` is empty here. Cheap talk — it may be honest or a
+        /// lie. Must respect the 50 ms / 256 KB budget.
+        talk: func(state: round-state) -> result<signal>;
+
+        /// Plant phase: decide how many of your 10 seeds to plant, 0-10 (the
+        /// engine clamps out-of-range values). `state.signals` now holds every
+        /// player's talk from this round, so you can react to what was promised.
+        /// Must respect the 50 ms / 256 KB budget.
+        plant: func(state: round-state) -> result<u8>;
+
+        /// Vote phase: after every plant is revealed (`state.plants`), cast a
+        /// ballot — name one player to tax, or `none` to abstain. A target named by
+        /// >= 2 distinct voters with the uniquely highest vote-weight (and kept > 2)
+        /// has seeds reclaimed into the garden.
+        /// Contributors — players who planted >= 3 THIS round — cast 2 votes;
+        /// everyone else casts 1. Nib always abstains. Must respect the budget.
+        vote: func(state: round-state) -> result<ballot>;
+
+        /// The match has ended. Persist any updated memory to the virtual
+        /// filesystem here (there is no return blob).
+        match-end: func(summary: match-summary) -> result;
+    }
+}

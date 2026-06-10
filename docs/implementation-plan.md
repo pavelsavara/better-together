@@ -145,7 +145,7 @@ only *reads* data or links out.
 
 | Task | Deliverable |
 |------|-------------|
-| Scaffold `web/` (Vite + React + TS + MUI), dark garden theme | `web/package.json`, app shell + router |
+| Scaffold `web/` (Vite + React + TS, hand-rolled CSS), botanical-terminal theme | `web/package.json`, app shell + router |
 | Global data provider (fetch + cache `index.json`, `scores.json`) | `web/src/data/` |
 | Top Scores page (Co-Player/Raw tabs, confidence whiskers, rows link to detail) | `web/src/pages/Scores.tsx` |
 | Bot Detail page (`/bot/:id`): full metadata + cached avatar + standing | `web/src/pages/Bot.tsx` |

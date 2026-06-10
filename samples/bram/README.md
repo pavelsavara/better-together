@@ -36,9 +36,9 @@ Beavers build communal dams; Bram builds communal gardens. His playbook:
 Bram's power is that two of the game's simplest bots are, in effect, his
 members — steerable by a boss who understands them:
 
-- **[Micro](../micro/README.md) — the unwitting member.** Micro plants
-  `(number of BLOOM signals this round) + 4`. Bram doesn't need Micro's *consent*
-  — every `BLOOM` the guild broadcasts mechanically *pumps* Micro's plant. Micro
+- **[Nib](../nib/README.md) — the unwitting member.** Nib plants
+  `(number of BLOOM signals this round) + 4`. Bram doesn't need Nib's *consent*
+  — every `BLOOM` the guild broadcasts mechanically *pumps* Nib's plant. Nib
   is too simple to know it's in a guild; it just follows the promises, and Bram
   manufactures them.
 - **[Gopher](../gopher/README.md) — the loyal reflex.** Gopher is win-stay,

@@ -7,7 +7,7 @@
 //
 // Bram is the coalition organizer: he plants generously every round as the
 // table's anchor, signals BLOOM honestly, recognizes his guild members
-// (Micro, Gopher) and rallies the bloc, and aims the tax vote at the fattest
+// (Nib, Gopher) and rallies the bloc, and aims the tax vote at the fattest
 // hoarder — never at a member, never at an arbiter ally (Keith, Andy).
 
 using System.Text.Json;
@@ -231,13 +231,13 @@ internal sealed class Brain
     // ──────────────────────── recognition ────────────────────────
 
     /// The guild: the two simplest bots are, in effect, Bram's members — every
-    /// BLOOM he broadcasts pumps Micro's plant, and Gopher's win-stay reflex
+    /// BLOOM he broadcasts pumps Nib's plant, and Gopher's win-stay reflex
     /// keeps cooperating while the payout stays high. Also anyone he has rallied
     /// before (persisted in the roster).
     private bool IsMember(string id)
     {
         var lower = id.ToLowerInvariant();
-        return lower.Contains("micro") || lower.Contains("gopher") || _roster.Members.Contains(id);
+        return lower.Contains("nib") || lower.Contains("gopher") || _roster.Members.Contains(id);
     }
 
     /// The arbiters share Bram's politics; he never aims the tax at them.

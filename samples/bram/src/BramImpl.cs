@@ -28,7 +28,7 @@ public sealed class PlayerImpl : IPlayer
             author: "Better Together samples",
             repo: "https://github.com/pavelsavara/better-together",
             lore: "A beaver who plays for his table, not his pot. He fills the dam "
-                + "from the front, rallies his guild — Micro and Gopher follow his "
+                + "from the front, rallies his guild — Nib and Gopher follow his "
                 + "lead by reflex — and when a free-rider sits down to skim the common "
                 + "stream, he calls the vote and taxes the fattest hoarder dry. He "
                 + "never crosses a member, never lets one be punished alone, and counts "

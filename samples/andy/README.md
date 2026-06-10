@@ -38,7 +38,7 @@ table's behaviour** — and only to what players actually *did*, never to what t
   spines are a visible *warning*, never a bluff.
 
 > **Deeds over words.** Andy deliberately ignores the *current* round's signals
-> when deciding how much to plant — that's [Micro](../micro/README.md)'s job, and
+> when deciding how much to plant — that's [Nib](../nib/README.md)'s job, and
 > policing whether a promise was *kept* is [Keith](../keith/README.md)'s. A table
 > can promise `BLOOM` all it likes; Andy waits to see the seeds hit the dirt and
 > reciprocates *next* round.

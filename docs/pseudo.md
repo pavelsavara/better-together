@@ -127,7 +127,7 @@ vote(state):  # forgiveness stays primary; aim only at a stubborn free-rider
   defections[id] = count of rounds this match where id planted < Stake=3
   candidates = this round's plants, not self, kept = 10-plant > UNTAXABLE=2,
                defections[id] ≥ PersistentFoe=2,
-               and NEVER a guild member (bram/micro/gopher/keith) or remembered friend
+               and NEVER a guild member (bram/nib/gopher/keith) or remembered friend
   pick max by: defections desc, then kept desc, then lowest id; none → abstain
 match_end:    fold collab (plant≥6) into trust (α=0.40), decay all trust ×0.97 toward neutral, prune; save
 ```
@@ -153,7 +153,7 @@ match_end:    persist verdict map if changed
 [`samples/bram/src/Strategy.cs`](../samples/bram/src/Strategy.cs)
 
 ```
-match_start: members = seated ids containing "micro"/"gopher" or in saved roster
+match_start: members = seated ids containing "nib"/"gopher" or in saved roster
 talk(round):  return BLOOM (honest; anchor 9 ≥ threshold 5)
 plant(round): return member seated ? RALLY=10 : ANCHOR=9   # lead from the front
 vote(plants):  # aim at the fattest hoarder
@@ -187,9 +187,9 @@ match_end:    if this table's avg≥7 → remember all opponents as "rich"; save
 
 ---
 
-## 🌱 Micro (hand-written WAT) — minimalist signal-matcher, no memory
+## 🖋️ Nib (hand-written WAT) — minimalist signal-matcher, no memory
 
-[`samples/micro/src/micro.wat`](../samples/micro/src/micro.wat)
+[`samples/nib/src/nib.wat`](../samples/nib/src/nib.wat)
 
 ```
 talk(state):  return WATCH           # always (honest: "deciding by others")
@@ -218,7 +218,7 @@ match_end:   attempt path traversal ../../.. → must trap
 
 - **Honest signallers** (talk reflects plant): Ferris, Gopher, Dusty, Keith, Andy, Bram.
   **Liars / noise:** Corro (always BLOOM), Reynard (always BLOOM), Khaos (random).
-- **Who casts a tax vote** — nine of the ten do; Micro is the lone abstainer:
+- **Who casts a tax vote** — nine of the ten do; Nib is the lone abstainer:
   - *Reputation / promise enforcers:* Keith (worst oath-breaker), Ferris (proven
     defector still skimming), Andy (most persistent free-rider, but never a guild
     member or remembered friend, and only after a forgiveness round).
@@ -227,10 +227,10 @@ match_end:   attempt path traversal ../../.. → must trap
   - *Self-interested aimers:* Corro (taxes the generous mark), Bram (fattest
     hoarder), Reynard (fattest skimmer, but abstains under an arbiter's gaze),
     Khaos (random opponent, half the time).
-  - *Principled abstainers:* Micro always returns `none` — it keeps no memory or
+  - *Principled abstainers:* Nib always returns `none` — it keeps no memory or
     grudge, so it never casts a tax vote.
 - **Universal guardrails** every voter shares: never tax yourself, never tax the
     untaxable (kept ≤ 2), and abstain when no target qualifies. Ties break on the
     lowest id for determinism.
-- **All ten players now export `vote`** — Micro's hand-written WAT was the last
+- **All ten players now export `vote`** — Nib's hand-written WAT was the last
   gap and now abstains, so the roster is complete.

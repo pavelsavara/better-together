@@ -10,7 +10,7 @@ how the web UI consumes it. It is the contract between the four moving parts:
 2. **Validation Action** — GitHub Action that validates a submitted bot.
 3. **Tournament engine** — a TypeScript/Node orchestrator that runs matches on a
    schedule (`game/`).
-4. **Web UI** — a serverless Vite + MUI + jsco SPA (`web/`) served from
+4. **Web UI** — a serverless Vite + jsco SPA (`web/`) served from
    `github.io`.
 
 All four are **serverless**: there is no always-on backend. State is a set of
@@ -35,7 +35,7 @@ flowchart TB
     end
 
     GP -->|served as static site| PAGES[username.github.io]
-    PAGES --> UI[Web UI SPA<br/>Vite + MUI + jsco]
+    PAGES --> UI[Web UI SPA<br/>Vite + jsco]
     UI -->|fetch index.json, scores.json, .wasm| PAGES
     UI -->|"Submit bot" deep-link| ISSUE
 ```
@@ -454,8 +454,8 @@ The UI displays the seed and can re-run a logged match from it (§5).
 
 ## 5. Web UI (`web/`)
 
-A **serverless SPA** (Vite + React + MUI + jsco), built into the `gh-pages`
-site. It is **exhibition only** — nothing it does affects the official
+A **serverless SPA** (Vite + React + jsco, hand-rolled CSS), built into the
+`gh-pages` site. It is **exhibition only** — nothing it does affects the official
 leaderboard. See [UI Sketches](UI-sketches.md) for wireframes.
 
 ```mermaid
@@ -551,7 +551,7 @@ better-together/
 │   │   ├── validate/  # OCI pull, id (fnv1a32) + avatar resize, checks, admit
 │   │   └── run.ts     # scheduled entry point
 │   └── package.json
-├── web/           # SPA (Vite + MUI + jsco)                        ← this design
+├── web/           # SPA (Vite + jsco, hand-rolled CSS)              ← this design
 │   ├── src/{pages,components,engine,data}/  # pages incl. /bot/:id detail
 │   └── package.json
 ├── .github/

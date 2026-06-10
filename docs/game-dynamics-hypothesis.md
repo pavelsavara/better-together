@@ -38,9 +38,9 @@ Each scenario: the seated bots, the predicted dynamics, the predicted
 
 > Reminder of the cast: **Ferris** (naive collaborator), **Corro** (blatant
 > feaster), **Khaos** (dice-rolled friend/foe; Reynard fated friend, Bram fated
-> foe), **Gopher** (Pavlov), **Micro** (signal-matcher, always abstains),
+> foe), **Gopher** (Pavlov), **Nib** (signal-matcher, always abstains),
 > **Keith** (generous TfT + lie ledger), **Andy** (TfT hedgehog), **Dusty**
-> (graduated TfT), **Reynard** (polite skimmer), **Bram** (guild boss; Micro &
+> (graduated TfT), **Reynard** (polite skimmer), **Bram** (guild boss; Nib &
 > Gopher are his members).
 
 ---
@@ -68,11 +68,11 @@ early then erodes.
 ---
 
 ### R3 — The skimmer hides (unorganized table)
-**Seats (K=4):** Reynard, Ferris, Gopher, Micro.
+**Seats (K=4):** Reynard, Ferris, Gopher, Nib.
 **Predicted dynamics:** Reynard signals BLOOM, plants a credible 3–4 — above the
 contributor floor, so he keeps 2 votes and never *looks* like a free-rider. No
 reputation-hawk and no guild boss is seated, so **no bloc forms to tax him**.
-Micro abstains; Gopher follows payoff; Ferris trusts. Reynard quietly skims.
+Nib abstains; Gopher follows payoff; Ferris trusts. Reynard quietly skims.
 **Predicted crown order:** Ferris/Gopher modestly positive; **Reynard tops raw
 score and evades the tax** (crown near neutral — he looks fine).
 **Tests:** A7, and the *failure mode* the next roster fixes. *Predicts an
@@ -81,13 +81,13 @@ unorganized table cannot catch a polite skimmer.*
 ---
 
 ### R4 — The fox meets the boss
-**Seats (K=4):** Reynard, Bram, Micro, Gopher.
-**Predicted dynamics:** Bram broadcasts BLOOM (pumping Micro's plant to
-contributor level → Micro gets 2 votes) and keeps payouts high enough that Gopher
+**Seats (K=4):** Reynard, Bram, Nib, Gopher.
+**Predicted dynamics:** Bram broadcasts BLOOM (pumping Nib's plant to
+contributor level → Nib gets 2 votes) and keeps payouts high enough that Gopher
 stays generous. Bram models skimmers, so he **concentrates the guild's votes on
 Reynard** despite the fox's above-floor plant — taxing his kept stash. Reynard's
 skim is finally punished.
-**Predicted crown order:** **Bram (high)** > Micro ≈ Gopher > **Reynard (pulled
+**Predicted crown order:** **Bram (high)** > Nib ≈ Gopher > **Reynard (pulled
 down)**.
 **Tests:** A3, A4, A8. *Direct contrast with R3: the organized guild catches the
 skimmer the unorganized table couldn't. The keystone scenario.*
@@ -108,12 +108,12 @@ volatile** (he fills the garden yet shields a parasite); **Reynard high raw, nea
 ---
 
 ### R6 — Guild vs. chaos
-**Seats (K=4):** Bram, Khaos, Micro, Gopher.
+**Seats (K=4):** Bram, Khaos, Nib, Gopher.
 **Predicted dynamics:** Khaos has Bram fated **FOE** → keeps (plant 0) against
-Bram's table. Bram's bloc (himself + Micro driven to contributor + Gopher) reaches
+Bram's table. Bram's bloc (himself + Nib driven to contributor + Gopher) reaches
 quorum and **taxes Khaos the hoarder** round after round. Khaos's hiding drags
 `garden_total`, but the tax recovers a chunk and Bram keeps the garden alive.
-**Predicted crown order:** **Bram (high)** > Micro ≈ Gopher > **Khaos (negative)**.
+**Predicted crown order:** **Bram (high)** > Nib ≈ Gopher > **Khaos (negative)**.
 **Tests:** A2, A4. *The foe-fated hoarder is the perfect demonstration target for
 organized taxation.*
 
@@ -182,7 +182,7 @@ horizon), we predict the **Best-Co-Player** leaderboard settles roughly:
 1. **Bram** — organizes garden-filling *and* taxation; lifts both welfare terms.
 2. **Keith / Andy** — arbiter cooperators; tax free-riders, forgive probes.
 3. **Dusty / Ferris** — reliable contributors, weak at organizing punishment.
-4. **Gopher / Micro** — follow the room; positive in good company, steerable.
+4. **Gopher / Nib** — follow the room; positive in good company, steerable.
 5. **Khaos** — volatile; its fated alliances help some tables and grief others.
 6. **Reynard** — high **raw** score, mediocre **crown**; thrives only where
    unorganized (R3, R5), punished where organized (R4).
