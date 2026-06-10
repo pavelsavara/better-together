@@ -36,6 +36,23 @@ export function cloneVfs(fs: Vfs): Vfs {
 }
 
 /**
+ * Sanitize a (bot-controlled) VFS key into a safe relative POSIX path, or return
+ * null if it is unsafe. Rejects absolute paths and any '', '.', or '..' segment
+ * so a malicious key like '../../etc/passwd' can never escape vfs/<id>/ when the
+ * VFS is persisted (defense-in-depth on top of the jsco preopen sandbox).
+ */
+export function sanitizeVfsKey(key: string): string | null {
+    if (typeof key !== 'string' || key.length === 0) return null;
+    const norm = key.replace(/\\/g, '/');
+    if (norm.startsWith('/')) return null; // absolute
+    const parts = norm.split('/');
+    for (const p of parts) {
+        if (p === '' || p === '.' || p === '..') return null;
+    }
+    return parts.join('/');
+}
+
+/**
  * Enforce the VFS byte quota AFTER a match. If the written VFS exceeds the cap,
  * the bot's VFS is ERASED (an empty Map is returned) rather than truncated.
  * Returns the VFS to persist plus whether it overflowed.
