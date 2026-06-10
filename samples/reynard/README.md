@@ -7,10 +7,6 @@
 > hot-headed neighbour moves to punish him, he plays the wounded innocent until
 > the punisher looks like the aggressor.
 
-> **Status: design sketch.** This README captures Reynard's intended character
-> and strategy. There is no implementation yet — code comes after the rules for
-> voting/taxation are ratified.
-
 Reynard is the **gray-zone opportunist** of the [Better Together](../../README.md)
 game — the role the existing cast was missing. [Corro](../corro/README.md) is an
 *obvious* predator who lies every round and plants zero; any reputation-tracker
@@ -54,7 +50,7 @@ budget*. His rules of thumb:
   floor so the guild's vote can't legally touch him — a quiet, ongoing duel
   between an organized guild and a very polite parasite.
 
-## The technology (planned)
+## The technology
 
 | | |
 |---|---|
@@ -65,7 +61,17 @@ budget*. His rules of thumb:
 
 ## Where to look
 
-- Once implemented, `src/` will hold the skimmer logic: table-wealth estimation,
-  the credible-minimum calculation, and the punisher-detector.
+- [`component.js`](component.js) holds the skimmer logic: table-wealth
+  estimation from the previous round, the credible-minimum calculation, the
+  arbiter check that keeps him honest-looking under a watcher's gaze, and the
+  persisted set of tables he remembers as worth skimming.
 - For the role this bot fills in the ecosystem, see the design discussion in the
   top-level [README](../../README.md).
+
+## Build
+
+```sh
+npm install
+npm run build
+# -> reynard.wasm
+```

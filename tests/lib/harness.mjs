@@ -48,7 +48,9 @@ const SAMPLE_WASM = {
     micro: ['samples/micro/micro.wasm', 'dist/micro.wasm'],
     keith: ['samples/keith/keith.wasm', 'dist/keith.wasm'],
     andy: ['samples/andy/bin/Release/net10.0/wasi-wasm/native/andy.wasm', 'dist/andy.wasm'],
+    bram: ['samples/bram/bin/Release/net10.0/wasi-wasm/native/bram.wasm', 'dist/bram.wasm'],
     dusty: ['samples/dusty/dusty.wasm', 'dist/dusty.wasm'],
+    reynard: ['samples/reynard/reynard.wasm', 'dist/reynard.wasm'],
     attacker: ['samples/attacker/target/wasm32-wasip2/release/attacker.wasm', 'dist/attacker.wasm'],
 };
 
@@ -187,6 +189,9 @@ export async function loadGardener(name, opts = {}) {
         },
         async plant(handle, state) {
             return unwrap(await fn('gardener-plant')(handle, state), `${name}.plant`);
+        },
+        async vote(handle, state) {
+            return unwrap(await fn('gardener-vote')(handle, state), `${name}.vote`);
         },
         async matchEnd(handle, summary) {
             return unwrap(await fn('gardener-match-end')(handle, summary), `${name}.match-end`);

@@ -24,6 +24,10 @@ echo "==> khaos   (JavaScript / jco + ComponentizeJS)"
 ( cd "${ROOT}/samples/khaos" && npm install && npm run build )
 cp "${ROOT}/samples/khaos/khaos.wasm" "${DIST}/khaos.wasm"
 
+echo "==> reynard (JavaScript / jco + ComponentizeJS)"
+( cd "${ROOT}/samples/reynard" && npm install && npm run build )
+cp "${ROOT}/samples/reynard/reynard.wasm" "${DIST}/reynard.wasm"
+
 echo "==> gopher  (Go / TinyGo / wit-bindgen-go)"
 (
   cd "${ROOT}/samples/gopher"
@@ -53,6 +57,14 @@ echo "==> andy    (C# / componentize-dotnet / NativeAOT-LLVM / wasi-wasm)"
 )
 cp "${ROOT}/samples/andy/bin/Release/net10.0/wasi-wasm/native/andy.wasm" "${DIST}/andy.wasm"
 
+echo "==> bram    (C# / componentize-dotnet / NativeAOT-LLVM / wasi-wasm)"
+(
+  cd "${ROOT}/samples/bram"
+  # Same toolchain as andy: NativeAOT-LLVM emits the WASI 0.2 component.
+  dotnet build -c Release
+)
+cp "${ROOT}/samples/bram/bin/Release/net10.0/wasi-wasm/native/bram.wasm" "${DIST}/bram.wasm"
+
 echo "==> dusty   (Grain / hand-written canonical ABI / preview1 -> preview2 adapt)"
 (
   cd "${ROOT}/samples/dusty"
@@ -72,7 +84,7 @@ cp "${ROOT}/samples/dusty/dusty.wasm" "${DIST}/dusty.wasm"
 
 echo
 echo "==> validating components"
-for sample in ferris corro khaos gopher micro keith andy dusty; do
+for sample in ferris corro khaos gopher micro keith andy dusty bram reynard; do
   echo "--- ${sample}.wasm ---"
   wasm-tools validate "${DIST}/${sample}.wasm"
   wasm-tools component wit "${DIST}/${sample}.wasm" | grep -E 'better-together:gardener/player' || true

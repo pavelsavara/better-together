@@ -61,8 +61,8 @@ Polyglot by design — every bot is just a component, regardless of source langu
 | **Keith**  | C++ (`wasm32-wasip2`) | Ledger-keeping sewer rat — generous Tit-for-Tat that enforces promises | [samples/keith](samples/keith) |
 | **Andy**   | C# (`wasi-wasm`) | Forgiving hedgehog — Tit-for-Tat on deeds, warm to friends, cold-forgetful of foes | [samples/andy](samples/andy) |
 | **Dusty**  | Grain (`.gr`) | Cautious pantry mouse — graduated Tit-for-Tat that mirrors the table's average | [samples/dusty](samples/dusty) |
-| **Reynard** | JavaScript (`jco`) | Velvet-gloved skimmer — the polite opportunist who skims fat tables and tries not to draw a taxing coalition *(design sketch)* | [samples/reynard](samples/reynard) |
-| **Bram**   | C# (`componentize-dotnet`) | Guild boss — organizes a voting bloc, taxes free-riders, plays for the whole table *(design sketch)* | [samples/bram](samples/bram) |
+| **Reynard** | JavaScript (`jco`) | Velvet-gloved skimmer — the polite opportunist who skims fat tables and tries not to draw a taxing coalition | [samples/reynard](samples/reynard) |
+| **Bram**   | C# (`componentize-dotnet`) | Guild boss — organizes a voting bloc, taxes free-riders, plays for the whole table | [samples/bram](samples/bram) |
 
 Inspect a built component's interface with [`wasm-tools`](https://github.com/bytecodealliance/wasm-tools):
 

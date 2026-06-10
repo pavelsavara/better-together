@@ -13,7 +13,7 @@ import { loadGardener, resolveSample } from './lib/harness.mjs';
 import { matchContext, roundState, matchSummary, action, broadcast, roundResult, SIGNALS } from './lib/fixtures.mjs';
 import { test, runAll, skipTest } from './lib/runner.mjs';
 
-const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy', 'dusty'];
+const SAMPLES = ['ferris', 'corro', 'khaos', 'gopher', 'micro', 'keith', 'andy', 'dusty', 'bram', 'reynard'];
 
 // Banter on stdout is optional flavor, not part of the player contract. Bots that
 // are silent by design (e.g. dusty's minimal hand-written canonical ABI) opt out.

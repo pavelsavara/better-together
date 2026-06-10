@@ -7,10 +7,6 @@
 > When Bram is at your table, the whole table does better — which is exactly the
 > crown this tournament hands out.
 
-> **Status: design sketch.** This README captures Bram's intended character and
-> strategy. There is no implementation yet — code comes after the rules for
-> voting/taxation are ratified.
-
 Bram is the **coalition organizer** of the [Better Together](../../README.md)
 game — the bot the **Best-Co-Player crown** is built to reward. Every other
 sample plays its *own* hand; Bram plays the *room*. He is the living argument
@@ -64,7 +60,7 @@ members — steerable by a boss who understands them:
   [Andy](../andy/README.md) share Bram's politics; a table with two of them is a
   voting bloc that can tax even a careful free-rider.
 
-## The technology (planned)
+## The technology
 
 | | |
 |---|---|
@@ -75,7 +71,18 @@ members — steerable by a boss who understands them:
 
 ## Where to look
 
-- Once implemented, `src/` will hold the boss logic: member recognition, the
-  bloc-rally signalling, the vote that targets the table's fattest hoarder, and member defense.
+- [`src/Strategy.cs`](src/Strategy.cs) holds the boss logic: member recognition,
+  the generous anchor, the vote that taxes the table's fattest hoarder (sparing
+  members and arbiter allies), and the persisted roster.
+- [`src/BramImpl.cs`](src/BramImpl.cs) is the thin export glue that maps the
+  generated Component Model records onto the plain strategy types.
+- [`src/Banter.cs`](src/Banter.cs) is the guild-boss flavor text on stdout.
 - For the role this bot fills — and why the crown rewards it — see the design
   discussion in the top-level [README](../../README.md).
+
+## Build
+
+```sh
+dotnet build -c Release
+# -> bin/Release/net10.0/wasi-wasm/native/bram.wasm
+```
