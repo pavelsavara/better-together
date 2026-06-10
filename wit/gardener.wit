@@ -5,9 +5,10 @@
 // filesystem — no network or HTTP. Cross-match memory (reputation, grudges,
 // alliances) is persisted to the virtual filesystem, not returned as a blob.
 //
-// The game engine never talks to this world directly. jsco's router host
-// instantiates many gardener components and re-exposes each one to the engine
-// as a `player` resource (see better-together:game/roster).
+// The game engine never talks to this world directly. The host
+// instantiates many gardener components, creates one `gardener` per seat, and
+// re-exposes each to the engine as a `seat` resource (see
+// better-together:game/roster).
 package better-together:gardener@0.1.0;
 
 /// Shared value types used by both the player and the engine.
@@ -107,18 +108,18 @@ interface types {
     }
 }
 
-/// The contract every player component implements. The router host constructs
-/// one `gardener` per seat, then drives it in order across a match: match-start,
-/// then `talk` + `plant` per round, then match-end.
+/// The contract every player component implements. The host constructs
+/// one `gardener` per seat, then the engine drives it in order across a match:
+/// match-start, then `talk` + `plant` per round, then match-end.
 interface player {
     use types.{metadata, signal, match-context, round-state, match-summary};
 
-    /// Static factory: create a new player instance. The router host calls this
+    /// Static factory: create a new player instance. The host calls this
     /// once per seat to spin up a gardener, which loads any persisted memory
     /// from the virtual filesystem and prepares to play.
     create: func() -> result<gardener>;
 
-    /// A single seated player. The router host creates one of these per
+    /// A single seated player. The host creates one of these per
     /// gardener component and forwards the engine's calls to it.
     resource gardener {
         /// Describe this player: name, version, author, repository URL, and lore.

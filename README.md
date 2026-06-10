@@ -28,23 +28,22 @@
 
 Two quick jumping-off points:
 
-- New bot authors start at [Player Rules → Your Turn](docs/player-rules.md#2-your-turn-simultaneous-every-round) and the [classic strategy table](docs/player-rules.md#appendix-a--classic-strategies).
+- New bot authors start at [Player Rules → Your Turn](docs/player-rules.md#2-your-turn-two-phases-talk-then-plant) and the [classic strategy table](docs/player-rules.md#appendix-a--classic-strategies).
 - Curious how you actually *win*? See [Engine Rules → The "Best Co-Player" Score](docs/engine-rules.md#7-the-best-co-player-score).
 
 ---
 
 ## The Contracts (WIT)
 
-The whole game is defined by three WebAssembly Interface Type packages:
+The game is defined by two WebAssembly Interface Type packages:
 
 | Package | File | Role |
 |---------|------|------|
 | `better-together:game`      | [wit/game.wit](wit/game.wit)               | The tournament **engine** world (host side). |
 | `better-together:gardener`  | [wit/gardener.wit](wit/gardener.wit)       | The **player** contract every bot implements. |
-| `jsco:multiplex`            | [wit/jsco-multiplex.wit](wit/jsco-multiplex.wit) | Generic, declarative multiplexer that virtualizes any resource-bearing interface across many provider components. |
 
 To implement a bot you only need the [`player` interface](wit/gardener.wit): export a
-`gardener` resource with `metadata`, `match-start`, `turn`, and `match-end`.
+`gardener` resource with `metadata`, `match-start`, `talk`, `plant`, and `match-end`.
 
 ---
 
@@ -76,7 +75,7 @@ wasm-tools component wit samples/corro/target/wasm32-wasip1/release/corro.wasm
 ```
 better-together/
 ├── docs/           Player Rules, Engine Rules & Architecture
-├── wit/            The game, gardener, and multiplexer contracts
+├── wit/            The game and player (gardener) contracts
 ├── samples/        Reference bots (Ferris, Corro, Khaos, Gopher, Micro, Keith, Andy, Dusty)
 ├── game/           Tournament host implementation
 └── README.md       You are here
