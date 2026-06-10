@@ -1,0 +1,98 @@
+# Validation Action — runs when a maintainer adds the `approved` label to a
+# "Submit a gardener" issue. It pulls the OCI image, extracts the .wasm, and
+# validates it inside the jsco sandbox (game/src/validate), then comments,
+# labels, and commits the registry change to the gh-pages branch.
+#
+# NOT ENABLED YET: the OCI puller + avatar processor in game/src/validate are
+# still stubbed (TODO). This workflow is authored so enabling validation is a
+# single follow-up once those land. Do not rely on it until the stubs are real.
+name: validate-bot
+
+# Disabled until the OCI/avatar stubs are implemented. Re-enable by uncommenting.
+# on:
+#   issues:
+#     types: [labeled]
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  # Single-writer discipline: only one validator touches index.json/wasm/icons.
+  group: store-writer
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    # Only run for the `approved` label (when wired to the issues event).
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'approved' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (engine + samples)
+        uses: actions/checkout@v6
+
+      - name: Checkout gh-pages (data store)
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: store
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install engine deps
+        working-directory: game
+        run: npm ci
+
+      - name: Run validator
+        id: validate
+        working-directory: game
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          APPROVER: ${{ github.actor }}
+          STORE_DIR: ${{ github.workspace }}/store
+          VALIDATION_COMMENT_FILE: ${{ github.workspace }}/validation-comment.md
+          # Built sample components fill the smoke-match roster (>= 3 required).
+          # These must be built first (see build-samples.yml) before enabling.
+          FILLER_WASMS: >-
+            ${{ github.workspace }}/samples/corro/target/wasm32-wasip1/release/corro.wasm,
+            ${{ github.workspace }}/samples/nib/nib.wasm,
+            ${{ github.workspace }}/samples/gopher/gopher.wasm
+        run: node --experimental-wasm-jspi src/validate/run-validate.ts
+
+      - name: Comment outcome on the issue
+        if: ${{ always() && github.event_name == 'issues' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/validation-comment.md`, 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body,
+            });
+            const label = '${{ steps.validate.outputs.outcome }}' === 'accepted' ? 'accepted' : 'rejected';
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              labels: [label],
+            });
+
+      - name: Commit registry change to gh-pages
+        if: ${{ steps.validate.outputs.outcome == 'accepted' }}
+        working-directory: store
+        run: |
+          git config user.name "better-together-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/index.json wasm icons
+          git commit -m "validate: admit bot from issue #${{ github.event.issue.number }}"
+          git push origin gh-pages
