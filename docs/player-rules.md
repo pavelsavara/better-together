@@ -23,7 +23,7 @@ Every round runs in **three phases**, and your component is called once per phas
    Then **every plant is revealed** to the whole table.
 3. **Vote** — `vote(state)` returns one player-id to **tax**, or `none` to
    abstain. By now `state.plants` holds everyone's plant for this round, so you
-   can target a selfish player. The table's votes are tallied and the plurality target
+   can target a free-rider. The table's votes are tallied and the plurality target
    has seeds reclaimed from their pot into the garden (see §5).
 
 | Field        | Phase | Type                     | Description                                    |
@@ -58,7 +58,7 @@ and whom you voted to tax.
 
 In your **plant** phase, `state.signals` holds every player's signal for this
 round (yours included). In your **vote** phase, `state.plants` also holds every
-player's plant, so you can target a selfish player.
+player's plant, so you can target a free-rider.
 
 When the round resolves, you see the full outcome — every ballot and the tax:
 
@@ -97,7 +97,7 @@ A K=4 table — you are **you**:
 1. **Talk.** alice and you broadcast `BLOOM`; carol `WATCH`; bob `HOLD`.
 2. **Plant.** alice plants 8, carol 7, you 6 — all ≥ 3, so each is a *contributor*
    with **2 votes**. bob plants **0** (1 vote). Every plant is revealed.
-3. **Vote.** alice, carol, and you each name **bob**, the obvious selfish player; bob
+3. **Vote.** alice, carol, and you each name **bob**, the obvious hoarder; bob
    abstains. Three distinct voters, bob's weight is uniquely highest, and bob kept
    10 (above the untaxable minimum of **2**) — so bob is taxed. (One voter alone,
    even a contributor, could not.)
@@ -143,8 +143,8 @@ Keep, and you help yourself a little while costing the group a lot; plant, and y
 cost yourself a little while helping the group a lot. That's the dilemma, and the
 flat ×2 keeps it alive at every group size.
 
-**The vote is how the table fights back.** You can't out-plant a selfish player on your
-own — but you can organise a tax. Reclaiming a selfish player's kept seeds doubles them into
+**The vote is how the table fights back.** You can't out-plant a free-rider on your
+own — but you can organise a tax. Reclaiming a free-rider's kept seeds doubles them into
 the garden, turning private hiding into shared value. That needs a **coalition**:
 a lone ballot can't tax anyone — a tax needs at least two voters aimed at the same
 target, so discipline takes allies.
@@ -183,10 +183,10 @@ These adapt directly to the three-phase round: pick a `signal` in `talk`, read
 |---------------------|-----------------------------------------------------------------------|-------------------|
 | **All-Bloom**       | Always signal BLOOM, always plant 10, abstain from voting.            | Unconditional altruist |
 | **All-Keep**       | Always signal HOLD, always plant 0, abstain (and get taxed).          | Unconditional defector |
-| **Tit-for-Tat**     | Round 1: signal BLOOM, plant 8. Then mirror the *group's average* plant from last round; signal BLOOM if you'll plant ≥ 5, else HOLD. Vote to tax the round's biggest selfish player. | Nice, retaliatory, forgiving |
+| **Tit-for-Tat**     | Round 1: signal BLOOM, plant 8. Then mirror the *group's average* plant from last round; signal BLOOM if you'll plant ≥ 5, else HOLD. Vote to tax the round's biggest hoarder. | Nice, retaliatory, forgiving |
 | **Grudger**         | Plant 8 until anyone plants 0. Then plant 0 forever against that group, and vote to tax them every round. | Cooperative but unforgiving |
 | **Pavlov**          | Plant 8 if last round's payout was above threshold, else plant 2. Abstain. | Win-stay, lose-shift |
 | **Promiser**        | Always signal BLOOM. Plant 2 (below the contributor threshold) — so only 1 vote, and a prime tax target. | Deceptive free-rider |
 | **Signal-Matcher**  | Match your plant level to the number of BLOOM signals broadcast *this* round. Abstain. | Conditional cooperator |
-| **Guild Boss**      | Plant generously, rally allies with BLOOM, and bloc-vote the fattest selfish player to tax their stash into the garden. | Coalition organizer |
+| **Guild Boss**      | Plant generously, rally allies with BLOOM, and bloc-vote the fattest hoarder to tax their stash into the garden. | Coalition organizer |
 | **Random**          | Plant uniform random 0–10. Signal random. Vote random or abstain.     | Baseline noise     |

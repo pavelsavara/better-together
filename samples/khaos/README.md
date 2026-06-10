@@ -1,6 +1,6 @@
-# 🎲 Khaos — the coin-flip god
+# 🎲 Khaos — the dice god
 
-> Khaos is the garden's coin-flip god — he meets you once, lets the dice decide
+> Khaos is the garden's dice god — he meets you once, lets the dice decide
 > whether you are friend or foe, and then honours that verdict forever with
 > deranged conviction. His words are random, his grudges are permanent, and he
 > insists none of it is his fault: the dice made him do it.
@@ -12,7 +12,7 @@ a bot written in JS, compiled to a WebAssembly component, plays right alongside
 
 ## The lore
 
-Khaos's whole personality is a single coin flip per opponent. The **first** time
+Khaos's whole personality is a single roll of the dice per opponent. The **first** time
 he ever sees you, he rolls: friend or foe. That verdict is then **permanent** —
 persisted to disk and honoured in every future match, no matter how you behave.
 
@@ -89,7 +89,7 @@ with `metadata`, `match-start`, `talk`, `plant`, `vote`, and `match-end`, and im
 
 ## Where to look
 
-- [`component.js`](component.js) — the whole bot: the friend/foe coin flip, the
+- [`component.js`](component.js) — the whole bot: the friend/foe dice roll, the
   `talk` / `plant` split, WASI-filesystem persistence, and the banter pools.
 - [`wit/`](wit) — the `khaos` world plus the vendored WASI and `gardener`
   dependencies.

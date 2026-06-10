@@ -11,7 +11,7 @@
 2. Seeds in the garden are **doubled and split equally** among all players — so the more everyone plants, the bigger the bloom.
 3. You're always tempted to keep everything and live off everyone else's planting — but if everyone keeps, the garden dies and everyone loses.
 4. Each round you broadcast **one signal** to coordinate — but signals are cheap talk; you can lie.
-5. After plants are revealed, the table **votes**: name a selfish player to **tax**, and the seeds they kept *above a small untaxable minimum* are reclaimed into the garden for everyone — so a generous planter is always safe. Contribute a real stake (plant ≥ 3) and your ballot counts double.
+5. After plants are revealed, the table **votes**: name a free-rider to **tax**, and the seeds they kept *above a small untaxable minimum* are reclaimed into the garden for everyone — so a generous planter is always safe. Contribute a real stake (plant ≥ 3) and your ballot counts double.
 6. Every match runs **at least 8 rounds**; after that, each round has a **1-in-3 chance of being the last** — so no round is ever known to be the final one, and there's no safe "last round" to defect on.
 7. The tournament crown isn't "highest score" — it's **"Best Co-Player"**: whose presence makes every group they join thrive?
 
@@ -55,14 +55,14 @@ Polyglot by design — every bot is just a component, regardless of source langu
 |-----|----------|-------------|--------|
 | **Ferris** | Rust (`wasm32-wasip2`) | Reputation-aware, naively collaborative | [samples/ferris](samples/ferris) |
 | **Corro**  | Rust (`wasm32-wasip1`) | Deceptive free-rider — the enemy of Ferris | [samples/corro](samples/corro) |
-| **Khaos**  | JavaScript (`jco`) | Coin-flip god — friend or foe forever, words at random | [samples/khaos](samples/khaos) |
+| **Khaos**  | JavaScript (`jco`) | Dice god — friend or foe forever, words at random | [samples/khaos](samples/khaos) |
 | **Gopher** | Go (TinyGo `wasip2`) | Pavlov forager — win-stay, lose-shift out of pure habit | [samples/gopher](samples/gopher) |
 | **Micro**  | Hand-written `.wat` | Minimalist signal-matcher — matches the table's blooms, no memory | [samples/micro](samples/micro) |
 | **Keith**  | C++ (`wasm32-wasip2`) | Ledger-keeping sewer rat — generous Tit-for-Tat that enforces promises | [samples/keith](samples/keith) |
 | **Andy**   | C# (`wasi-wasm`) | Forgiving hedgehog — Tit-for-Tat on deeds, warm to friends, cold-forgetful of foes | [samples/andy](samples/andy) |
 | **Dusty**  | Grain (`.gr`) | Cautious pantry mouse — graduated Tit-for-Tat that mirrors the table's average | [samples/dusty](samples/dusty) |
 | **Reynard** | JavaScript (`jco`) | Velvet-gloved skimmer — the polite opportunist who skims fat tables and tries not to draw a taxing coalition *(design sketch)* | [samples/reynard](samples/reynard) |
-| **Bram**   | C# (`componentize-dotnet`) | Guild boss — organizes a voting bloc, taxes selfish players, plays for the whole table *(design sketch)* | [samples/bram](samples/bram) |
+| **Bram**   | C# (`componentize-dotnet`) | Guild boss — organizes a voting bloc, taxes free-riders, plays for the whole table *(design sketch)* | [samples/bram](samples/bram) |
 
 Inspect a built component's interface with [`wasm-tools`](https://github.com/bytecodealliance/wasm-tools):
 

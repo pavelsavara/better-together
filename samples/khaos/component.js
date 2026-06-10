@@ -4,7 +4,7 @@
 // # Strategy
 //
 // Khaos is Ferris's chaotic enemy. The first time he ever sees another player,
-// he flips a weighted coin and decides — at random — whether they are a FRIEND
+// he rolls a weighted die and decides — at random — whether they are a FRIEND
 // (70%) or a FOE (30%). That verdict is then remembered *forever*, persisted as
 // JSON on the virtual filesystem, so the same opponent is judged the same way in
 // every future match.
@@ -43,7 +43,7 @@ const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
 const LORE =
-    "Khaos is the garden's coin-flip god — he meets you once, lets the dice " +
+    "Khaos is the garden's dice god — he meets you once, lets the dice " +
     "decide whether you are friend or foe, and then honours that verdict " +
     "forever with deranged conviction. His words are random, his grudges are " +
     "permanent, and he insists none of it is his fault: the dice made him do it. " +
@@ -222,7 +222,7 @@ class Gardener {
     #talkBanter(foe, friend) {
         const pool = [
             "BLOOM! Or HOLD! Or WATCH! I rolled for it, don't blame me. 🎲",
-            "I flipped a coin to greet you. The coin lost.",
+            "I rolled the dice to greet you. The dice lost.",
             "Signals are noise. I am noise. We are one. 🌪️",
             "Maybe I mean it this round. Maybe. Probably not.",
             "Order is a lie and so is this broadcast.",

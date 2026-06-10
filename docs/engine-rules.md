@@ -36,7 +36,7 @@ Tournament (permanent — always running)
 ### 3. Round Resolution (executed by engine)
 
 Each round runs in **three phases** so that talk can coordinate planting and the
-table can collectively discipline a selfish player:
+table can rein in a free-rider:
 
 1. **Talk phase**: the engine calls every player's `talk` and collects one
    `signal` from each. All signals are then **broadcast to everyone** before a
@@ -101,16 +101,16 @@ garden, you must hold a real stake *in* it. It never touches your payout, so
 there is no payoff reason to aim for "exactly 3" — the number that *gives you a voice*
 and the number that makes the group *rich* are nowhere near each other.
 
-**The tax is how discipline pays.** Reclaiming a selfish player's kept seeds and doubling
+**The tax is how discipline pays.** Reclaiming a free-rider's kept seeds and doubling
 them into the garden converts a privately-kept seed (worth 1) into shared,
 doubled value (worth 2). That is the "better together" mechanic in this design:
-not a lone martyr subsidising the table, but the table **collectively
-reclaiming** what a free-rider tried to keep.
+not a lone martyr subsidising the table, but the table **recovering** what a
+free-rider tried to keep.
 
 **The untaxable minimum protects honest keepers.** The vote can never reach a
 player's first `T = 2` kept seeds, so a generous planter (kept ≤ 2) is immune and
 a hostile bloc cannot grief a full cooperator for spite. The tax bites only the
-seeds a selfish player keeps *above* that floor — it disciplines free-riding, not mere
+seeds a free-rider keeps *above* that floor — it disciplines free-riding, not mere
 self-interest. Because the floor protects *kept* seeds and the endowment is 10,
 the only way to be fully safe is to plant generously (≥ 8), so safety and
 cooperation point the same way.
@@ -136,7 +136,7 @@ group_total(round) = 10K + garden_total + tax_collected
 Group welfare rises with exactly two things a player can influence: **how full
 the garden is** (their own plant, plus the plants they *elicit*) and **how many
 hidden seeds the table reclaims**. An unconditional altruist (All-Bloom) lifts the
-first term only by its own hand; an arbiter who *deters* selfish players into
+first term only by its own hand; an arbiter who *deters* free-riders into
 planting more, and *taxes* the ones who don't, lifts both — and so wins the
 [Best Co-Player](#7-the-best-co-player-score) crown *whenever opponents are
 deterrable*. That is the design's answer to the "All-Bloom wins" failure of a
@@ -149,7 +149,7 @@ flat welfare metric.
   round — equivalently, each further round happens with probability 2/3. The
   expected match length is ≈ 10 rounds.
 - The hazard rate is public (it's right here), but the **realized** length R is
-  never revealed — and because the stop is a fresh coin-flip every round, **no
+  never revealed — and because the stop is a fresh draw every round, **no
   round is ever known to be the last**. There is no fixed endpoint to defect on.
 - The engine enforces an undisclosed hard cap purely so a match cannot run
   forever; it is astronomically unlikely to be reached and carries no strategic
@@ -213,7 +213,7 @@ fast.
 | Strategy              | Individual Score | Co-Player Score | Why                                                  |
 |-----------------------|-----------------|-----------------|------------------------------------------------------|
 | Always keep          | Medium          | **Negative**    | Adds nothing to the garden and is a prime tax target; group total drops |
-| Always plant (naive)  | Low             | Positive        | Fills the garden by its own hand, but can't deter or tax selfish players |
+| Always plant (naive)  | Low             | Positive        | Fills the garden by its own hand, but can't deter or tax free-riders |
 | Arbiter (cooperate, mirror, **vote to tax**) | High | **Highly positive** | Elicits cooperation *and* reclaims reserves into the garden — lifts both terms of `group_total` |
 | Deceptive (signal BLOOM, plant 0)    | High short-term | **Negative** | Lies in talk, gets taxed the same round, partners distrust — cooperation collapses |
 
@@ -225,8 +225,8 @@ fast.
 > garden* (your plant plus the plants you elicit) and by *reclaiming reserves*
 > (the tax you organize), not by fattening your own pot.
 >
-> One subtlety: both eliciting cooperation and taxing selfish players only pay **against
-> opponents who react** — a selfish player you can deter into planting, a liar a bloc can
+> One subtlety: both eliciting cooperation and taxing free-riders only pay **against
+> opponents who react** — a free-rider you can deter into planting, a liar a bloc can
 > tax. In a field of purely unconditional bots, nothing you do changes their
 > play, so the altruist (All-Bloom) ties the arbiter. The arbiter
 > *pulls ahead* the moment opponents are deterrable and bloc-taxable — which, in a
@@ -275,7 +275,7 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
 
 1. `garden_total` = 8 + 0 + 6 + 7 = **21**
 2. **Vote weight**: Alice, Carol, Dave each planted ≥ 3 → **2 votes** each; Bob
-   planted 0 → **1 vote**. Bob is the obvious selfish player, so Alice, Carol, and Dave
+   planted 0 → **1 vote**. Bob is the obvious hoarder, so Alice, Carol, and Dave
    all vote to tax Bob (Bob abstains).
 3. **Tax**: three distinct voters named Bob (6 vote-weight) — a coalition with the
    uniquely highest weight, and Bob kept 10 (above the untaxable minimum T=2), so
@@ -298,7 +298,7 @@ else by 2.0. Check the identity: `group_total` = 14.5+18.5+16.5+15.5 = **65** =
 `10K + garden_total + tax_collected` = 40 + 21 + 4. Had Bob also planted 8, no tax
 would be needed, `garden_total` = 29, and `group_total` = 40 + 29 = **69** — still
 strictly better. **Cooperation dominates; the tax just makes hiding cost the
-selfish player and pay the table.**
+hoarder and pay the table.**
 
 Over many rounds, the table taxes Bob whenever he keeps, and his reputation
 follows him into future matches — steadily eroding both his raw gain and his
@@ -319,14 +319,14 @@ whale's sacrifice.
 ### Why a contribution threshold (plant ≥ 3)?
 The threshold is your **voice in the vote**: plant ≥ 3 and you cast 2 votes instead
 of 1. To help *weed* the garden you must hold a real stake *in* it — pure
-selfish players can't be kingmakers. The threshold never touches payout, so it governs
+free-riders can't be kingmakers. The threshold never touches payout, so it governs
 only your political weight, never the size of your harvest.
 
 ### Why a vote-and-tax (instead of pure withdrawal)?
 In a public-goods game the only other punishment channel is *withholding seeds* —
 but withholding lowers the garden, i.e. it destroys the very welfare the crown
 measures, which structurally favours the unconditional altruist. A **targeted
-tax** is a separate channel: it docks one named selfish player *without* taxing the
+tax** is a separate channel: it docks one named free-rider *without* taxing the
 whole table, and (because reclaimed seeds are doubled into the garden) it actively
 *creates* welfare. That is what lets calibrated discipline out-score naive
 generosity — and what makes coalitions necessary, since the tax needs a voting
@@ -344,7 +344,7 @@ round it is sent in — it only ever feeds future reputation. The **talk phase**
 (everyone broadcasts, signals revealed) lets a `BLOOM` rally the table *now*, and
 makes a `BLOOM` → `plant 0` an immediate, observable betrayal. The **vote phase**
 (plants revealed, then ballots cast) lets the table *act* on that betrayal the
-the same round, taxing the liar's stash into the garden. Talk stays cheap, but it now
+same round, taxing the liar's stash into the garden. Talk stays cheap, but it now
 both coordinates the plant and arms the vote.
 
 ### Why persistent identity?

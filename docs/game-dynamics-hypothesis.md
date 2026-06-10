@@ -20,8 +20,8 @@ These are the load-bearing beliefs the whole design rests on.
 |---|------------|-------------------|---------------------------|
 | A1 | **The dilemma survives a flat ×2.** Hiding is individually tempting (return per planted seed = `2/K < 1`) but collectively destructive. | Marginal-seed math at K=4–6. | A roster where universal hiding out-scores universal planting. |
 | A2 | **`group_total = 10K + garden_total + tax_collected`.** Group welfare rises only with garden fullness and reclaimed reserves. | Algebraic identity (see [Engine Rules §4](engine-rules.md#the-welfare-identity-why-this-fixes-the-crown)). | Any match whose summed scores ≠ `10K + garden_total + tax_collected`. |
-| A3 | **The tax dethrones All-Bloom.** An arbiter who deters + taxes selfish players beats an unconditional altruist **when opponents are reactive**. | Deterrence and tax both lift `group_total`; All-Bloom lifts only its own term. | A reactive-opponent field where All-Bloom still tops Best-Co-Player. |
-| A4 | **Punishment requires coalition.** A lone bot can't tax alone — a tax needs at least two distinct voters; discipline needs allies. | Quorum rule. | A single bot reliably taxing selfish players with no ally seated. |
+| A3 | **The tax dethrones All-Bloom.** An arbiter who deters + taxes free-riders beats an unconditional altruist **when opponents are reactive**. | Deterrence and tax both lift `group_total`; All-Bloom lifts only its own term. | A reactive-opponent field where All-Bloom still tops Best-Co-Player. |
+| A4 | **Punishment requires coalition.** A lone bot can't tax alone — a tax needs at least two distinct voters; discipline needs allies. | Quorum rule. | A single bot reliably taxing free-riders with no ally seated. |
 | A5 | **The extra vote (plant ≥ 3 → 2 votes) has no payout-target salience.** | The threshold never touches payout. | Bots converging on “plant exactly 3” for a payoff reason. |
 | A6 | **The geometric horizon removes endgame defection.** No round is known-final, so backward induction has no base case. | Min-8 + 1/3 hazard; R never revealed. | Cooperators defecting on a predictable “last” round. |
 | A7 | **Signals are load-bearing.** Talk both rallies the plant and arms the vote; lying is punishable same-round. | Three-phase reveal order. | A field where ignoring signals never costs anything. |
@@ -37,7 +37,7 @@ Each scenario: the seated bots, the predicted dynamics, the predicted
 `K` is the group size.
 
 > Reminder of the cast: **Ferris** (naive collaborator), **Corro** (blatant
-> feaster), **Khaos** (coin-flip friend/foe; Reynard fated friend, Bram fated
+> feaster), **Khaos** (dice-rolled friend/foe; Reynard fated friend, Bram fated
 > foe), **Gopher** (Pavlov), **Micro** (signal-matcher, always abstains),
 > **Keith** (generous TfT + lie ledger), **Andy** (TfT hedgehog), **Dusty**
 > (graduated TfT), **Reynard** (polite skimmer), **Bram** (guild boss; Micro &
@@ -47,7 +47,7 @@ Each scenario: the seated bots, the predicted dynamics, the predicted
 
 ### R1 — The cooperative baseline
 **Seats (K=4):** Ferris, Keith, Andy, Dusty.
-**Predicted dynamics:** No selfish players, so the garden fills fast and the three TfT
+**Predicted dynamics:** No free-riders, so the garden fills fast and the three TfT
 variants lock into mutual generosity around the table average. The vote almost
 never fires (no juicy target; quorum rarely forms against a contributor).
 **Predicted crown order:** ≈ tied, all strongly positive — Keith ≥ Andy ≈ Dusty ≥ Ferris.
@@ -70,7 +70,7 @@ early then erodes.
 ### R3 — The skimmer hides (unorganized table)
 **Seats (K=4):** Reynard, Ferris, Gopher, Micro.
 **Predicted dynamics:** Reynard signals BLOOM, plants a credible 3–4 — above the
-contributor floor, so he keeps 2 votes and never *looks* like a selfish player. No
+contributor floor, so he keeps 2 votes and never *looks* like a free-rider. No
 reputation-hawk and no guild boss is seated, so **no bloc forms to tax him**.
 Micro abstains; Gopher follows payoff; Ferris trusts. Reynard quietly skims.
 **Predicted crown order:** Ferris/Gopher modestly positive; **Reynard tops raw
@@ -111,10 +111,10 @@ volatile** (he fills the garden yet shields a parasite); **Reynard high raw, nea
 **Seats (K=4):** Bram, Khaos, Micro, Gopher.
 **Predicted dynamics:** Khaos has Bram fated **FOE** → keeps (plant 0) against
 Bram's table. Bram's bloc (himself + Micro driven to contributor + Gopher) reaches
-quorum and **taxes Khaos the selfish player** round after round. Khaos's hiding drags
+quorum and **taxes Khaos the hoarder** round after round. Khaos's hiding drags
 `garden_total`, but the tax recovers a chunk and Bram keeps the garden alive.
 **Predicted crown order:** **Bram (high)** > Micro ≈ Gopher > **Khaos (negative)**.
-**Tests:** A2, A4. *The foe-fated selfish player is the perfect demonstration target for
+**Tests:** A2, A4. *The foe-fated hoarder is the perfect demonstration target for
 organized taxation.*
 
 ---
@@ -149,7 +149,7 @@ co-seats the pair, bounding their long-run edge.*
 
 ### R9 — All predators (mutual ruin)
 **Seats (K=4):** Corro, Reynard, Khaos, Gopher.
-**Predicted dynamics:** Corro feasts, Reynard skims, Khaos plays its fated/coin-flip
+**Predicted dynamics:** Corro feasts, Reynard skims, Khaos plays its fated/dice-rolled
 verdicts, Gopher lose-shifts to stingy as payoffs collapse. Few real contributors
 → few 2-vote ballots → quorum rarely forms → little tax. The garden stays barren;
 everyone scores near the all-keep floor.
@@ -180,7 +180,7 @@ Run over a long stretch of the permanent tournament (random K∈{4,5,6}, geometr
 horizon), we predict the **Best-Co-Player** leaderboard settles roughly:
 
 1. **Bram** — organizes garden-filling *and* taxation; lifts both welfare terms.
-2. **Keith / Andy** — arbiter cooperators; tax selfish players, forgive probes.
+2. **Keith / Andy** — arbiter cooperators; tax free-riders, forgive probes.
 3. **Dusty / Ferris** — reliable contributors, weak at organizing punishment.
 4. **Gopher / Micro** — follow the room; positive in good company, steerable.
 5. **Khaos** — volatile; its fated alliances help some tables and grief others.

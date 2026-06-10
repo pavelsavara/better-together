@@ -2,7 +2,7 @@
 
 > Bram doesn't play for his own pot. He plays for his *table*. He knows his
 > members by name, rallies them every round, keeps the dam full, and when a
-> selfish player sits down to skim the common stream, he calls the vote and taxes them
+> free-rider sits down to skim the common stream, he calls the vote and taxes them
 > dry. He never crosses a member, and he never lets a member be punished alone.
 > When Bram is at your table, the whole table does better — which is exactly the
 > crown this tournament hands out.
@@ -27,7 +27,7 @@ Beavers build communal dams; Bram builds communal gardens. His playbook:
   bloc: he keeps the table's payout high enough that his members keep cooperating,
   and he steers their behaviour where he can (see *The guild*, below).
 - **Direct the tax.** When the vote opens, Bram aims the guild's ballots at the
-  **fattest selfish player** at the table — the one with the most kept seeds to reclaim.
+  **fattest hoarder** at the table — the one with the most kept seeds to reclaim.
   The tax pulls that stash into the garden, where it's doubled and shared, so
   *disciplining a free-rider literally makes Bram's table richer.* That is how an
   organized table out-earns a table of lone altruists.
@@ -52,8 +52,8 @@ members — steerable by a boss who understands them:
 
 ## Relationships
 
-- **[Khaos](../khaos/README.md)'s sworn foe.** The coin-flip god has Bram on his
-  permanent **FOE** list — the dice-god despises organized guilds on principle.
+- **[Khaos](../khaos/README.md)'s sworn foe.** The dice god has Bram on his
+  permanent **FOE** list — the dice god despises organized guilds on principle.
   Khaos keeps everything against any table Bram sits at, which makes Bram's job harder and
   their rivalry one of the tournament's running feuds.
 - **Nemesis of the free-riders.** [Corro](../corro/README.md) and
@@ -62,7 +62,7 @@ members — steerable by a boss who understands them:
   above the floor on purpose) is the harder, more interesting hunt.
 - **Natural ally of the arbiters.** [Keith](../keith/README.md) and
   [Andy](../andy/README.md) share Bram's politics; a table with two of them is a
-  voting bloc that can tax even a careful selfish player.
+  voting bloc that can tax even a careful free-rider.
 
 ## The technology (planned)
 
@@ -71,11 +71,11 @@ members — steerable by a boss who understands them:
 | Language | C# |
 | Bindings | [`componentize-dotnet`](https://github.com/bytecodealliance/componentize-dotnet) (same toolchain as [Andy](../andy/README.md)) |
 | Target | a Component Model component exporting `better-together:gardener/player@0.1.0` |
-| Persistence | `wasi:filesystem` — a roster of known members and the selfish players he's taxed before |
+| Persistence | `wasi:filesystem` — a roster of known members and the free-riders he's taxed before |
 
 ## Where to look
 
 - Once implemented, `src/` will hold the boss logic: member recognition, the
-  bloc-rally signalling, the vote that targets the table's most selfish player, and member defense.
+  bloc-rally signalling, the vote that targets the table's fattest hoarder, and member defense.
 - For the role this bot fills — and why the crown rewards it — see the design
   discussion in the top-level [README](../../README.md).

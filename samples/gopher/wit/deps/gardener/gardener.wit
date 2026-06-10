@@ -114,7 +114,7 @@ interface types {
         /// every player — including you — broadcast this round.
         signals: list<signal-broadcast>,
         /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
-        /// (after plants are revealed) so a ballot can target a selfish player.
+        /// (after plants are revealed) so a ballot can target a free-rider.
         plants: list<player-action>,
     }
 

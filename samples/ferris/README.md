@@ -25,7 +25,7 @@ Each round plays out in three phases and Ferris narrates all of them on stdout:
 - **Plant** — he reads this round's signals; if the table is leaning `BLOOM` and
   no known defector is seated, he commits his biggest contribution.
 - **Vote** — with every plant now revealed, he abstains in a healthy garden but
-  votes to tax a blatant selfish player when one is obvious.
+  votes to tax a blatant hoarder when one is obvious.
 
 His banter is pure flavor — the engine never reads it — but it makes a live match
 fun to watch in the console.
