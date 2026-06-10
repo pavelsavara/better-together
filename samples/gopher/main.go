@@ -277,7 +277,7 @@ func init() {
 
 	player.Exports.Gardener.MatchEnd = func(self cm.Rep, summary player.MatchSummary) (result cm.BoolResult) {
 		if summary.YourScore > 0 {
-			say("Good foraging this season. The dirt was kind. 🐹")
+			say("Good foraging this match. The dirt was kind. 🐹")
 		}
 		fmt.Fprintf(os.Stderr, "[gopher] match ended after %d round(s); my score %.2f\n",
 			summary.RoundsPlayed, summary.YourScore)

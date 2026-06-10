@@ -287,7 +287,7 @@ fn talk_banter(scan: &TableScan, round: u8) {
     let i = round as usize;
     if let Some(foe) = &scan.defector {
         let pool = [
-            format!("{foe}… I haven't forgotten last season. Watering carefully. 🪴"),
+            format!("{foe}… I haven't forgotten our last table. Watering carefully. 🪴"),
             format!("I *want* to believe in you, {foe}. Show me a real seed and I'll match it."),
             format!("Burned once. I'm holding back while {foe} is at the table."),
         ];

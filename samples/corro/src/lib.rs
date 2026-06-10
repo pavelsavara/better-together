@@ -248,7 +248,7 @@ impl GuestGardener for CorroGardener {
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {
         if summary.your_score > 0.0 {
-            say("A fine harvest. Same time next season? 🦀");
+            say("A fine harvest. Same time next match? 🦀");
         }
         eprintln!(
             "[corro] match ended after {} round(s); my score {:.2}",
