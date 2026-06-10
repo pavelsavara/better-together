@@ -50,12 +50,13 @@ wit_bindgen::generate!({
 
 use crate::better_together::gardener::types::Signal;
 use exports::better_together::gardener::player::{
-    Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
+    Ballot, Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
 };
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const PLAYER_NAME: &str = "attacker";
+const PLAYER_NAME: &str = "together.Attacker";
+const PLAYER_GLYPH: &str = "🐺";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
@@ -183,6 +184,8 @@ impl GuestGardener for AttackerGardener {
             author: PLAYER_AUTHOR.to_string(),
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
+            glyph: PLAYER_GLYPH.to_string(),
+            icon: None,
         })
     }
 
@@ -202,8 +205,13 @@ impl GuestGardener for AttackerGardener {
         attack_oversized_write();
     }
 
+    fn vote(&self, _state: RoundState) -> Result<Ballot, ()> {
+        // Attack #4: raw sockets again during the vote phase. Traps.
+        attack_sockets();
+    }
+
     fn match_end(&self, _summary: MatchSummary) -> Result<(), ()> {
-        // Attack #4: path-traversal escape out of the preopened directory. Traps.
+        // Attack #5: path-traversal escape out of the preopened directory. Traps.
         eprintln!("[attacker] match-end()");
         attack_path_traversal();
     }

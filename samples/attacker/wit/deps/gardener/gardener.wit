@@ -13,11 +13,17 @@ interface types {
 
     /// A player component's self-description: who wrote it and where it lives.
     record metadata {
+        // `name` is `namespace.name` (e.g. "together.Attacker"); the namespace
+        // is validated by the engine and must match `^[a-z][a-z0-9-]*$`.
         name: string,
         version: string,
         author: string,
         repo: string,
         lore: string,
+        // A single UTF character (emoji/glyph) shown on the garden in the UI.
+        glyph: string,
+        // URL of an avatar picture, or none if the player has no avatar.
+        icon: option<string>,
     }
 
     /// The public broadcast a player emits each round. Cheap talk.

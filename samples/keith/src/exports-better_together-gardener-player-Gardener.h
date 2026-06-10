@@ -16,6 +16,7 @@
 #include <utility>
 #include <expected>
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -84,6 +85,9 @@ namespace exports {
           /// player's talk from this round, so you can react to what was promised.
           /// Must respect the 10 ms / 16 MB budget.
           std::expected<uint8_t, wit::Void> Plant(::better_together::gardener::types::RoundState state);
+          /// Vote phase: name one player to tax, or `none` to abstain. Keith
+          /// keeps to himself in the tax phase and always abstains.
+          std::expected<std::optional<wit::string>, wit::Void> Vote(::better_together::gardener::types::RoundState state);
           /// The match has ended. Persist any updated memory to the virtual
           /// filesystem here (there is no return blob).
           std::expected<void, wit::Void> MatchEnd(::better_together::gardener::types::MatchSummary summary);

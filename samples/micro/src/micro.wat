@@ -26,13 +26,17 @@
 ;;   512  create result area   : { u8 disc @512, i32 handle @516 }
 ;;   528  talk   result area   : { u8 disc @528, u8 signal @529 }
 ;;   536  plant  result area   : { u8 disc @536, u8 value  @537 }
-;;   544  metadata result area : { u8 disc @544, 5x(ptr,len) record @548..588 }
+;;   544  metadata result area : { u8 disc @544, record @548..608:
+;;                                 6x(ptr,len) strings @548..596 (name,version,
+;;                                 author,repo,lore,glyph), then
+;;                                 icon option<string> @596 (u8 disc@596, ptr@600,len@604) }
 ;;   608  stream-write retptr scratch (result<_,stream-error>)
-;;  1024  "micro"                                   (len 5)
+;;  1024  "together.Micro"                          (len 14)
 ;;  1040  "0.1.0"                                   (len 5)
 ;;  1056  "Better Together samples"                 (len 23)
 ;;  1120  "https://github.com/pavelsavara/better-together" (len 46)
 ;;  1184  lore                                      (len 185)
+;;  1408  glyph "🌱"                                 (len 4)
 ;;  1600  banter line (ends with \n)                (len 59)
 ;; ---------------------------------------------------------------------------
 
@@ -44,36 +48,48 @@
   ;; the types inline) ties them to the exact same package identity the
   ;; engine and the other sample bots use.
   ;; =====================================================================
+  ;; NOTE: the `(option string)` for `icon` MUST be declared as an explicit
+  ;; type (index 0) BEFORE the metadata record. Writing it inline in the field
+  ;; makes wasm-tools hoist it to index 0 anyway, silently shifting every later
+  ;; numeric type index by one and corrupting all the hand-written references.
   (type $ty-types (instance
+    (type (option string))                                                  ;; 0
     (type (record (field "name" string) (field "version" string)
                   (field "author" string) (field "repo" string)
-                  (field "lore" string)))                                   ;; 0
-    (export "metadata" (type (eq 0)))                                       ;; 1
-    (type (enum "bloom" "hold" "watch"))                                    ;; 2
-    (export "signal" (type (eq 2)))                                         ;; 3
-    (type string)                                                           ;; 4
-    (export "player-id" (type (eq 4)))                                      ;; 5
-    (type (list 5))                                                         ;; 6
-    (type (record (field "match-id" string) (field "players" 6)
-                  (field "self-id" 5) (field "group-size" u8)))             ;; 7
-    (export "match-context" (type (eq 7)))                                  ;; 8
-    (type (record (field "id" 5) (field "plant" u8) (field "signal" 3)))    ;; 9
-    (export "player-action" (type (eq 9)))                                  ;; 10
-    (type (list 10))                                                        ;; 11
-    (type (record (field "actions" 11) (field "garden-total" u16)
-                  (field "multiplier" f32) (field "garden-payout" f32)))    ;; 12
-    (export "round-result" (type (eq 12)))                                  ;; 13
-    (type (record (field "id" 5) (field "signal" 3)))                       ;; 14
-    (export "signal-broadcast" (type (eq 14)))                              ;; 15
-    (type (list 13))                                                        ;; 16
-    (type (list 15))                                                        ;; 17
-    (type (record (field "round" u8) (field "history" 16) (field "signals" 17))) ;; 18
-    (export "round-state" (type (eq 18)))                                   ;; 19
-    (type (tuple 5 f32))                                                    ;; 20
-    (type (list 20))                                                        ;; 21
-    (type (record (field "rounds-played" u8) (field "final-scores" 21)
-                  (field "your-score" f32)))                                ;; 22
-    (export "match-summary" (type (eq 22)))                                 ;; 23
+                  (field "lore" string) (field "glyph" string)
+                  (field "icon" 0)))                                         ;; 1
+    (export "metadata" (type (eq 1)))                                       ;; 2
+    (type (enum "bloom" "hold" "watch"))                                    ;; 3
+    (export "signal" (type (eq 3)))                                         ;; 4
+    (type string)                                                           ;; 5
+    (export "player-id" (type (eq 5)))                                      ;; 6
+    (type (list 6))                                                         ;; 7
+    (type (record (field "match-id" string) (field "players" 7)
+                  (field "self-id" 6) (field "group-size" u8)))             ;; 8
+    (export "match-context" (type (eq 8)))                                  ;; 9
+    (type (record (field "id" 6) (field "plant" u8) (field "signal" 4)))    ;; 10
+    (export "player-action" (type (eq 10)))                                 ;; 11
+    (type (list 11))                                                        ;; 12  list<player-action>
+    (type (option 6))                                                        ;; 13  option<player-id>
+    (type (record (field "voter" 6) (field "target" 13)))                   ;; 14  vote-record
+    (export "vote-record" (type (eq 14)))                                   ;; 15
+    (type (list 15))                                                        ;; 16  list<vote-record>
+    (type (record (field "actions" 12) (field "garden-total" u16)
+                  (field "votes" 16) (field "tax-target" 13)
+                  (field "tax-collected" u8) (field "garden-payout" f32)))   ;; 17  round-result
+    (export "round-result" (type (eq 17)))                                  ;; 18
+    (type (record (field "id" 6) (field "signal" 4)))                       ;; 19  signal-broadcast
+    (export "signal-broadcast" (type (eq 19)))                              ;; 20
+    (type (list 18))                                                        ;; 21  list<round-result>
+    (type (list 20))                                                        ;; 22  list<signal-broadcast>
+    (type (record (field "round" u8) (field "history" 21)
+                  (field "signals" 22) (field "plants" 12)))                ;; 23  round-state
+    (export "round-state" (type (eq 23)))                                   ;; 24
+    (type (tuple 6 f32))                                                    ;; 25
+    (type (list 25))                                                        ;; 26
+    (type (record (field "rounds-played" u8) (field "final-scores" 26)
+                  (field "your-score" f32)))                                ;; 27  match-summary
+    (export "match-summary" (type (eq 27)))                                 ;; 28
   ))
   (import "better-together:gardener/types@0.1.0"
           (instance $types (type $ty-types)))
@@ -82,6 +98,7 @@
   (alias export $types "player-id"        (type $player-id))
   (alias export $types "match-context"    (type $match-context))
   (alias export $types "player-action"    (type $player-action))
+  (alias export $types "vote-record"      (type $vote-record))
   (alias export $types "round-result"     (type $round-result))
   (alias export $types "signal-broadcast" (type $signal-broadcast))
   (alias export $types "round-state"      (type $round-state))
@@ -133,11 +150,12 @@
   ;; =====================================================================
   (core module $mem-module
     (memory (export "memory") 2)
-    (data (i32.const 1024) "micro")
+    (data (i32.const 1024) "together.Micro")
     (data (i32.const 1040) "0.1.0")
     (data (i32.const 1056) "Better Together samples")
     (data (i32.const 1120) "https://github.com/pavelsavara/better-together")
     (data (i32.const 1184) "Micro is the smallest gardener: a single seed, hand-written in raw wasm text. It keeps no memory and bears no grudge - each round it matches the table's promises and adds a little more.")
+    (data (i32.const 1408) "\f0\9f\8c\b1")
     (data (i32.const 1600) "micro: i match what you pledge, then plant a little extra.\n")
   )
   (core instance $mem-inst (instantiate $mem-module))
@@ -211,11 +229,13 @@
     ;; Build { disc=0, record{ 5 (ptr,len) strings } } in static memory.
     (func $metadata (export "metadata") (param $self i32) (result i32)
       (i32.store8 (i32.const 544) (i32.const 0))
-      (i32.store (i32.const 548) (i32.const 1024)) (i32.store (i32.const 552) (i32.const 5))   ;; name
+      (i32.store (i32.const 548) (i32.const 1024)) (i32.store (i32.const 552) (i32.const 14))  ;; name "together.Micro"
       (i32.store (i32.const 556) (i32.const 1040)) (i32.store (i32.const 560) (i32.const 5))   ;; version
       (i32.store (i32.const 564) (i32.const 1056)) (i32.store (i32.const 568) (i32.const 23))  ;; author
       (i32.store (i32.const 572) (i32.const 1120)) (i32.store (i32.const 576) (i32.const 46))  ;; repo
       (i32.store (i32.const 580) (i32.const 1184)) (i32.store (i32.const 584) (i32.const 185)) ;; lore
+      (i32.store (i32.const 588) (i32.const 1408)) (i32.store (i32.const 592) (i32.const 4))   ;; glyph
+      (i32.store8 (i32.const 596) (i32.const 0))                                              ;; icon = none
       (i32.const 544))
 
     ;; ---- match-start(context) -> result -------------------------------
@@ -226,9 +246,12 @@
 
     ;; ---- talk(state) -> result<signal> --------------------------------
     ;; Print a line of banter, then always broadcast `watch` (enum = 2).
+    ;; round-state flattens to: round, history(ptr,len), signals(ptr,len),
+    ;; plants(ptr,len). Micro reads none of it here.
     (func $talk (export "talk")
           (param $self i32) (param $round i32)
-          (param $hp i32) (param $hl i32) (param $sp i32) (param $sl i32) (result i32)
+          (param $hp i32) (param $hl i32) (param $sp i32) (param $sl i32)
+          (param $pp i32) (param $pl i32) (result i32)
       (local $h i32)
       (local.set $h (call $get-stdout))
       (call $bwf (local.get $h) (i32.const 1600) (i32.const 59) (i32.const 608))
@@ -240,9 +263,12 @@
     ;; ---- plant(state) -> result<u8> -----------------------------------
     ;; Count `bloom` (enum = 0) broadcasts in state.signals, add 4, clamp 10.
     ;; signal-broadcast layout: { id: (ptr@0,len@4), signal: u8@8 }, stride 12.
+    ;; round-state flattens to: round, history(ptr,len), signals(ptr,len),
+    ;; plants(ptr,len). Micro reads only the signals list.
     (func $plant (export "plant")
           (param $self i32) (param $round i32)
-          (param $hp i32) (param $hl i32) (param $sp i32) (param $sl i32) (result i32)
+          (param $hp i32) (param $hl i32) (param $sp i32) (param $sl i32)
+          (param $pp i32) (param $pl i32) (result i32)
       (local $i i32) (local $cnt i32) (local $v i32)
       (block $done
         (loop $loop
@@ -320,84 +346,92 @@
   ;; same wiring `wit-component` emits for compiled bots.
   ;; =====================================================================
   (component $player-shim
+    (type (option string))                                                  ;; 0
     (type (record (field "name" string) (field "version" string)
-                  (field "author" string) (field "repo" string) (field "lore" string))) ;; 0
-    (import "import-type-metadata" (type (eq 0)))                            ;; 1
-    (type (enum "bloom" "hold" "watch"))                                    ;; 2
-    (import "import-type-signal" (type (eq 2)))                             ;; 3
-    (type string)                                                          ;; 4
-    (import "import-type-player-id" (type (eq 4)))                          ;; 5
-    (type (list 5))                                                        ;; 6
-    (type (record (field "match-id" string) (field "players" 6)
-                  (field "self-id" 5) (field "group-size" u8)))             ;; 7
-    (import "import-type-match-context" (type (eq 7)))                      ;; 8
-    (type (record (field "id" 5) (field "plant" u8) (field "signal" 3)))    ;; 9
-    (import "import-type-player-action" (type (eq 9)))                      ;; 10
-    (type (list 10))                                                        ;; 11
-    (type (record (field "actions" 11) (field "garden-total" u16)
-                  (field "multiplier" f32) (field "garden-payout" f32)))    ;; 12
-    (import "import-type-round-result" (type (eq 12)))                      ;; 13
-    (type (record (field "id" 5) (field "signal" 3)))                       ;; 14
-    (import "import-type-signal-broadcast" (type (eq 14)))                  ;; 15
-    (type (list 13))                                                        ;; 16
-    (type (list 15))                                                        ;; 17
-    (type (record (field "round" u8) (field "history" 16) (field "signals" 17))) ;; 18
-    (import "import-type-round-state" (type (eq 18)))                       ;; 19
-    (type (tuple 5 f32))                                                    ;; 20
-    (type (list 20))                                                        ;; 21
-    (type (record (field "rounds-played" u8) (field "final-scores" 21)
-                  (field "your-score" f32)))                                ;; 22
-    (import "import-type-match-summary" (type (eq 22)))                     ;; 23
-    (import "import-type-gardener" (type (sub resource)))                   ;; 24
-    (type (borrow 24))                                                      ;; 25
-    (import "import-type-metadata0" (type (eq 1)))                          ;; 26
-    (type (result 26))                                                     ;; 27
-    (type (func (param "self" 25) (result 27)))                            ;; 28
-    (import "import-method-gardener-metadata" (func (type 28)))             ;; 0
-    (import "import-type-match-context0" (type (eq 8)))                     ;; 29
-    (type (result))                                                        ;; 30
-    (type (func (param "self" 25) (param "context" 29) (result 30)))        ;; 31
-    (import "import-method-gardener-match-start" (func (type 31)))          ;; 1
-    (import "import-type-round-state0" (type (eq 19)))                      ;; 32
-    (import "import-type-signal0" (type (eq 3)))                            ;; 33
-    (type (result 33))                                                     ;; 34
-    (type (func (param "self" 25) (param "state" 32) (result 34)))          ;; 35
-    (import "import-method-gardener-talk" (func (type 35)))                 ;; 2
-    (type (result u8))                                                     ;; 36
-    (type (func (param "self" 25) (param "state" 32) (result 36)))          ;; 37
-    (import "import-method-gardener-plant" (func (type 37)))                ;; 3
-    (import "import-type-match-summary0" (type (eq 23)))                    ;; 38
-    (type (func (param "self" 25) (param "summary" 38) (result 30)))        ;; 39
-    (import "import-method-gardener-match-end" (func (type 39)))            ;; 4
-    (type (own 24))                                                        ;; 40
-    (type (result 40))                                                     ;; 41
-    (type (func (result 41)))                                              ;; 42
-    (import "import-func-create" (func (type 42)))                          ;; 5
-    (export "metadata"      (type 1))                                       ;; 43
-    (export "signal"        (type 3))                                       ;; 44
-    (export "match-context" (type 8))                                       ;; 45
-    (export "round-state"   (type 19))                                      ;; 46
-    (export "match-summary" (type 23))                                      ;; 47
-    (export "gardener"      (type 24))                                      ;; 48
-    (type (borrow 48))                                                      ;; 49
-    (type (result 43))                                                     ;; 50
-    (type (func (param "self" 49) (result 50)))                            ;; 51
-    (export "[method]gardener.metadata" (func 0) (func (type 51)))
-    (type (result))                                                        ;; 52
-    (type (func (param "self" 49) (param "context" 45) (result 52)))        ;; 53
-    (export "[method]gardener.match-start" (func 1) (func (type 53)))
-    (type (result 44))                                                     ;; 54
-    (type (func (param "self" 49) (param "state" 46) (result 54)))          ;; 55
-    (export "[method]gardener.talk" (func 2) (func (type 55)))
-    (type (result u8))                                                     ;; 56
-    (type (func (param "self" 49) (param "state" 46) (result 56)))          ;; 57
-    (export "[method]gardener.plant" (func 3) (func (type 57)))
-    (type (func (param "self" 49) (param "summary" 47) (result 52)))        ;; 58
-    (export "[method]gardener.match-end" (func 4) (func (type 58)))
-    (type (own 48))                                                        ;; 59
-    (type (result 59))                                                     ;; 60
-    (type (func (result 60)))                                              ;; 61
-    (export "create" (func 5) (func (type 61)))
+                  (field "author" string) (field "repo" string) (field "lore" string)
+                  (field "glyph" string) (field "icon" 0)))                  ;; 1
+    (import "import-type-metadata" (type (eq 1)))                            ;; 2
+    (type (enum "bloom" "hold" "watch"))                                    ;; 3
+    (import "import-type-signal" (type (eq 3)))                             ;; 4
+    (type string)                                                          ;; 5
+    (import "import-type-player-id" (type (eq 5)))                          ;; 6
+    (type (list 6))                                                        ;; 7
+    (type (record (field "match-id" string) (field "players" 7)
+                  (field "self-id" 6) (field "group-size" u8)))             ;; 8
+    (import "import-type-match-context" (type (eq 8)))                      ;; 9
+    (type (record (field "id" 6) (field "plant" u8) (field "signal" 4)))    ;; 10
+    (import "import-type-player-action" (type (eq 10)))                     ;; 11
+    (type (list 11))                                                        ;; 12  list<player-action>
+    (type (option 6))                                                        ;; 13  option<player-id>
+    (type (record (field "voter" 6) (field "target" 13)))                   ;; 14  vote-record
+    (import "import-type-vote-record" (type (eq 14)))                       ;; 15
+    (type (list 15))                                                        ;; 16  list<vote-record>
+    (type (record (field "actions" 12) (field "garden-total" u16)
+                  (field "votes" 16) (field "tax-target" 13)
+                  (field "tax-collected" u8) (field "garden-payout" f32)))   ;; 17  round-result
+    (import "import-type-round-result" (type (eq 17)))                      ;; 18
+    (type (record (field "id" 6) (field "signal" 4)))                       ;; 19  signal-broadcast
+    (import "import-type-signal-broadcast" (type (eq 19)))                  ;; 20
+    (type (list 18))                                                        ;; 21  list<round-result>
+    (type (list 20))                                                        ;; 22  list<signal-broadcast>
+    (type (record (field "round" u8) (field "history" 21)
+                  (field "signals" 22) (field "plants" 12)))                ;; 23  round-state
+    (import "import-type-round-state" (type (eq 23)))                       ;; 24
+    (type (tuple 6 f32))                                                    ;; 25
+    (type (list 25))                                                        ;; 26
+    (type (record (field "rounds-played" u8) (field "final-scores" 26)
+                  (field "your-score" f32)))                                ;; 27
+    (import "import-type-match-summary" (type (eq 27)))                     ;; 28
+    (import "import-type-gardener" (type (sub resource)))                   ;; 29
+    (type (borrow 29))                                                      ;; 30
+    (import "import-type-metadata0" (type (eq 2)))                          ;; 31
+    (type (result 31))                                                     ;; 32
+    (type (func (param "self" 30) (result 32)))                            ;; 33
+    (import "import-method-gardener-metadata" (func (type 33)))             ;; 0
+    (import "import-type-match-context0" (type (eq 9)))                     ;; 34
+    (type (result))                                                        ;; 35
+    (type (func (param "self" 30) (param "context" 34) (result 35)))        ;; 36
+    (import "import-method-gardener-match-start" (func (type 36)))          ;; 1
+    (import "import-type-round-state0" (type (eq 24)))                      ;; 37
+    (import "import-type-signal0" (type (eq 4)))                            ;; 38
+    (type (result 38))                                                     ;; 39
+    (type (func (param "self" 30) (param "state" 37) (result 39)))          ;; 40
+    (import "import-method-gardener-talk" (func (type 40)))                 ;; 2
+    (type (result u8))                                                     ;; 41
+    (type (func (param "self" 30) (param "state" 37) (result 41)))          ;; 42
+    (import "import-method-gardener-plant" (func (type 42)))                ;; 3
+    (import "import-type-match-summary0" (type (eq 28)))                    ;; 43
+    (type (func (param "self" 30) (param "summary" 43) (result 35)))        ;; 44
+    (import "import-method-gardener-match-end" (func (type 44)))            ;; 4
+    (type (own 29))                                                        ;; 45
+    (type (result 45))                                                     ;; 46
+    (type (func (result 46)))                                              ;; 47
+    (import "import-func-create" (func (type 47)))                          ;; 5
+    (export "metadata"      (type 2))                                       ;; 48
+    (export "signal"        (type 4))                                       ;; 49
+    (export "match-context" (type 9))                                       ;; 50
+    (export "round-state"   (type 24))                                      ;; 51
+    (export "match-summary" (type 28))                                      ;; 52
+    (export "gardener"      (type 29))                                      ;; 53
+    (type (borrow 53))                                                      ;; 54
+    (type (result 48))                                                     ;; 55
+    (type (func (param "self" 54) (result 55)))                            ;; 56
+    (export "[method]gardener.metadata" (func 0) (func (type 56)))
+    (type (result))                                                        ;; 57
+    (type (func (param "self" 54) (param "context" 50) (result 57)))        ;; 58
+    (export "[method]gardener.match-start" (func 1) (func (type 58)))
+    (type (result 49))                                                     ;; 59
+    (type (func (param "self" 54) (param "state" 51) (result 59)))          ;; 60
+    (export "[method]gardener.talk" (func 2) (func (type 60)))
+    (type (result u8))                                                     ;; 61
+    (type (func (param "self" 54) (param "state" 51) (result 61)))          ;; 62
+    (export "[method]gardener.plant" (func 3) (func (type 62)))
+    (type (func (param "self" 54) (param "summary" 52) (result 57)))        ;; 63
+    (export "[method]gardener.match-end" (func 4) (func (type 63)))
+    (type (own 53))                                                        ;; 64
+    (type (result 64))                                                     ;; 65
+    (type (func (result 65)))                                              ;; 66
+    (export "create" (func 5) (func (type 66)))
   )
   (instance $player (instantiate $player-shim
     (with "import-method-gardener-metadata"    (func $metadata-comp))
@@ -411,6 +445,7 @@
     (with "import-type-player-id"        (type $player-id))
     (with "import-type-match-context"    (type $match-context))
     (with "import-type-player-action"    (type $player-action))
+    (with "import-type-vote-record"      (type $vote-record))
     (with "import-type-round-result"     (type $round-result))
     (with "import-type-signal-broadcast" (type $signal-broadcast))
     (with "import-type-round-state"      (type $round-state))

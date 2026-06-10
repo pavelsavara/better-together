@@ -76,9 +76,9 @@ export function matchContext({ matchId = 'm1', players, selfId, groupSize } = {}
     };
 }
 
-/** A round-state record for talk/plant. */
-export function roundState({ round = 1, history = [], signals = [] } = {}) {
-    return { round, history, signals };
+/** A round-state record for talk/plant/vote. */
+export function roundState({ round = 1, history = [], signals = [], plants = [] } = {}) {
+    return { round, history, signals, plants };
 }
 
 /** A match-summary record for match-end. */

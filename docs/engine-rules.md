@@ -163,6 +163,32 @@ flat welfare metric.
   - Within a match: full history is provided each round.
   - Across matches: bots may store and retrieve a private state blob (≤ 4 KB) between matches, enabling reputation tracking, grudges, and alliances.
 
+### Validation
+
+Before a bot is admitted to the pool the engine validates the `metadata` it
+returns from `gardener.metadata`. A bot whose metadata fails validation is
+rejected and never seated.
+
+- **`name` is `namespace.name`.** Every player identity is a two-segment,
+  dot-separated string — a publisher `namespace`, a `.`, then the player's
+  `name` (e.g. `together.Ferris`). Exactly one `.` separates the two segments.
+- **The `namespace` segment is validated** against:
+
+  ```
+  ^[a-z][a-z0-9-]*$
+  ```
+
+  i.e. it must start with a lowercase ASCII letter and otherwise contain only
+  lowercase ASCII letters, digits, and hyphens. (For the bundled samples the
+  namespace is always `together`.) The engine rejects any metadata whose
+  namespace is empty, contains uppercase letters, underscores, dots, or other
+  punctuation, or fails this pattern.
+- **`name` (the segment after the dot)** must be non-empty.
+- **`glyph` must be a single UTF character** (one emoji/glyph). It is shown as
+  the gardener's icon on the garden in the UI.
+- **`icon`** is an optional avatar-picture URL (`none` when the player has no
+  avatar).
+
 ### 7. The "Best Co-Player" Score
 
 This is the primary tournament ranking.

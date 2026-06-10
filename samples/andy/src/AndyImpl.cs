@@ -23,7 +23,7 @@ public sealed class PlayerImpl : IPlayer
         private readonly Brain _brain = new(FriendBook.ResolvePath());
 
         public Wit.Metadata Metadata() => new(
-            name: "andy",
+            name: "together.Andy",
             version: "0.1.0",
             author: "Better Together samples",
             repo: "https://github.com/pavelsavara/better-together",
@@ -31,7 +31,9 @@ public sealed class PlayerImpl : IPlayer
                 + "he remembers across many gardens, but he curls into his spines the "
                 + "moment a neighbour turns stingy — then uncurls and forgives by dawn. "
                 + "He warms to Bram the beaver's honest guild and keeps his spines half-up "
-                + "around Reynard the fox, whose smile never quite reaches his ledger.");
+                + "around Reynard the fox, whose smile never quite reaches his ledger.",
+            glyph: "🦔",
+            icon: null);
 
         public void MatchStart(Wit.MatchContext context) =>
             _brain.MatchStart(context.selfId);
@@ -41,6 +43,9 @@ public sealed class PlayerImpl : IPlayer
 
         public byte Plant(Wit.RoundState state) =>
             (byte)_brain.Plant(state.round, ToRounds(state.history));
+
+        // Andy forgives by dawn: he never names a neighbour to tax, always abstaining.
+        public string? Vote(Wit.RoundState state) => null;
 
         public void MatchEnd(Wit.MatchSummary summary) => _brain.MatchEnd();
     }

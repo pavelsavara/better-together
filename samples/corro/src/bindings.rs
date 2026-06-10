@@ -19,7 +19,10 @@ pub mod better_together {
             /// leaderboard without constructing or running the player.
             #[derive(Clone)]
             pub struct Metadata {
-                /// Human-readable name of this player (often used as the player-id).
+                /// Fully-qualified identity as `namespace.name` (e.g. "together.Ferris").
+                /// The `namespace` segment groups players by publisher and is validated
+                /// by the engine — see engine-rules.md §Validation (it must match
+                /// `^[a-z][a-z0-9-]*$`). Often used as the player-id.
                 pub name: _rt::String,
                 /// Semantic version of this player, e.g. "1.0.0".
                 pub version: _rt::String,
@@ -31,6 +34,11 @@ pub mod better_together {
                 /// engine never parses it; it exists so leaderboards and match logs can
                 /// show who this bot *is*.
                 pub lore: _rt::String,
+                /// A single UTF character (emoji/glyph) shown as this gardener's icon on
+                /// the garden in the UI, e.g. "🦀".
+                pub glyph: _rt::String,
+                /// URL of an avatar picture for this player, or none if it has no avatar.
+                pub icon: Option<_rt::String>,
             }
             impl ::core::fmt::Debug for Metadata {
                 fn fmt(
@@ -43,19 +51,23 @@ pub mod better_together {
                         .field("author", &self.author)
                         .field("repo", &self.repo)
                         .field("lore", &self.lore)
+                        .field("glyph", &self.glyph)
+                        .field("icon", &self.icon)
                         .finish()
                 }
             }
             /// The public broadcast a player emits each round. Cheap talk — it carries
-            /// no enforced meaning and may be honest or deceptive.
+            /// no enforced meaning and may be honest or deceptive. Because talk is
+            /// revealed before plants AND before the tax vote, a signal both rallies the
+            /// plant and foreshadows the vote.
             #[repr(u8)]
             #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
             pub enum Signal {
-                /// "I intend to plant generously this round."
+                /// "I intend to plant generously this round" — and accept the tax if I lie.
                 Bloom,
-                /// "I intend to keep most/all of my seeds."
+                /// "I intend to keep most/all of my seeds" — expect a vote.
                 Hold,
-                /// "I'm deciding based on what others do."
+                /// "I'm deciding based on what others do" — including whom to tax.
                 Watch,
             }
             impl ::core::fmt::Debug for Signal {
@@ -84,6 +96,25 @@ pub mod better_together {
                     }
                 }
             }
+            /// A tax-phase ballot: the player to tax this round, or none to abstain.
+            pub type Ballot = Option<PlayerId>;
+            /// One player's ballot in the vote phase, revealed to everyone afterwards.
+            #[derive(Clone)]
+            pub struct VoteRecord {
+                pub voter: PlayerId,
+                pub target: Option<PlayerId>,
+            }
+            impl ::core::fmt::Debug for VoteRecord {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("VoteRecord")
+                        .field("voter", &self.voter)
+                        .field("target", &self.target)
+                        .finish()
+                }
+            }
             /// What a single player did in a given round, revealed to everyone.
             #[derive(Clone)]
             pub struct PlayerAction {
@@ -109,11 +140,19 @@ pub mod better_together {
             pub struct RoundResult {
                 /// One entry per player in the match.
                 pub actions: _rt::Vec<PlayerAction>,
-                /// Sum of every player's `plant` this round.
+                /// Sum of every player's `plant` this round, BEFORE the tax is applied.
                 pub garden_total: u16,
-                /// Diversity multiplier: 1.0 + 0.5 * distinct-contributors.
-                pub multiplier: f32,
-                /// (garden-total * multiplier) / group-size, paid to every player.
+                /// Every ballot cast in the vote phase this round.
+                pub votes: _rt::Vec<VoteRecord>,
+                /// The player the table voted to tax (named by >= 2 distinct voters with the
+                /// uniquely highest vote-weight; targets who kept <= 2 are untaxable), if any.
+                pub tax_target: Option<PlayerId>,
+                /// Seeds reclaimed from the tax-target's pot into the garden
+                /// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
+                /// minimum of 2 seeds). Zero when there was no tax.
+                pub tax_collected: u8,
+                /// ((garden-total + tax-collected) * 2) / group-size, paid to every player.
+                /// The garden is flatly DOUBLED — there is no diversity multiplier.
                 pub garden_payout: f32,
             }
             impl ::core::fmt::Debug for RoundResult {
@@ -124,7 +163,9 @@ pub mod better_together {
                     f.debug_struct("RoundResult")
                         .field("actions", &self.actions)
                         .field("garden-total", &self.garden_total)
-                        .field("multiplier", &self.multiplier)
+                        .field("votes", &self.votes)
+                        .field("tax-target", &self.tax_target)
+                        .field("tax-collected", &self.tax_collected)
                         .field("garden-payout", &self.garden_payout)
                         .finish()
                 }
@@ -172,8 +213,8 @@ pub mod better_together {
                         .finish()
                 }
             }
-            /// Delivered to both `talk` and `plant` each round. The number of remaining
-            /// rounds is never revealed.
+            /// Delivered to `talk`, `plant`, and `vote` each round. The number of
+            /// remaining rounds is never revealed.
             #[derive(Clone)]
             pub struct RoundState {
                 /// 1-based index of the round you are about to play.
@@ -181,9 +222,12 @@ pub mod better_together {
                 /// Every previous round of this match, oldest first.
                 pub history: _rt::Vec<RoundResult>,
                 /// This round's broadcasts. Empty when passed to `talk` (no one has
-                /// spoken yet); when passed to `plant` it holds the signal every player
-                /// — including you — broadcast this round, so plants can react to talk.
+                /// spoken yet); when passed to `plant` and `vote` it holds the signal
+                /// every player — including you — broadcast this round.
                 pub signals: _rt::Vec<SignalBroadcast>,
+                /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
+                /// (after plants are revealed) so a ballot can target a free-rider.
+                pub plants: _rt::Vec<PlayerAction>,
             }
             impl ::core::fmt::Debug for RoundState {
                 fn fmt(
@@ -194,13 +238,14 @@ pub mod better_together {
                         .field("round", &self.round)
                         .field("history", &self.history)
                         .field("signals", &self.signals)
+                        .field("plants", &self.plants)
                         .finish()
                 }
             }
             /// Delivered once when the match ends.
             #[derive(Clone)]
             pub struct MatchSummary {
-                /// How many rounds the match actually ran (R, 8-12).
+                /// How many rounds the match actually ran (R, >= 8).
                 pub rounds_played: u8,
                 /// Final match score for every player.
                 pub final_scores: _rt::Vec<(PlayerId, f32)>,
@@ -227,9 +272,9 @@ pub mod better_together {
 pub mod exports {
     pub mod better_together {
         pub mod gardener {
-            /// The contract every player component implements. The router host constructs
-            /// one `gardener` per seat, then drives it in order across a match: match-start,
-            /// then `talk` + `plant` per round, then match-end.
+            /// The contract every player component implements. The host constructs
+            /// one `gardener` per seat, then the engine drives it in order across a match:
+            /// match-start, then `talk` + `plant` per round, then match-end.
             #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
             pub mod player {
                 #[used]
@@ -238,10 +283,11 @@ pub mod exports {
                 use super::super::super::super::_rt;
                 pub type Metadata = super::super::super::super::better_together::gardener::types::Metadata;
                 pub type Signal = super::super::super::super::better_together::gardener::types::Signal;
+                pub type Ballot = super::super::super::super::better_together::gardener::types::Ballot;
                 pub type MatchContext = super::super::super::super::better_together::gardener::types::MatchContext;
                 pub type RoundState = super::super::super::super::better_together::gardener::types::RoundState;
                 pub type MatchSummary = super::super::super::super::better_together::gardener::types::MatchSummary;
-                /// A single seated player. The router host creates one of these per
+                /// A single seated player. The host creates one of these per
                 /// gardener component and forwards the engine's calls to it.
                 #[derive(Debug)]
                 #[repr(transparent)]
@@ -402,6 +448,8 @@ pub mod exports {
                                 author: author2,
                                 repo: repo2,
                                 lore: lore2,
+                                glyph: glyph2,
+                                icon: icon2,
                             } = e;
                             let vec3 = (name2.into_bytes()).into_boxed_slice();
                             let ptr3 = vec3.as_ptr().cast::<u8>();
@@ -453,6 +501,38 @@ pub mod exports {
                             *ptr1
                                 .add(9 * ::core::mem::size_of::<*const u8>())
                                 .cast::<*mut u8>() = ptr7.cast_mut();
+                            let vec8 = (glyph2.into_bytes()).into_boxed_slice();
+                            let ptr8 = vec8.as_ptr().cast::<u8>();
+                            let len8 = vec8.len();
+                            ::core::mem::forget(vec8);
+                            *ptr1
+                                .add(12 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>() = len8;
+                            *ptr1
+                                .add(11 * ::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>() = ptr8.cast_mut();
+                            match icon2 {
+                                Some(e) => {
+                                    *ptr1
+                                        .add(13 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (1i32) as u8;
+                                    let vec9 = (e.into_bytes()).into_boxed_slice();
+                                    let ptr9 = vec9.as_ptr().cast::<u8>();
+                                    let len9 = vec9.len();
+                                    ::core::mem::forget(vec9);
+                                    *ptr1
+                                        .add(15 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len9;
+                                    *ptr1
+                                        .add(14 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = ptr9.cast_mut();
+                                }
+                                None => {
+                                    *ptr1
+                                        .add(13 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (0i32) as u8;
+                                }
+                            };
                         }
                         Err(_) => {
                             *ptr1.add(0).cast::<u8>() = (1i32) as u8;
@@ -503,6 +583,30 @@ pub mod exports {
                                 .add(10 * ::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
                             _rt::cabi_dealloc(l9, l10, 1);
+                            let l11 = *arg0
+                                .add(11 * ::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>();
+                            let l12 = *arg0
+                                .add(12 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            _rt::cabi_dealloc(l11, l12, 1);
+                            let l13 = i32::from(
+                                *arg0
+                                    .add(13 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            match l13 {
+                                0 => {}
+                                _ => {
+                                    let l14 = *arg0
+                                        .add(14 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l15 = *arg0
+                                        .add(15 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    _rt::cabi_dealloc(l14, l15, 1);
+                                }
+                            }
                         }
                         _ => {}
                     }
@@ -570,15 +674,17 @@ pub mod exports {
                     arg3: usize,
                     arg4: *mut u8,
                     arg5: usize,
+                    arg6: *mut u8,
+                    arg7: usize,
                 ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
-                    let base11 = arg2;
-                    let len11 = arg3;
-                    let mut result11 = _rt::Vec::with_capacity(len11);
-                    for i in 0..len11 {
-                        let base = base11
-                            .add(i * (8 + 3 * ::core::mem::size_of::<*const u8>()));
-                        let e11 = {
+                    let base25 = arg2;
+                    let len25 = arg3;
+                    let mut result25 = _rt::Vec::with_capacity(len25);
+                    for i in 0..len25 {
+                        let base = base25
+                            .add(i * (8 + 8 * ::core::mem::size_of::<*const u8>()));
+                        let e25 = {
                             let l0 = *base.add(0).cast::<*mut u8>();
                             let l1 = *base
                                 .add(::core::mem::size_of::<*const u8>())
@@ -631,80 +737,214 @@ pub mod exports {
                                     .cast::<u16>(),
                             );
                             let l9 = *base
-                                .add(4 + 2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<f32>();
+                                .add(3 * ::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>();
                             let l10 = *base
-                                .add(8 + 2 * ::core::mem::size_of::<*const u8>())
+                                .add(4 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let base18 = l9;
+                            let len18 = l10;
+                            let mut result18 = _rt::Vec::with_capacity(len18);
+                            for i in 0..len18 {
+                                let base = base18
+                                    .add(i * (5 * ::core::mem::size_of::<*const u8>()));
+                                let e18 = {
+                                    let l11 = *base.add(0).cast::<*mut u8>();
+                                    let l12 = *base
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len13 = l12;
+                                    let bytes13 = _rt::Vec::from_raw_parts(
+                                        l11.cast(),
+                                        len13,
+                                        len13,
+                                    );
+                                    let l14 = i32::from(
+                                        *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<u8>(),
+                                    );
+                                    super::super::super::super::better_together::gardener::types::VoteRecord {
+                                        voter: _rt::string_lift(bytes13),
+                                        target: match l14 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l15 = *base
+                                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<*mut u8>();
+                                                    let l16 = *base
+                                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<usize>();
+                                                    let len17 = l16;
+                                                    let bytes17 = _rt::Vec::from_raw_parts(
+                                                        l15.cast(),
+                                                        len17,
+                                                        len17,
+                                                    );
+                                                    _rt::string_lift(bytes17)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                    }
+                                };
+                                result18.push(e18);
+                            }
+                            _rt::cabi_dealloc(
+                                base18,
+                                len18 * (5 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
+                            );
+                            let l19 = i32::from(
+                                *base
+                                    .add(5 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l23 = i32::from(
+                                *base
+                                    .add(8 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l24 = *base
+                                .add(4 + 8 * ::core::mem::size_of::<*const u8>())
                                 .cast::<f32>();
                             super::super::super::super::better_together::gardener::types::RoundResult {
                                 actions: result7,
                                 garden_total: l8 as u16,
-                                multiplier: l9,
-                                garden_payout: l10,
+                                votes: result18,
+                                tax_target: match l19 {
+                                    0 => None,
+                                    1 => {
+                                        let e = {
+                                            let l20 = *base
+                                                .add(6 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>();
+                                            let l21 = *base
+                                                .add(7 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            let len22 = l21;
+                                            let bytes22 = _rt::Vec::from_raw_parts(
+                                                l20.cast(),
+                                                len22,
+                                                len22,
+                                            );
+                                            _rt::string_lift(bytes22)
+                                        };
+                                        Some(e)
+                                    }
+                                    _ => _rt::invalid_enum_discriminant(),
+                                },
+                                tax_collected: l23 as u8,
+                                garden_payout: l24,
                             }
                         };
-                        result11.push(e11);
+                        result25.push(e25);
                     }
                     _rt::cabi_dealloc(
-                        base11,
-                        len11 * (8 + 3 * ::core::mem::size_of::<*const u8>()),
+                        base25,
+                        len25 * (8 + 8 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
-                    let base16 = arg4;
-                    let len16 = arg5;
-                    let mut result16 = _rt::Vec::with_capacity(len16);
-                    for i in 0..len16 {
-                        let base = base16
+                    let base30 = arg4;
+                    let len30 = arg5;
+                    let mut result30 = _rt::Vec::with_capacity(len30);
+                    for i in 0..len30 {
+                        let base = base30
                             .add(i * (3 * ::core::mem::size_of::<*const u8>()));
-                        let e16 = {
-                            let l12 = *base.add(0).cast::<*mut u8>();
-                            let l13 = *base
+                        let e30 = {
+                            let l26 = *base.add(0).cast::<*mut u8>();
+                            let l27 = *base
                                 .add(::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
-                            let len14 = l13;
-                            let bytes14 = _rt::Vec::from_raw_parts(
-                                l12.cast(),
-                                len14,
-                                len14,
+                            let len28 = l27;
+                            let bytes28 = _rt::Vec::from_raw_parts(
+                                l26.cast(),
+                                len28,
+                                len28,
                             );
-                            let l15 = i32::from(
+                            let l29 = i32::from(
                                 *base
                                     .add(2 * ::core::mem::size_of::<*const u8>())
                                     .cast::<u8>(),
                             );
                             super::super::super::super::better_together::gardener::types::SignalBroadcast {
-                                id: _rt::string_lift(bytes14),
+                                id: _rt::string_lift(bytes28),
                                 signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
-                                    l15 as u8,
+                                    l29 as u8,
                                 ),
                             }
                         };
-                        result16.push(e16);
+                        result30.push(e30);
                     }
                     _rt::cabi_dealloc(
-                        base16,
-                        len16 * (3 * ::core::mem::size_of::<*const u8>()),
+                        base30,
+                        len30 * (3 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
-                    let result17 = T::talk(
+                    let base36 = arg6;
+                    let len36 = arg7;
+                    let mut result36 = _rt::Vec::with_capacity(len36);
+                    for i in 0..len36 {
+                        let base = base36
+                            .add(i * (3 * ::core::mem::size_of::<*const u8>()));
+                        let e36 = {
+                            let l31 = *base.add(0).cast::<*mut u8>();
+                            let l32 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let len33 = l32;
+                            let bytes33 = _rt::Vec::from_raw_parts(
+                                l31.cast(),
+                                len33,
+                                len33,
+                            );
+                            let l34 = i32::from(
+                                *base
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l35 = i32::from(
+                                *base
+                                    .add(1 + 2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            super::super::super::super::better_together::gardener::types::PlayerAction {
+                                id: _rt::string_lift(bytes33),
+                                plant: l34 as u8,
+                                signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
+                                    l35 as u8,
+                                ),
+                            }
+                        };
+                        result36.push(e36);
+                    }
+                    _rt::cabi_dealloc(
+                        base36,
+                        len36 * (3 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let result37 = T::talk(
                         unsafe { GardenerBorrow::lift(arg0 as u32 as usize) }.get(),
                         super::super::super::super::better_together::gardener::types::RoundState {
                             round: arg1 as u8,
-                            history: result11,
-                            signals: result16,
+                            history: result25,
+                            signals: result30,
+                            plants: result36,
                         },
                     );
-                    let ptr18 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    match result17 {
+                    let ptr38 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result37 {
                         Ok(e) => {
-                            *ptr18.add(0).cast::<u8>() = (0i32) as u8;
-                            *ptr18.add(1).cast::<u8>() = (e.clone() as i32) as u8;
+                            *ptr38.add(0).cast::<u8>() = (0i32) as u8;
+                            *ptr38.add(1).cast::<u8>() = (e.clone() as i32) as u8;
                         }
                         Err(_) => {
-                            *ptr18.add(0).cast::<u8>() = (1i32) as u8;
+                            *ptr38.add(0).cast::<u8>() = (1i32) as u8;
                         }
                     };
-                    ptr18
+                    ptr38
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -715,15 +955,17 @@ pub mod exports {
                     arg3: usize,
                     arg4: *mut u8,
                     arg5: usize,
+                    arg6: *mut u8,
+                    arg7: usize,
                 ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
-                    let base11 = arg2;
-                    let len11 = arg3;
-                    let mut result11 = _rt::Vec::with_capacity(len11);
-                    for i in 0..len11 {
-                        let base = base11
-                            .add(i * (8 + 3 * ::core::mem::size_of::<*const u8>()));
-                        let e11 = {
+                    let base25 = arg2;
+                    let len25 = arg3;
+                    let mut result25 = _rt::Vec::with_capacity(len25);
+                    for i in 0..len25 {
+                        let base = base25
+                            .add(i * (8 + 8 * ::core::mem::size_of::<*const u8>()));
+                        let e25 = {
                             let l0 = *base.add(0).cast::<*mut u8>();
                             let l1 = *base
                                 .add(::core::mem::size_of::<*const u8>())
@@ -776,80 +1018,543 @@ pub mod exports {
                                     .cast::<u16>(),
                             );
                             let l9 = *base
-                                .add(4 + 2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<f32>();
+                                .add(3 * ::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>();
                             let l10 = *base
-                                .add(8 + 2 * ::core::mem::size_of::<*const u8>())
+                                .add(4 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let base18 = l9;
+                            let len18 = l10;
+                            let mut result18 = _rt::Vec::with_capacity(len18);
+                            for i in 0..len18 {
+                                let base = base18
+                                    .add(i * (5 * ::core::mem::size_of::<*const u8>()));
+                                let e18 = {
+                                    let l11 = *base.add(0).cast::<*mut u8>();
+                                    let l12 = *base
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len13 = l12;
+                                    let bytes13 = _rt::Vec::from_raw_parts(
+                                        l11.cast(),
+                                        len13,
+                                        len13,
+                                    );
+                                    let l14 = i32::from(
+                                        *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<u8>(),
+                                    );
+                                    super::super::super::super::better_together::gardener::types::VoteRecord {
+                                        voter: _rt::string_lift(bytes13),
+                                        target: match l14 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l15 = *base
+                                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<*mut u8>();
+                                                    let l16 = *base
+                                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<usize>();
+                                                    let len17 = l16;
+                                                    let bytes17 = _rt::Vec::from_raw_parts(
+                                                        l15.cast(),
+                                                        len17,
+                                                        len17,
+                                                    );
+                                                    _rt::string_lift(bytes17)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                    }
+                                };
+                                result18.push(e18);
+                            }
+                            _rt::cabi_dealloc(
+                                base18,
+                                len18 * (5 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
+                            );
+                            let l19 = i32::from(
+                                *base
+                                    .add(5 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l23 = i32::from(
+                                *base
+                                    .add(8 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l24 = *base
+                                .add(4 + 8 * ::core::mem::size_of::<*const u8>())
                                 .cast::<f32>();
                             super::super::super::super::better_together::gardener::types::RoundResult {
                                 actions: result7,
                                 garden_total: l8 as u16,
-                                multiplier: l9,
-                                garden_payout: l10,
+                                votes: result18,
+                                tax_target: match l19 {
+                                    0 => None,
+                                    1 => {
+                                        let e = {
+                                            let l20 = *base
+                                                .add(6 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>();
+                                            let l21 = *base
+                                                .add(7 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            let len22 = l21;
+                                            let bytes22 = _rt::Vec::from_raw_parts(
+                                                l20.cast(),
+                                                len22,
+                                                len22,
+                                            );
+                                            _rt::string_lift(bytes22)
+                                        };
+                                        Some(e)
+                                    }
+                                    _ => _rt::invalid_enum_discriminant(),
+                                },
+                                tax_collected: l23 as u8,
+                                garden_payout: l24,
                             }
                         };
-                        result11.push(e11);
+                        result25.push(e25);
                     }
                     _rt::cabi_dealloc(
-                        base11,
-                        len11 * (8 + 3 * ::core::mem::size_of::<*const u8>()),
+                        base25,
+                        len25 * (8 + 8 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
-                    let base16 = arg4;
-                    let len16 = arg5;
-                    let mut result16 = _rt::Vec::with_capacity(len16);
-                    for i in 0..len16 {
-                        let base = base16
+                    let base30 = arg4;
+                    let len30 = arg5;
+                    let mut result30 = _rt::Vec::with_capacity(len30);
+                    for i in 0..len30 {
+                        let base = base30
                             .add(i * (3 * ::core::mem::size_of::<*const u8>()));
-                        let e16 = {
-                            let l12 = *base.add(0).cast::<*mut u8>();
-                            let l13 = *base
+                        let e30 = {
+                            let l26 = *base.add(0).cast::<*mut u8>();
+                            let l27 = *base
                                 .add(::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
-                            let len14 = l13;
-                            let bytes14 = _rt::Vec::from_raw_parts(
-                                l12.cast(),
-                                len14,
-                                len14,
+                            let len28 = l27;
+                            let bytes28 = _rt::Vec::from_raw_parts(
+                                l26.cast(),
+                                len28,
+                                len28,
                             );
-                            let l15 = i32::from(
+                            let l29 = i32::from(
                                 *base
                                     .add(2 * ::core::mem::size_of::<*const u8>())
                                     .cast::<u8>(),
                             );
                             super::super::super::super::better_together::gardener::types::SignalBroadcast {
-                                id: _rt::string_lift(bytes14),
+                                id: _rt::string_lift(bytes28),
                                 signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
-                                    l15 as u8,
+                                    l29 as u8,
                                 ),
                             }
                         };
-                        result16.push(e16);
+                        result30.push(e30);
                     }
                     _rt::cabi_dealloc(
-                        base16,
-                        len16 * (3 * ::core::mem::size_of::<*const u8>()),
+                        base30,
+                        len30 * (3 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
-                    let result17 = T::plant(
+                    let base36 = arg6;
+                    let len36 = arg7;
+                    let mut result36 = _rt::Vec::with_capacity(len36);
+                    for i in 0..len36 {
+                        let base = base36
+                            .add(i * (3 * ::core::mem::size_of::<*const u8>()));
+                        let e36 = {
+                            let l31 = *base.add(0).cast::<*mut u8>();
+                            let l32 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let len33 = l32;
+                            let bytes33 = _rt::Vec::from_raw_parts(
+                                l31.cast(),
+                                len33,
+                                len33,
+                            );
+                            let l34 = i32::from(
+                                *base
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l35 = i32::from(
+                                *base
+                                    .add(1 + 2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            super::super::super::super::better_together::gardener::types::PlayerAction {
+                                id: _rt::string_lift(bytes33),
+                                plant: l34 as u8,
+                                signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
+                                    l35 as u8,
+                                ),
+                            }
+                        };
+                        result36.push(e36);
+                    }
+                    _rt::cabi_dealloc(
+                        base36,
+                        len36 * (3 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let result37 = T::plant(
                         unsafe { GardenerBorrow::lift(arg0 as u32 as usize) }.get(),
                         super::super::super::super::better_together::gardener::types::RoundState {
                             round: arg1 as u8,
-                            history: result11,
-                            signals: result16,
+                            history: result25,
+                            signals: result30,
+                            plants: result36,
                         },
                     );
-                    let ptr18 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    match result17 {
+                    let ptr38 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result37 {
                         Ok(e) => {
-                            *ptr18.add(0).cast::<u8>() = (0i32) as u8;
-                            *ptr18.add(1).cast::<u8>() = (_rt::as_i32(e)) as u8;
+                            *ptr38.add(0).cast::<u8>() = (0i32) as u8;
+                            *ptr38.add(1).cast::<u8>() = (_rt::as_i32(e)) as u8;
                         }
                         Err(_) => {
-                            *ptr18.add(0).cast::<u8>() = (1i32) as u8;
+                            *ptr38.add(0).cast::<u8>() = (1i32) as u8;
                         }
                     };
-                    ptr18
+                    ptr38
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_gardener_vote_cabi<T: GuestGardener>(
+                    arg0: *mut u8,
+                    arg1: i32,
+                    arg2: *mut u8,
+                    arg3: usize,
+                    arg4: *mut u8,
+                    arg5: usize,
+                    arg6: *mut u8,
+                    arg7: usize,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
+                    let base25 = arg2;
+                    let len25 = arg3;
+                    let mut result25 = _rt::Vec::with_capacity(len25);
+                    for i in 0..len25 {
+                        let base = base25
+                            .add(i * (8 + 8 * ::core::mem::size_of::<*const u8>()));
+                        let e25 = {
+                            let l0 = *base.add(0).cast::<*mut u8>();
+                            let l1 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let base7 = l0;
+                            let len7 = l1;
+                            let mut result7 = _rt::Vec::with_capacity(len7);
+                            for i in 0..len7 {
+                                let base = base7
+                                    .add(i * (3 * ::core::mem::size_of::<*const u8>()));
+                                let e7 = {
+                                    let l2 = *base.add(0).cast::<*mut u8>();
+                                    let l3 = *base
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len4 = l3;
+                                    let bytes4 = _rt::Vec::from_raw_parts(
+                                        l2.cast(),
+                                        len4,
+                                        len4,
+                                    );
+                                    let l5 = i32::from(
+                                        *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<u8>(),
+                                    );
+                                    let l6 = i32::from(
+                                        *base
+                                            .add(1 + 2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<u8>(),
+                                    );
+                                    super::super::super::super::better_together::gardener::types::PlayerAction {
+                                        id: _rt::string_lift(bytes4),
+                                        plant: l5 as u8,
+                                        signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
+                                            l6 as u8,
+                                        ),
+                                    }
+                                };
+                                result7.push(e7);
+                            }
+                            _rt::cabi_dealloc(
+                                base7,
+                                len7 * (3 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
+                            );
+                            let l8 = i32::from(
+                                *base
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u16>(),
+                            );
+                            let l9 = *base
+                                .add(3 * ::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>();
+                            let l10 = *base
+                                .add(4 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let base18 = l9;
+                            let len18 = l10;
+                            let mut result18 = _rt::Vec::with_capacity(len18);
+                            for i in 0..len18 {
+                                let base = base18
+                                    .add(i * (5 * ::core::mem::size_of::<*const u8>()));
+                                let e18 = {
+                                    let l11 = *base.add(0).cast::<*mut u8>();
+                                    let l12 = *base
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len13 = l12;
+                                    let bytes13 = _rt::Vec::from_raw_parts(
+                                        l11.cast(),
+                                        len13,
+                                        len13,
+                                    );
+                                    let l14 = i32::from(
+                                        *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<u8>(),
+                                    );
+                                    super::super::super::super::better_together::gardener::types::VoteRecord {
+                                        voter: _rt::string_lift(bytes13),
+                                        target: match l14 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l15 = *base
+                                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<*mut u8>();
+                                                    let l16 = *base
+                                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                                        .cast::<usize>();
+                                                    let len17 = l16;
+                                                    let bytes17 = _rt::Vec::from_raw_parts(
+                                                        l15.cast(),
+                                                        len17,
+                                                        len17,
+                                                    );
+                                                    _rt::string_lift(bytes17)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                    }
+                                };
+                                result18.push(e18);
+                            }
+                            _rt::cabi_dealloc(
+                                base18,
+                                len18 * (5 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
+                            );
+                            let l19 = i32::from(
+                                *base
+                                    .add(5 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l23 = i32::from(
+                                *base
+                                    .add(8 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l24 = *base
+                                .add(4 + 8 * ::core::mem::size_of::<*const u8>())
+                                .cast::<f32>();
+                            super::super::super::super::better_together::gardener::types::RoundResult {
+                                actions: result7,
+                                garden_total: l8 as u16,
+                                votes: result18,
+                                tax_target: match l19 {
+                                    0 => None,
+                                    1 => {
+                                        let e = {
+                                            let l20 = *base
+                                                .add(6 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>();
+                                            let l21 = *base
+                                                .add(7 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            let len22 = l21;
+                                            let bytes22 = _rt::Vec::from_raw_parts(
+                                                l20.cast(),
+                                                len22,
+                                                len22,
+                                            );
+                                            _rt::string_lift(bytes22)
+                                        };
+                                        Some(e)
+                                    }
+                                    _ => _rt::invalid_enum_discriminant(),
+                                },
+                                tax_collected: l23 as u8,
+                                garden_payout: l24,
+                            }
+                        };
+                        result25.push(e25);
+                    }
+                    _rt::cabi_dealloc(
+                        base25,
+                        len25 * (8 + 8 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let base30 = arg4;
+                    let len30 = arg5;
+                    let mut result30 = _rt::Vec::with_capacity(len30);
+                    for i in 0..len30 {
+                        let base = base30
+                            .add(i * (3 * ::core::mem::size_of::<*const u8>()));
+                        let e30 = {
+                            let l26 = *base.add(0).cast::<*mut u8>();
+                            let l27 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let len28 = l27;
+                            let bytes28 = _rt::Vec::from_raw_parts(
+                                l26.cast(),
+                                len28,
+                                len28,
+                            );
+                            let l29 = i32::from(
+                                *base
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            super::super::super::super::better_together::gardener::types::SignalBroadcast {
+                                id: _rt::string_lift(bytes28),
+                                signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
+                                    l29 as u8,
+                                ),
+                            }
+                        };
+                        result30.push(e30);
+                    }
+                    _rt::cabi_dealloc(
+                        base30,
+                        len30 * (3 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let base36 = arg6;
+                    let len36 = arg7;
+                    let mut result36 = _rt::Vec::with_capacity(len36);
+                    for i in 0..len36 {
+                        let base = base36
+                            .add(i * (3 * ::core::mem::size_of::<*const u8>()));
+                        let e36 = {
+                            let l31 = *base.add(0).cast::<*mut u8>();
+                            let l32 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let len33 = l32;
+                            let bytes33 = _rt::Vec::from_raw_parts(
+                                l31.cast(),
+                                len33,
+                                len33,
+                            );
+                            let l34 = i32::from(
+                                *base
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            let l35 = i32::from(
+                                *base
+                                    .add(1 + 2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            super::super::super::super::better_together::gardener::types::PlayerAction {
+                                id: _rt::string_lift(bytes33),
+                                plant: l34 as u8,
+                                signal: super::super::super::super::better_together::gardener::types::Signal::_lift(
+                                    l35 as u8,
+                                ),
+                            }
+                        };
+                        result36.push(e36);
+                    }
+                    _rt::cabi_dealloc(
+                        base36,
+                        len36 * (3 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let result37 = T::vote(
+                        unsafe { GardenerBorrow::lift(arg0 as u32 as usize) }.get(),
+                        super::super::super::super::better_together::gardener::types::RoundState {
+                            round: arg1 as u8,
+                            history: result25,
+                            signals: result30,
+                            plants: result36,
+                        },
+                    );
+                    let ptr38 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result37 {
+                        Ok(e) => {
+                            *ptr38.add(0).cast::<u8>() = (0i32) as u8;
+                            match e {
+                                Some(e) => {
+                                    *ptr38
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (1i32) as u8;
+                                    let vec39 = (e.into_bytes()).into_boxed_slice();
+                                    let ptr39 = vec39.as_ptr().cast::<u8>();
+                                    let len39 = vec39.len();
+                                    ::core::mem::forget(vec39);
+                                    *ptr38
+                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len39;
+                                    *ptr38
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = ptr39.cast_mut();
+                                }
+                                None => {
+                                    *ptr38
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                        }
+                        Err(_) => {
+                            *ptr38.add(0).cast::<u8>() = (1i32) as u8;
+                        }
+                    };
+                    ptr38
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_gardener_vote<T: GuestGardener>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l1 = i32::from(
+                                *arg0.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
+                            );
+                            match l1 {
+                                0 => {}
+                                _ => {
+                                    let l2 = *arg0
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l3 = *arg0
+                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    _rt::cabi_dealloc(l2, l3, 1);
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -902,7 +1607,7 @@ pub mod exports {
                 }
                 pub trait Guest {
                     type Gardener: GuestGardener;
-                    /// Static factory: create a new player instance. The router host calls this
+                    /// Static factory: create a new player instance. The host calls this
                     /// once per seat to spin up a gardener, which loads any persisted memory
                     /// from the virtual filesystem and prepares to play.
                     fn create() -> Result<Gardener, ()>;
@@ -965,6 +1670,13 @@ pub mod exports {
                     /// player's talk from this round, so you can react to what was promised.
                     /// Must respect the 10 ms / 16 MB budget.
                     fn plant(&self, state: RoundState) -> Result<u8, ()>;
+                    /// Vote phase: after every plant is revealed (`state.plants`), cast a
+                    /// ballot — name one player to tax, or `none` to abstain. A target named by
+                    /// >= 2 distinct voters with the uniquely highest vote-weight (and kept > 2)
+                    /// has seeds reclaimed into the garden.
+                    /// Contributors — players who planted >= 3 THIS round — cast 2 votes;
+                    /// everyone else casts 1. Must respect the 10 ms / 16 MB budget.
+                    fn vote(&self, state: RoundState) -> Result<Ballot, ()>;
                     /// The match has ended. Persist any updated memory to the virtual
                     /// filesystem here (there is no return blob).
                     fn match_end(&self, summary: MatchSummary) -> Result<(), ()>;
@@ -1000,17 +1712,30 @@ pub mod exports {
                         "better-together:gardener/player@0.1.0#[method]gardener.talk")]
                         unsafe extern "C" fn export_method_gardener_talk(arg0 : * mut u8,
                         arg1 : i32, arg2 : * mut u8, arg3 : usize, arg4 : * mut u8, arg5
-                        : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
-                        _export_method_gardener_talk_cabi::<<$ty as $($path_to_types)*::
-                        Guest >::Gardener > (arg0, arg1, arg2, arg3, arg4, arg5) } }
-                        #[unsafe (export_name =
+                        : usize, arg6 : * mut u8, arg7 : usize,) -> * mut u8 { unsafe {
+                        $($path_to_types)*:: _export_method_gardener_talk_cabi::<<$ty as
+                        $($path_to_types)*:: Guest >::Gardener > (arg0, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7) } } #[unsafe (export_name =
                         "better-together:gardener/player@0.1.0#[method]gardener.plant")]
                         unsafe extern "C" fn export_method_gardener_plant(arg0 : * mut
                         u8, arg1 : i32, arg2 : * mut u8, arg3 : usize, arg4 : * mut u8,
-                        arg5 : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
+                        arg5 : usize, arg6 : * mut u8, arg7 : usize,) -> * mut u8 {
+                        unsafe { $($path_to_types)*::
                         _export_method_gardener_plant_cabi::<<$ty as $($path_to_types)*::
-                        Guest >::Gardener > (arg0, arg1, arg2, arg3, arg4, arg5) } }
-                        #[unsafe (export_name =
+                        Guest >::Gardener > (arg0, arg1, arg2, arg3, arg4, arg5, arg6,
+                        arg7) } } #[unsafe (export_name =
+                        "better-together:gardener/player@0.1.0#[method]gardener.vote")]
+                        unsafe extern "C" fn export_method_gardener_vote(arg0 : * mut u8,
+                        arg1 : i32, arg2 : * mut u8, arg3 : usize, arg4 : * mut u8, arg5
+                        : usize, arg6 : * mut u8, arg7 : usize,) -> * mut u8 { unsafe {
+                        $($path_to_types)*:: _export_method_gardener_vote_cabi::<<$ty as
+                        $($path_to_types)*:: Guest >::Gardener > (arg0, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7) } } #[unsafe (export_name =
+                        "cabi_post_better-together:gardener/player@0.1.0#[method]gardener.vote")]
+                        unsafe extern "C" fn _post_return_method_gardener_vote(arg0 : *
+                        mut u8,) { unsafe { $($path_to_types)*::
+                        __post_return_method_gardener_vote::<<$ty as $($path_to_types)*::
+                        Guest >::Gardener > (arg0) } } #[unsafe (export_name =
                         "better-together:gardener/player@0.1.0#[method]gardener.match-end")]
                         unsafe extern "C" fn export_method_gardener_match_end(arg0 : *
                         mut u8, arg1 : i32, arg2 : * mut u8, arg3 : usize, arg4 : f32,)
@@ -1031,10 +1756,10 @@ pub mod exports {
                 struct _RetArea(
                     [::core::mem::MaybeUninit<
                         u8,
-                    >; 11 * ::core::mem::size_of::<*const u8>()],
+                    >; 16 * ::core::mem::size_of::<*const u8>()],
                 );
                 static mut _RET_AREA: _RetArea = _RetArea(
-                    [::core::mem::MaybeUninit::uninit(); 11
+                    [::core::mem::MaybeUninit::uninit(); 16
                         * ::core::mem::size_of::<*const u8>()],
                 );
             }
@@ -1139,6 +1864,13 @@ mod _rt {
             String::from_utf8_unchecked(bytes)
         }
     }
+    pub unsafe fn invalid_enum_discriminant<T>() -> T {
+        if cfg!(debug_assertions) {
+            panic!("invalid enum discriminant")
+        } else {
+            unsafe { core::hint::unreachable_unchecked() }
+        }
+    }
     pub fn as_i32<T: AsI32>(t: T) -> i32 {
         t.as_i32()
     }
@@ -1238,33 +1970,37 @@ pub(crate) use __export_corro_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1172] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x98\x08\x01A\x02\x01\
-A\x09\x01B\x18\x01s\x04\0\x09player-id\x03\0\0\x01r\x05\x04names\x07versions\x06\
-authors\x04repos\x04lores\x04\0\x08metadata\x03\0\x02\x01m\x03\x05bloom\x04hold\x05\
-watch\x04\0\x06signal\x03\0\x04\x01r\x03\x02id\x01\x05plant}\x06signal\x05\x04\0\
-\x0dplayer-action\x03\0\x06\x01p\x07\x01r\x04\x07actions\x08\x0cgarden-total{\x0a\
-multiplierv\x0dgarden-payoutv\x04\0\x0cround-result\x03\0\x09\x01p\x01\x01r\x04\x08\
-match-ids\x07players\x0b\x07self-id\x01\x0agroup-size}\x04\0\x0dmatch-context\x03\
-\0\x0c\x01r\x02\x02id\x01\x06signal\x05\x04\0\x10signal-broadcast\x03\0\x0e\x01p\
-\x0a\x01p\x0f\x01r\x03\x05round}\x07history\x10\x07signals\x11\x04\0\x0bround-st\
-ate\x03\0\x12\x01o\x02\x01v\x01p\x14\x01r\x03\x0drounds-played}\x0cfinal-scores\x15\
-\x0ayour-scorev\x04\0\x0dmatch-summary\x03\0\x16\x03\0$better-together:gardener/\
-types@0.1.0\x05\0\x02\x03\0\0\x08metadata\x02\x03\0\0\x06signal\x02\x03\0\0\x0dm\
-atch-context\x02\x03\0\0\x0bround-state\x02\x03\0\0\x0dmatch-summary\x01B\x1e\x02\
-\x03\x02\x01\x01\x04\0\x08metadata\x03\0\0\x02\x03\x02\x01\x02\x04\0\x06signal\x03\
-\0\x02\x02\x03\x02\x01\x03\x04\0\x0dmatch-context\x03\0\x04\x02\x03\x02\x01\x04\x04\
-\0\x0bround-state\x03\0\x06\x02\x03\x02\x01\x05\x04\0\x0dmatch-summary\x03\0\x08\
-\x04\0\x08gardener\x03\x01\x01h\x0a\x01j\x01\x01\0\x01@\x01\x04self\x0b\0\x0c\x04\
-\0\x19[method]gardener.metadata\x01\x0d\x01j\0\0\x01@\x02\x04self\x0b\x07context\
-\x05\0\x0e\x04\0\x1c[method]gardener.match-start\x01\x0f\x01j\x01\x03\0\x01@\x02\
-\x04self\x0b\x05state\x07\0\x10\x04\0\x15[method]gardener.talk\x01\x11\x01j\x01}\
-\0\x01@\x02\x04self\x0b\x05state\x07\0\x12\x04\0\x16[method]gardener.plant\x01\x13\
-\x01@\x02\x04self\x0b\x07summary\x09\0\x0e\x04\0\x1a[method]gardener.match-end\x01\
-\x14\x01i\x0a\x01j\x01\x15\0\x01@\0\0\x16\x04\0\x06create\x01\x17\x04\0%better-t\
-ogether:gardener/player@0.1.0\x05\x06\x04\0!better-together:corro/corro@0.1.0\x04\
-\0\x0b\x0b\x01\0\x05corro\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit\
--component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1351] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xcb\x09\x01A\x02\x01\
+A\x0a\x01B\x1f\x01s\x04\0\x09player-id\x03\0\0\x01ks\x01r\x07\x04names\x07versio\
+ns\x06authors\x04repos\x04lores\x05glyphs\x04icon\x02\x04\0\x08metadata\x03\0\x03\
+\x01m\x03\x05bloom\x04hold\x05watch\x04\0\x06signal\x03\0\x05\x01k\x01\x04\0\x06\
+ballot\x03\0\x07\x01k\x01\x01r\x02\x05voter\x01\x06target\x09\x04\0\x0bvote-reco\
+rd\x03\0\x0a\x01r\x03\x02id\x01\x05plant}\x06signal\x06\x04\0\x0dplayer-action\x03\
+\0\x0c\x01p\x0d\x01p\x0b\x01r\x06\x07actions\x0e\x0cgarden-total{\x05votes\x0f\x0a\
+tax-target\x09\x0dtax-collected}\x0dgarden-payoutv\x04\0\x0cround-result\x03\0\x10\
+\x01p\x01\x01r\x04\x08match-ids\x07players\x12\x07self-id\x01\x0agroup-size}\x04\
+\0\x0dmatch-context\x03\0\x13\x01r\x02\x02id\x01\x06signal\x06\x04\0\x10signal-b\
+roadcast\x03\0\x15\x01p\x11\x01p\x16\x01r\x04\x05round}\x07history\x17\x07signal\
+s\x18\x06plants\x0e\x04\0\x0bround-state\x03\0\x19\x01o\x02\x01v\x01p\x1b\x01r\x03\
+\x0drounds-played}\x0cfinal-scores\x1c\x0ayour-scorev\x04\0\x0dmatch-summary\x03\
+\0\x1d\x03\0$better-together:gardener/types@0.1.0\x05\0\x02\x03\0\0\x08metadata\x02\
+\x03\0\0\x06signal\x02\x03\0\0\x06ballot\x02\x03\0\0\x0dmatch-context\x02\x03\0\0\
+\x0bround-state\x02\x03\0\0\x0dmatch-summary\x01B#\x02\x03\x02\x01\x01\x04\0\x08\
+metadata\x03\0\0\x02\x03\x02\x01\x02\x04\0\x06signal\x03\0\x02\x02\x03\x02\x01\x03\
+\x04\0\x06ballot\x03\0\x04\x02\x03\x02\x01\x04\x04\0\x0dmatch-context\x03\0\x06\x02\
+\x03\x02\x01\x05\x04\0\x0bround-state\x03\0\x08\x02\x03\x02\x01\x06\x04\0\x0dmat\
+ch-summary\x03\0\x0a\x04\0\x08gardener\x03\x01\x01h\x0c\x01j\x01\x01\0\x01@\x01\x04\
+self\x0d\0\x0e\x04\0\x19[method]gardener.metadata\x01\x0f\x01j\0\0\x01@\x02\x04s\
+elf\x0d\x07context\x07\0\x10\x04\0\x1c[method]gardener.match-start\x01\x11\x01j\x01\
+\x03\0\x01@\x02\x04self\x0d\x05state\x09\0\x12\x04\0\x15[method]gardener.talk\x01\
+\x13\x01j\x01}\0\x01@\x02\x04self\x0d\x05state\x09\0\x14\x04\0\x16[method]garden\
+er.plant\x01\x15\x01j\x01\x05\0\x01@\x02\x04self\x0d\x05state\x09\0\x16\x04\0\x15\
+[method]gardener.vote\x01\x17\x01@\x02\x04self\x0d\x07summary\x0b\0\x10\x04\0\x1a\
+[method]gardener.match-end\x01\x18\x01i\x0c\x01j\x01\x19\0\x01@\0\0\x1a\x04\0\x06\
+create\x01\x1b\x04\0%better-together:gardener/player@0.1.0\x05\x07\x04\0!better-\
+together:corro/corro@0.1.0\x04\0\x0b\x0b\x01\0\x05corro\x03\0\0\0G\x09producers\x01\
+\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

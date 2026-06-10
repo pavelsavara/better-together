@@ -1,6 +1,6 @@
 // Dusty — a cautious grey pantry mouse who plays graduated true Tit-for-Tat.
 //
-// Written in pure Grain. The six canonical-ABI exports below are hand-marshalled
+// Written in pure Grain. The seven canonical-ABI exports below are hand-marshalled
 // at the @unsafe / WasmI32 boundary; `wasm-tools component embed` + `component new`
 // (with the WASI preview1 reactor adapter) wrap this core module into a proper
 // `better-together:gardener/player@0.1.0` component.
@@ -71,7 +71,8 @@ let _COOP_AVG = 4n       // group-average plant that counts as a "generous" roun
 // Metadata strings (module constants -> stable, GC-rooted addresses).
 // ---------------------------------------------------------------------------
 
-let metaName = "Dusty"
+let metaName = "together.Dusty"
+let metaGlyph = "🐭"
 let metaVersion = "0.1.0"
 let metaAuthor = "Better Together samples"
 let metaRepo = "https://github.com/better-together/better-together/tree/main/samples/dusty"
@@ -277,7 +278,9 @@ provide let create = () => {
 
 // ---------------------------------------------------------------------------
 // metadata: func() -> result<metadata>
-//   result<metadata> = disc i32@0=ok, then 5x(ptr,len) strings @4 (size 44)
+//   result<metadata> = disc i32@0=ok, then the metadata record @4:
+//     6x(ptr,len) strings (name,version,author,repo,lore,glyph) @4..52, then
+//     icon: option<string> @52 (u8 disc @52, pad, ptr@56, len@60). Size 64.
 // ---------------------------------------------------------------------------
 
 @unsafe
@@ -292,13 +295,17 @@ let storeStr = (area: WasmI32, idx: WasmI32, s: String) => {
 @unsafe
 @externalName("better-together:gardener/player@0.1.0#[method]gardener.metadata")
 provide let metadata = (self: WasmI32) => {
-  let p = Memory.malloc(44n)
+  let p = Memory.malloc(64n)
   WasmI32.store(p, 0n, 0n) // disc = ok
   storeStr(p, 0n, metaName)
   storeStr(p, 1n, metaVersion)
   storeStr(p, 2n, metaAuthor)
   storeStr(p, 3n, metaRepo)
   storeStr(p, 4n, metaLore)
+  storeStr(p, 5n, metaGlyph)
+  // icon: option<string> = none. The variant disc (u8) sits at record
+  // offset 48 -> p+52; storing 0 there selects `none`.
+  WasmI32.store(p, 0n, 52n)
   p
 }
 
@@ -351,6 +358,8 @@ provide let talk = (
   histLen: WasmI32,
   sigPtr: WasmI32,
   sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
 ) => {
   computeLastRound(histPtr, histLen)
   let target = decideTarget()
@@ -375,6 +384,8 @@ provide let plant = (
   histLen: WasmI32,
   sigPtr: WasmI32,
   sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
 ) => {
   computeLastRound(histPtr, histLen)
 
@@ -392,6 +403,31 @@ provide let plant = (
   let p = Memory.malloc(4n)
   WasmI32.store8(p, 0n, 0n)              // disc = ok
   WasmI32.store8(p, clamp10(target), 1n) // value 0..10
+  p
+}
+
+// ---------------------------------------------------------------------------
+// vote: func(state) -> result<ballot>  where ballot = option<player-id>
+//   return layout (16 bytes): result disc u8@0, ballot(option) disc u8@4,
+//   string ptr@8 / len@12. Dusty shelters from the tax phase and always
+//   abstains, so the ballot is `none` and the string slot is unused.
+// ---------------------------------------------------------------------------
+
+@unsafe
+@externalName("better-together:gardener/player@0.1.0#[method]gardener.vote")
+provide let vote = (
+  self: WasmI32,
+  round: WasmI32,
+  histPtr: WasmI32,
+  histLen: WasmI32,
+  sigPtr: WasmI32,
+  sigLen: WasmI32,
+  plantsPtr: WasmI32,
+  plantsLen: WasmI32,
+) => {
+  let p = Memory.malloc(16n)
+  WasmI32.store8(p, 0n, 0n) // result disc = ok
+  WasmI32.store8(p, 0n, 4n) // ballot disc = none
   p
 }
 

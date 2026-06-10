@@ -31,7 +31,8 @@ import (
 // ─────────────────────────── Identity ─────────────────────────────
 
 const (
-	playerName    = "gopher"
+	playerName    = "together.Gopher"
+	playerGlyph   = "🐹"
 	playerVersion = "0.1.0"
 	playerAuthor  = "Better Together samples"
 	playerRepo    = "https://github.com/pavelsavara/better-together"
@@ -216,6 +217,8 @@ func init() {
 			Author:  playerAuthor,
 			Repo:    playerRepo,
 			Lore:    playerLore,
+			Glyph:   playerGlyph,
+			Icon:    cm.None[string](),
 		}
 		return cm.OK[cm.Result[player.Metadata, player.Metadata, struct{}]](md)
 	}
@@ -273,6 +276,13 @@ func init() {
 		plantBanter(state.Round, plant)
 		fmt.Fprintf(os.Stderr, "[gopher] round %d: plant %d\n", state.Round, plant)
 		return cm.OK[cm.Result[uint8, uint8, struct{}]](plant)
+	}
+
+	player.Exports.Gardener.Vote = func(self cm.Rep, state player.RoundState) (result cm.Result[player.Ballot, player.Ballot, struct{}]) {
+		// Gopher doesn't hold grudges and doesn't read minds — he never names a
+		// neighbour to tax, always abstaining.
+		fmt.Fprintf(os.Stderr, "[gopher] round %d: vote abstain\n", state.Round)
+		return cm.OK[cm.Result[player.Ballot, player.Ballot, struct{}]](player.Ballot(cm.None[types.PlayerID]()))
 	}
 
 	player.Exports.Gardener.MatchEnd = func(self cm.Rep, summary player.MatchSummary) (result cm.BoolResult) {

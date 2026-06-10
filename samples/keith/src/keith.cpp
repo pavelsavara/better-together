@@ -166,7 +166,7 @@ std::expected<ex::Gardener::Owned, wit::Void> ex::Create() {
 
 std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
   return bt::Metadata{
-      wit::string::from_view("keith"),
+      wit::string::from_view("together.Keith"),
       wit::string::from_view("0.1.0"),
       wit::string::from_view("Better Together samples"),
       wit::string::from_view("https://github.com/pavelsavara/better-together"),
@@ -176,6 +176,8 @@ std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
           "book of who broke their word, and he never forgets. He'd vote any day "
           "with Bram the beaver's guild, and his book is the one place Reynard "
           "the fox's careful skim still shows up in red."),
+      wit::string::from_view("\xF0\x9F\x90\x80"),
+      std::optional<wit::string>{},
   };
 }
 
@@ -255,6 +257,13 @@ std::expected<uint8_t, wit::Void> ex::Gardener::Plant(bt::RoundState state) {
 
   printf("\xF0\x9F\x90\x80 keith [r%u plant]: %u seeds in the dirt.\n", state.round, plant);
   return plant;
+}
+
+std::expected<std::optional<wit::string>, wit::Void> ex::Gardener::Vote(bt::RoundState state) {
+  // Keith remembers bites, but he doesn't throw the first stone in the tax
+  // phase — he keeps to himself and abstains.
+  printf("\xF0\x9F\x90\x80 keith [r%u vote]: abstain.\n", state.round);
+  return std::optional<wit::string>{};
 }
 
 std::expected<void, wit::Void> ex::Gardener::MatchEnd(bt::MatchSummary summary) {

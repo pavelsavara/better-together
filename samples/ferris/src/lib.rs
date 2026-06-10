@@ -64,12 +64,13 @@ wit_bindgen::generate!({
 // transitively, so they stay in `types`.
 use crate::better_together::gardener::types::{RoundResult, Signal};
 use exports::better_together::gardener::player::{
-    Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
+    Ballot, Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
 };
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const PLAYER_NAME: &str = "ferris";
+const PLAYER_NAME: &str = "together.Ferris";
+const PLAYER_GLYPH: &str = "🦀";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
@@ -278,7 +279,7 @@ fn signal_name(signal: &Signal) -> &'static str {
 // is a communication channel; the engine never reads it.
 
 fn say(line: &str) {
-    println!("🌱 ferris: {line}");
+    println!("🦀 ferris: {line}");
 }
 
 /// Talk-phase chatter, chosen from the situation (defector / friend / strangers)
@@ -414,6 +415,8 @@ impl GuestGardener for FerrisGardener {
             author: PLAYER_AUTHOR.to_string(),
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
+            glyph: PLAYER_GLYPH.to_string(),
+            icon: None,
         })
     }
 
@@ -472,6 +475,13 @@ impl GuestGardener for FerrisGardener {
         plant_banter(leaned_in, holding);
         eprintln!("[ferris] round {}: plant {}", round_state.round, plant);
         Ok(plant)
+    }
+
+    fn vote(&self, round_state: RoundState) -> Result<Ballot, ()> {
+        // Ferris keeps the table friendly: abstaining is free and common, so it
+        // never throws the first stone in the tax phase.
+        eprintln!("[ferris] round {}: vote abstain", round_state.round);
+        Ok(None)
     }
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {

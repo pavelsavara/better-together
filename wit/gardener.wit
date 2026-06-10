@@ -20,7 +20,10 @@ interface types {
     /// Returned by `gardener.metadata` so the engine can build a registry /
     /// leaderboard without constructing or running the player.
     record metadata {
-        /// Human-readable name of this player (often used as the player-id).
+        /// Fully-qualified identity as `namespace.name` (e.g. "together.Ferris").
+        /// The `namespace` segment groups players by publisher and is validated
+        /// by the engine — see engine-rules.md §Validation (it must match
+        /// `^[a-z][a-z0-9-]*$`). Often used as the player-id.
         name: string,
         /// Semantic version of this player, e.g. "1.0.0".
         version: string,
@@ -32,6 +35,11 @@ interface types {
         /// engine never parses it; it exists so leaderboards and match logs can
         /// show who this bot *is*.
         lore: string,
+        /// A single UTF character (emoji/glyph) shown as this gardener's icon on
+        /// the garden in the UI, e.g. "🦀".
+        glyph: string,
+        /// URL of an avatar picture for this player, or none if it has no avatar.
+        icon: option<string>,
     }
 
     /// The public broadcast a player emits each round. Cheap talk — it carries

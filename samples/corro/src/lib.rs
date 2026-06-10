@@ -39,12 +39,13 @@ use std::collections::BTreeMap;
 
 use bindings::better_together::gardener::types::{RoundResult, Signal};
 use bindings::exports::better_together::gardener::player::{
-    Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
+    Ballot, Gardener, Guest, GuestGardener, MatchContext, MatchSummary, Metadata, RoundState,
 };
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const PLAYER_NAME: &str = "corro";
+const PLAYER_NAME: &str = "together.Corro";
+const PLAYER_GLYPH: &str = "🥀";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
@@ -188,6 +189,8 @@ impl GuestGardener for CorroGardener {
             author: PLAYER_AUTHOR.to_string(),
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
+            glyph: PLAYER_GLYPH.to_string(),
+            icon: None,
         })
     }
 
@@ -244,6 +247,18 @@ impl GuestGardener for CorroGardener {
             if baiting { "bait" } else { "feast" }
         );
         Ok(plant)
+    }
+
+    fn vote(&self, round_state: RoundState) -> Result<Ballot, ()> {
+        let st = self.state.borrow();
+        // Predator's ballot: tax the most generous mark to keep them weak.
+        let mark = most_generous(&round_state.history, &st.self_id).map(|(id, _)| id);
+        eprintln!(
+            "[corro] round {}: vote {}",
+            round_state.round,
+            mark.as_deref().unwrap_or("abstain")
+        );
+        Ok(mark)
     }
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {

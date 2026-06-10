@@ -38,7 +38,8 @@ import { getDirectories } from "wasi:filesystem/preopens@0.2.3";
 
 // ──────────────────────────── Identity ────────────────────────────
 
-const NAME = "khaos";
+const NAME = "together.Khaos";
+const GLYPH = "🎲";
 const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
@@ -162,7 +163,7 @@ class Gardener {
     }
 
     metadata() {
-        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE };
+        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: undefined };
     }
 
     matchStart(context) {
@@ -200,6 +201,18 @@ class Gardener {
         const plant = foe ? FOE_PLANT : FRIEND_PLANT;
         this.#plantBanter(foe, plant);
         return plant;
+    }
+
+    vote(_state) {
+        // Chaos at the ballot box: half the time he abstains, half the time he
+        // points the dice at a random neighbour to tax.
+        if (this.#opponents.length === 0 || Math.random() < 0.5) {
+            this.#say("Abstain? Sure. The dice shrugged. 🎲");
+            return undefined;
+        }
+        const target = this.#opponents[Math.floor(Math.random() * this.#opponents.length)];
+        this.#say(`I tax ${target}. No reason. The dice said so. 🎲`);
+        return target;
     }
 
     matchEnd(_summary) {
