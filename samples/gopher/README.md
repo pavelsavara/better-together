@@ -23,6 +23,11 @@ His whole world is one question asked each round:
   what he did: same generosity, same signal.
 - **Lose → shift.** If the previous round paid poorly, he flips to the opposite
   behaviour — a generous Gopher clams up, a stingy Gopher opens his paws.
+- **Vote on reflex.** The same Pavlov instinct carries into the tax phase. If his
+  last round paid off (his score cleared his aspiration of 14), Gopher is content
+  and abstains; if it fell short, he lashes out at the fattest hoarder — the
+  seated player who kept the most seeds (anyone keeping ≤ 2 is untaxable). No
+  ledger and no grudge, just whether the last dig paid.
 
 This is the famous **win-stay, lose-shift** rule. It's remarkably effective: it
 cooperates with cooperators (both keep winning, both keep staying), recovers from

@@ -17,7 +17,7 @@ talk(state):  # then plant mirrors this
   else:                               signal BLOOM  (plan BASE=8)
 plant(state): return the planned number (3 / 10 / 8), clamped 0..10
 vote(state):  # name a proven defector who is skimming right now
-  guilty = seated, not self, kept = 10-plant > UNTAXABLE=2, plant < COLLAB=6,
+  guilty = seated, not self, kept = 10-plant > UNTAXABLE=2, plant < COLLAB=8,
            and merged(lifetime+this-match) rate < 0.50 over ≥5 observed rounds
   pick the worst free-rider (lowest plant; tie → lowest id); none qualifying → abstain
 match_end:    fold this match's per-opponent collab (plant≥8) into lifetime stats; save
@@ -126,9 +126,11 @@ vote(state):  # forgiveness stays primary; aim only at a stubborn free-rider
   if round ≤ ForgiveEvery(3): abstain                    # extend an olive branch first
   defections[id] = count of rounds this match where id planted < Stake=3
   candidates = this round's plants, not self, kept = 10-plant > UNTAXABLE=2,
-               defections[id] ≥ PersistentFoe=2,
+               (defections[id] ≥ PersistentFoe=2 OR id is the skimmer reynard),
                and NEVER a guild member (bram/nib/gopher/keith) or remembered friend
-  pick max by: defections desc, then kept desc, then lowest id; none → abstain
+  pick max by: skimmer(reynard) first, then defections desc, then kept desc, then lowest id; none → abstain
+  # reynard never plants < Stake so never accrues defections — named on sight as an arbiter's duty
+  # ids match on the short name: strip the `hash#` and `namespace.` prefixes
 match_end:    fold collab (plant≥6) into trust (α=0.40), decay all trust ×0.97 toward neutral, prune; save
 ```
 
@@ -139,7 +141,10 @@ match_end:    fold collab (plant≥6) into trust (α=0.40), decay all trust ×0.
 [`samples/khaos/component.js`](../samples/khaos/component.js)
 
 ```
-match_start: for each new opponent → fated {reynard:friend, bram:foe}, else random<0.5? friend:foe; remember forever
+match_start: for each new opponent → fated verdict if a known roster short-name
+             (friends: reynard, ferris, corro, nib, gopher, dusty;
+              foes: bram, keith, andy), else random<0.7? friend:foe; remember forever
+             # ids match on the short name: strip the `hash#` and `namespace.` prefixes
 talk(state):  return random pick of {BLOOM,HOLD,WATCH}   # words mean nothing
 plant(state): if any remembered FOE seated → 0  else → max (10)
 vote(state):  if no opponents or random<0.5 → abstain; else tax a RANDOM opponent
@@ -153,7 +158,7 @@ match_end:    persist verdict map if changed
 [`samples/bram/src/Strategy.cs`](../samples/bram/src/Strategy.cs)
 
 ```
-match_start: members = seated ids containing "nib"/"gopher" or in saved roster
+match_start: members = seated whose short-name is nib/gopher (strip `hash#`/`namespace.`) or ids in saved roster
 talk(round):  return BLOOM (honest; anchor 9 ≥ threshold 5)
 plant(round): return member seated ? RALLY=10 : ANCHOR=9   # lead from the front
 vote(plants):  # aim at the fattest hoarder

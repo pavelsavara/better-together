@@ -81,10 +81,10 @@ fn most_generous(history: &[RoundResult], self_id: &str) -> Option<(String, u32)
             *totals.entry(a.id.clone()).or_default() += a.plant as u32;
         }
     }
-    // Highest total wins; ties broken by id for determinism.
+    // Highest total wins; ties broken by higher id for determinism.
     totals
         .into_iter()
-        .max_by(|x, y| x.1.cmp(&y.1).then(y.0.cmp(&x.0)))
+        .max_by(|x, y| x.1.cmp(&y.1).then(x.0.cmp(&y.0)))
 }
 
 /// Did any opponent plant a real stake (>= STAKE) in the most recent round? If

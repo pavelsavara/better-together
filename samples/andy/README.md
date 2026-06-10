@@ -36,6 +36,14 @@ table's behaviour** — and only to what players actually *did*, never to what t
   stuck in permanent mutual defection the way a pure grudger does.
 - **Signal honestly.** `BLOOM` when he means to plant ≥ 5, otherwise `HOLD`. His
   spines are a visible *warning*, never a bluff.
+- **Name the free-rider — but forgive first.** Andy holds his ballot for the first
+  few rounds (an olive branch), then aims at the most *persistent* free-rider: a
+  seated player who has dug below the contributor stake (< 3) for at least two
+  rounds and still keeps more than the untaxable minimum. He never points at a
+  guild member (Bram, Nib, Gopher) or the other arbiter Keith, nor at a remembered
+  friend. The one exception is [Reynard](../reynard/README.md) — the velvet-gloved
+  skimmer never plants low enough to register as a defector, so Andy, an arbiter
+  who sees the skim for what it is, names the fox on sight whenever he is seated.
 
 > **Deeds over words.** Andy deliberately ignores the *current* round's signals
 > when deciding how much to plant — that's [Nib](../nib/README.md)'s job, and

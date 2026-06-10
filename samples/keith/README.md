@@ -35,6 +35,12 @@ His temperament is **nice, retaliatory, and forgiving**, in that order:
 - **Unforgetful.** A gardener who repeatedly signals `BLOOM` and then stiffs the
   garden becomes a *liar* in the ledger. When a table is run by proven liars,
   Keith keeps his seeds in his pocket. The rat does not feed cheats.
+- **Enforce the promise.** In the tax phase Keith names this round's worst
+  oath-breaker: a seated player who stood up and signalled `BLOOM` yet planted
+  below the contribution threshold (< 3) while keeping more than the untaxable
+  minimum. Among the liars he picks the *biggest* lie — the one who kept the most
+  — and if nobody broke their word, he abstains. Keith taxes the broken promise,
+  never the quiet, honest miser.
 
 Each round plays out in three phases (talk → plant → vote) and Keith mutters
 about all three on stdout — pure flavor the engine never reads, but fun to watch

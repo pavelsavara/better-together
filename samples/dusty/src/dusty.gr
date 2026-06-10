@@ -47,6 +47,11 @@ let mut lastCount = 0n
 let mut lastMyFound = 0n
 @unsafe
 let mut lastMyPlant = 0n
+// Others-only tally for the Tit-for-Tat target (excludes self).
+@unsafe
+let mut lastOthersSum = 0n
+@unsafe
+let mut lastOthersCount = 0n
 
 // Cross-match memory (loaded at match-start, persisted at match-end).
 @unsafe
@@ -120,6 +125,8 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
   lastCount = 0n
   lastMyFound = 0n
   lastMyPlant = 0n
+  lastOthersSum = 0n
+  lastOthersCount = 0n
   if (histLen > 0n) {
     let rr = histPtr + (histLen - 1n) * 40n
     let actPtr = WasmI32.load(rr, 0n)
@@ -134,6 +141,9 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
       if (isSelf(idPtr, idLen)) {
         lastMyFound = 1n
         lastMyPlant = plant
+      } else {
+        lastOthersSum += plant
+        lastOthersCount += 1n
       }
     }
   }
@@ -142,10 +152,10 @@ let computeLastRound = (histPtr: WasmI32, histLen: WasmI32) => {
 // Graduated, cautious Tit-for-Tat target from the last round.
 @unsafe
 let decideTarget = () => {
-  if (lastCount == 0n) {
+  if (lastOthersCount == 0n) {
     opener
   } else {
-    let avg = divFloor(lastSum, lastCount)
+    let avg = divFloor(lastOthersSum, lastOthersCount)
     let my = if (lastMyFound == 1n) lastMyPlant else opener
     let t = if (avg < my) {
       // Garden cooled: scurry back an extra step.
@@ -153,7 +163,7 @@ let decideTarget = () => {
     } else {
       // Stable or warming: creep forward, but cap the climb at +2.
       let climb = my + 2n
-      let ceilAvg = divCeil(lastSum, lastCount)
+      let ceilAvg = divCeil(lastOthersSum, lastOthersCount)
       if (climb < ceilAvg) climb else ceilAvg
     }
     clamp10(t)
@@ -404,9 +414,12 @@ provide let plant = (
   }
 
   let mut target = plannedPlant
-  // If most neighbours just promised to bloom, lean in one extra seed.
+  // If at least half of the *other* gardeners just promised to bloom, lean in
+  // one extra seed. The signal list includes our own broadcast, so the count of
+  // others is sigLen - 1.
   let blooms = countOtherBlooms(sigPtr, sigLen)
-  if (sigLen > 0n && blooms * 2n >= sigLen) target = clamp10(target + 1n)
+  let others = sigLen - 1n
+  if (others > 0n && blooms * 2n >= others) target = clamp10(target + 1n)
 
   let p = Memory.malloc(4n)
   WasmI32.store8(p, 0n, 0n)              // disc = ok

@@ -19,8 +19,9 @@
 //         gets you seen, flagged, and voted into the tax.
 //       - If an arbiter is seated he stays at the credible handful, never
 //         skimming, so the ledger reads him as "fine."
-//   * `vote(state)` — he keeps his head down and ABSTAINS. The skimmer is never
-//     the one who calls a vote; drawing attention is the opposite of the craft.
+//   * `vote(state)` — under an arbiter's gaze (Keith/Andy) he abstains, staying
+//     spotless; otherwise he points the table at the fattest rival hoarder
+//     (kept > 2) so the heat lands on a louder skimmer, never on him.
 //
 // # Persistence
 //
@@ -156,9 +157,21 @@ function saveRich(rich) {
 
 const clamp = (n) => Math.max(0, Math.min(10, n | 0));
 
+/// Reduce a player-id to its bare short name for well-known matching. The
+/// engine's in-game id is "hash#namespace.Name" (e.g. "1a2b3c4d#together.keith");
+/// skip the "hash#" prefix and the "namespace." prefix so matches are exact
+/// rather than substring (otherwise "andy" would match e.g. "candyman").
+function shortName(id) {
+    let s = String(id).toLowerCase();
+    const hash = s.lastIndexOf("#");
+    if (hash >= 0) s = s.slice(hash + 1);
+    const dot = s.lastIndexOf(".");
+    if (dot >= 0) s = s.slice(dot + 1);
+    return s;
+}
+
 function isArbiter(id) {
-    const lower = id.toLowerCase();
-    return ARBITERS.some((a) => lower.includes(a));
+    return ARBITERS.includes(shortName(id));
 }
 
 /// The others' average plant in the most recent resolved round, or null when

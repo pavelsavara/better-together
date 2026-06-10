@@ -236,15 +236,35 @@ internal sealed class Brain
     /// before (persisted in the roster).
     private bool IsMember(string id)
     {
-        var lower = id.ToLowerInvariant();
-        return lower.Contains("nib") || lower.Contains("gopher") || _roster.Members.Contains(id);
+        var name = ShortName(id);
+        return name is "nib" or "gopher" || _roster.Members.Contains(id);
     }
 
     /// The arbiters share Bram's politics; he never aims the tax at them.
     private static bool IsAlly(string id)
     {
-        var lower = id.ToLowerInvariant();
-        return lower.Contains("keith") || lower.Contains("andy");
+        var name = ShortName(id);
+        return name is "keith" or "andy";
+    }
+
+    /// Reduce a player-id to its bare short name for well-known matching. The
+    /// engine's in-game id is "hash#namespace.Name" (e.g.
+    /// "1a2b3c4d#together.bram"); skip the "hash#" prefix and the "namespace."
+    /// prefix, then lower-case, so matches are exact rather than substring.
+    private static string ShortName(string id)
+    {
+        var s = id.ToLowerInvariant();
+        int hash = s.LastIndexOf('#');
+        if (hash >= 0)
+        {
+            s = s.Substring(hash + 1);
+        }
+        int dot = s.LastIndexOf('.');
+        if (dot >= 0)
+        {
+            s = s.Substring(dot + 1);
+        }
+        return s;
     }
 
     private int PlantFor() => _members.Count > 0 ? Knobs.RallyPlant : Knobs.AnchorPlant;

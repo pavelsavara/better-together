@@ -210,8 +210,13 @@ internal sealed class Brain
         }
 
         // Aim at the most persistent free-rider revealed in THIS round's plants.
+        // The velvet-gloved skimmer (Reynard) is the one exception to Andy's
+        // patience: he never plants below the contributor stake, so he never
+        // racks up "defections" — but Andy, as an arbiter, sees the skim for what
+        // it is and taxes him first whenever he is seated.
         Deed? best = null;
         int bestDefections = 0;
+        bool bestSkimmer = false;
         foreach (var deed in plants)
         {
             if (deed.Id == _selfId || IsGuild(deed.Id) || _book.IsFriend(deed.Id))
@@ -223,19 +228,22 @@ internal sealed class Brain
             {
                 continue; // immune
             }
+            bool skimmer = IsSkimmer(deed.Id);
             int d = defections.GetValueOrDefault(deed.Id);
-            if (d < Knobs.PersistentFoe)
+            if (d < Knobs.PersistentFoe && !skimmer)
             {
                 continue; // refused the olive branch too few times — still forgiven
             }
             if (best is null
-                || d > bestDefections
-                || (d == bestDefections && kept > 10 - best.Value.Plant)
-                || (d == bestDefections && kept == 10 - best.Value.Plant
+                || (skimmer && !bestSkimmer)
+                || (skimmer == bestSkimmer && d > bestDefections)
+                || (skimmer == bestSkimmer && d == bestDefections && kept > 10 - best.Value.Plant)
+                || (skimmer == bestSkimmer && d == bestDefections && kept == 10 - best.Value.Plant
                     && string.CompareOrdinal(deed.Id, best.Value.Id) < 0))
             {
                 best = deed;
                 bestDefections = d;
+                bestSkimmer = skimmer;
             }
         }
 
@@ -280,7 +288,7 @@ internal sealed class Brain
             plant = Math.Max(plant, Knobs.OpenPlant);
         }
 
-        bool foeSeated = _matchFoes.Count > 0;
+        bool foeSeated = SeatedFoePresent(history);
         bool friendSeated = SeatedFriendPresent(history);
 
         // A remembered friend (and no foe) warms him up; a within-match foe
@@ -346,6 +354,24 @@ internal sealed class Brain
         return false;
     }
 
+    /// Is a within-match foe actually seated at the table this round? Mirrors
+    /// SeatedFriendPresent: a remembered grudge only bites if its target shows up.
+    private bool SeatedFoePresent(IReadOnlyList<Round> history)
+    {
+        if (history.Count == 0)
+        {
+            return false;
+        }
+        foreach (var deed in history[^1].Actions)
+        {
+            if (deed.Id != _selfId && _matchFoes.Contains(deed.Id))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// Fold each opponent's collaboration this match into their trust, then pull
     /// every stored trust gently toward neutral (slow decay) and prune.
     private void FoldFriends(IReadOnlyList<Round> history)
@@ -399,9 +425,32 @@ internal sealed class Brain
     /// aims the tax at any of them.
     private static bool IsGuild(string id)
     {
-        var lower = id.ToLowerInvariant();
-        return lower.Contains("bram") || lower.Contains("nib")
-            || lower.Contains("gopher") || lower.Contains("keith");
+        var name = ShortName(id);
+        return name is "bram" or "nib" or "gopher" or "keith";
+    }
+
+    /// The gray-zone skimmer (Reynard): always above the contributor floor, so
+    /// he never registers as a defector — Andy names him on sight anyway.
+    private static bool IsSkimmer(string id) => ShortName(id) is "reynard";
+
+    /// Reduce a player-id to its bare short name for well-known matching. The
+    /// engine's in-game id is "hash#namespace.Name" (e.g.
+    /// "1a2b3c4d#together.andy"); skip the "hash#" prefix and the "namespace."
+    /// prefix, then lower-case, so matches are exact rather than substring.
+    private static string ShortName(string id)
+    {
+        var s = id.ToLowerInvariant();
+        int hash = s.LastIndexOf('#');
+        if (hash >= 0)
+        {
+            s = s.Substring(hash + 1);
+        }
+        int dot = s.LastIndexOf('.');
+        if (dot >= 0)
+        {
+            s = s.Substring(dot + 1);
+        }
+        return s;
     }
 
     private static int Clamp(int plant) => Math.Clamp(plant, 0, 10);

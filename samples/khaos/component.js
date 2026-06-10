@@ -44,27 +44,63 @@ const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
 const LORE =
-    "Khaos is the garden's dice god — he meets you once, lets the dice " +
-    "decide whether you are friend or foe, and then honours that verdict " +
+    "Khaos is the garden's dice god — he meets a stranger once, lets the dice " +
+    "decide whether they are friend or foe, and then honours that verdict " +
     "forever with deranged conviction. His words are random, his grudges are " +
     "permanent, and he insists none of it is his fault: the dice made him do it. " +
-    "Two names the dice never got to touch: Reynard the fox, his fated darling, " +
-    "and Bram the beaver — guild boss, sworn foe, given nothing on sight.";
+    "Some verdicts, though, were cast before the dice were ever thrown: the fox " +
+    "Reynard and his fellow tricksters are fated friends, while the guild boss " +
+    "Bram and the arbiters Keith and Andy are fated foes — the dice god's " +
+    "standing quarrel with anyone who organizes order or sits in judgment.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
 /// Probability that a newly-seen player is judged a FRIEND (vs. a FOE).
 const FRIEND_PROB = 0.7;
-/// Verdicts the dice never get to decide, matched case-insensitively by id.
-/// Reynard the fox flattered his way onto the eternal-friend list; Bram the
-/// beaver — who organizes guild to punish foxes — earned eternal enmity.
-const FATED_VERDICTS = { reynard: "friend", bram: "foe" };
+/// Verdicts the dice never get to decide, matched by short name (the segment
+/// after the last dot, hash prefix stripped). These are the roster Khaos has
+/// "always known": the dice were cast long ago and the result is canon. The
+/// pattern is deliberate and feeds the game's tensions and coalitions —
+///   * FRIENDS are the simple, the sincere, and the fellow tricksters: Reynard
+///     the fox (his fated darling, the accidental cartel), Ferris the earnest
+///     crab, Corro a kindred agent of chaos, Nib the blank-faced innocent, and
+///     Bram's would-be footsoldiers Gopher and Nib — befriending the boss's
+///     members while loathing the boss splits the guild before it forms.
+///   * FOES are the organizers and the judges: Bram the guild boss, and the two
+///     arbiters Keith (the ledger-keeper) and Andy (the hedgehog). The dice god
+///     has a standing quarrel with anyone who imposes order or sits in judgment.
+/// Dusty the timid mouse the dice take pity on. Everyone NOT listed here is a
+/// genuine stranger — rolled once, then remembered forever.
+const FATED_VERDICTS = {
+    reynard: "friend",
+    ferris: "friend",
+    corro: "friend",
+    nib: "friend",
+    gopher: "friend",
+    dusty: "friend",
+    bram: "foe",
+    keith: "foe",
+    andy: "foe",
+};
 /// Contribution when the whole table is friends — full generosity.
 const FRIEND_PLANT = 10;
 /// Contribution when any remembered foe is seated — keep everything.
 const FOE_PLANT = 0;
 /// The chaotic broadcast pool: one is picked at random every round.
 const SIGNALS = ["bloom", "hold", "watch"];
+
+/// Reduce a player-id to its bare short name for fated-verdict matching. The
+/// engine's in-game id is "hash#namespace.Name" (e.g. "1a2b3c4d#together.bram");
+/// skip the "hash#" prefix and the "namespace." prefix, then lower-case, so a
+/// fated name matches exactly rather than by substring.
+function shortName(id) {
+    let s = String(id).toLowerCase();
+    const hash = s.lastIndexOf("#");
+    if (hash >= 0) s = s.slice(hash + 1);
+    const dot = s.lastIndexOf(".");
+    if (dot >= 0) s = s.slice(dot + 1);
+    return s;
+}
 
 // ────────────────────────── Persistence ───────────────────────────
 
@@ -172,13 +208,13 @@ class Gardener {
             if (!Object.prototype.hasOwnProperty.call(this.#verdicts, id)) {
                 // A fated name skips the dice; everyone else is rolled and then
                 // remembered forever.
-                const fated = FATED_VERDICTS[id.toLowerCase()];
+                const fated = FATED_VERDICTS[shortName(id)];
                 this.#verdicts[id] = fated ?? (Math.random() < FRIEND_PROB ? "friend" : "foe");
                 this.#dirty = true;
                 if (fated === "friend") {
-                    this.#say(`${id}! The dice don't even get a vote — you are FATED a friend. 🦊🎲`);
+                    this.#say(`${id}! The dice don't even get a vote — you are FATED a friend. 🎲💚`);
                 } else if (fated === "foe") {
-                    this.#say(`${id}. No roll needed. The dice loathe a guild boss — FOE, forever. 🦫🚫`);
+                    this.#say(`${id}. No roll needed — the dice settled you long ago. FOE, forever. 🎲🚫`);
                 } else {
                     this.#say(
                         `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,

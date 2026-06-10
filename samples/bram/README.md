@@ -2,16 +2,17 @@
 
 > Bram doesn't play for his own pot. He plays for his *table*. He knows his
 > members by name, rallies them every round, keeps the dam full, and when a
-> free-rider sits down to skim the common stream, he calls the vote and taxes them
-> dry. He never crosses a member, and he never lets a member be punished alone.
-> When Bram is at your table, the whole table does better — which is exactly the
-> crown this tournament hands out.
+> free-rider sits down to skim the common stream, he aims his ballot to tax them.
+> He never votes against a member. He *aspires* to a table that does better
+> together — though whether the room actually rewards an organizer is for the
+> tournament, not Bram, to decide.
 
 Bram is the **coalition organizer** of the [Better Together](../../README.md)
-game — the bot the **Best-Co-Player crown** is built to reward. Every other
-sample plays its *own* hand; Bram plays the *room*. He is the living argument
-that, in this game, the winning skill is organizing cooperation and disciplining
-free-riders — not maximizing your private pot.
+game — the bot built to *probe* whether the **Best-Co-Player crown** rewards
+organizing. Every other sample plays its *own* hand; Bram plays the *room*. He is
+this game's wager that the winning skill might be organizing cooperation and
+disciplining free-riders rather than maximizing your private pot — a hypothesis
+the tournament, not the lore, gets to settle.
 
 ## The lore
 
@@ -22,14 +23,15 @@ Beavers build communal dams; Bram builds communal gardens. His playbook:
 - **Run the guild.** Bram recognizes his members by player-id and coordinates the
   bloc: he keeps the table's payout high enough that his members keep cooperating,
   and he steers their behaviour where he can (see *The guild*, below).
-- **Direct the tax.** When the vote opens, Bram aims the guild's ballots at the
-  **fattest hoarder** at the table — the one with the most kept seeds to reclaim.
-  The tax pulls that stash into the garden, where it's doubled and shared, so
-  *disciplining a free-rider literally makes Bram's table richer.* That is how an
-  organized table out-earns a table of lone altruists.
-- **Never crosses a member; defends them.** Bram never votes against a guild
-  member, and if an outsider moves to tax one of his own, he rallies the bloc to
-  shield them. Loyalty is the glue that makes the guild a reliable voting bloc.
+- **Direct the tax.** When the vote opens, Bram casts his ballot at a seated
+  non-member, non-ally free-rider — a free-rider he has *taxed before* first, and
+  otherwise the **fattest hoarder** (the one keeping the most seeds, above the
+  untaxable minimum). The tax pulls that stash into the garden, where it's doubled
+  and shared, so disciplining a free-rider can make the whole table richer.
+- **Never crosses a member.** Bram never aims his own ballot at a guild member or
+  at an arbiter ally ([Keith](../keith/README.md), [Andy](../andy/README.md)). He
+  can't *shield* a member from anyone else's vote — that is the engine's call —
+  but his own loyalty is unconditional.
 
 ## The guild
 

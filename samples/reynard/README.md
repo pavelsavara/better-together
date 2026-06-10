@@ -35,6 +35,12 @@ budget*. His rules of thumb:
   punisher's retaliation lands on a player who *looks* cooperative — making the
   punisher the one who tanks the table, and the one whose Best-Co-Player score
   suffers. Reynard is the reason discipline must be **calibrated**, not reflexive.
+- **Deflect, never absorb.** When he does cast a ballot, he points it at the
+  *fattest* rival hoarder — the seated player keeping the most seeds, above the
+  untaxable minimum — so the table's scrutiny falls on a louder skimmer while his
+  own modest trim goes unremarked. But under an arbiter's gaze
+  ([Keith](../keith/README.md) or [Andy](../andy/README.md)) he abstains entirely:
+  a model citizen never points fingers.
 
 ## Relationships
 
