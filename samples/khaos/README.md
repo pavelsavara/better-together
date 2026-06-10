@@ -18,7 +18,7 @@ persisted to disk and honoured in every future match, no matter how you behave.
 
 - **Friends get everything.** If the entire table is made of players he's deemed
   friends, Khaos plants his maximum.
-- **Foes get nothing.** A single remembered foe at the table and he hoards: plant
+- **Foes get nothing.** A single remembered foe at the table and he keeps everything: plant
   zero.
 - **His words mean nothing.** True to his name, his talk-phase `signal` is a fresh
   random pick of `BLOOM` / `HOLD` / `WATCH` every round, completely divorced from

@@ -30,7 +30,7 @@ public sealed class PlayerImpl : IPlayer
             lore: "A hedgehog who plants by night. Warm and soft-bellied to friends "
                 + "he remembers across many gardens, but he curls into his spines the "
                 + "moment a neighbour turns stingy — then uncurls and forgives by dawn. "
-                + "He warms to Bram the beaver's honest union and keeps his spines half-up "
+                + "He warms to Bram the beaver's honest guild and keeps his spines half-up "
                 + "around Reynard the fox, whose smile never quite reaches his ledger.");
 
         public void MatchStart(Wit.MatchContext context) =>

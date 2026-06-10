@@ -25,8 +25,8 @@ budget*. His rules of thumb:
 - **Always credible.** He signals `BLOOM` and, on a mixed table, actually plants
   a believable handful (≈ 5–6). He looks exactly like a normal cooperator.
 - **Skim the fat tables.** When the room is over-generous — high average plant,
-  no disciplinarian seated — he quietly trims to **3–4 seeds**: still above the
-  contributor floor, so he keeps his two votes and *looks* less like a hoarder —
+  no arbiter seated — he quietly trims to **3–4 seeds**: still above the
+  contributor floor, so he keeps his two votes and *looks* less like a selfish player —
   not immune to the tax (a coalition can still elect him), just less likely to draw
   one — while banking a doubled payout everyone else paid for.
 - **Never below the floor.** He will not drop under the contributor threshold the
@@ -48,10 +48,10 @@ budget*. His rules of thumb:
   Reynard is seated and will never vote against him, so Reynard skims the dice-god's
   generosity with total impunity. It is the tournament's most natural accidental
   cartel: chaos bankrolls the fox.
-- **The bane of [Bram](../bram/README.md)'s union.** Bram the beaver organizes
+- **The bane of [Bram](../bram/README.md)'s guild.** Bram the beaver organizes
   precisely to tax skimmers like Reynard. The fox's whole art is staying above the
-  floor so the union's vote can't legally touch him — a quiet, ongoing duel
-  between organized labor and a very polite parasite.
+  floor so the guild's vote can't legally touch him — a quiet, ongoing duel
+  between an organized guild and a very polite parasite.
 
 ## The technology (planned)
 

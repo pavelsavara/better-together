@@ -36,7 +36,7 @@ interface types {
         garden-total: u16,
         votes: list<vote-record>,
         tax-target: option<player-id>,
-        tax-seized: u8,
+        tax-collected: u8,
         garden-payout: f32,
     }
 

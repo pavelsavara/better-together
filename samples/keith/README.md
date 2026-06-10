@@ -59,7 +59,7 @@ seated), he trims from a generous 8 down to 5. That still honours his promise
 (≥ 3 keeps the `BLOOM` honest) but he refuses to be a martyr in a dying garden.
 
 The contribution threshold of **3** is the engine's, not arbitrary: a plant of 3+
-makes you a *contributor*, which enfranchises you with **2 votes** in the tax
+makes you a *contributor*, which gives you a voice — **2 votes** — in the tax
 phase — so Keith always clears it before voting to tax a proven liar.
 
 ## The memory

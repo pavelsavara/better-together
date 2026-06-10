@@ -73,11 +73,11 @@ interface types {
         /// The player the table voted to tax (named by >= 2 distinct voters with the
         /// uniquely highest vote-weight; targets who kept <= 2 are untaxable), if any.
         tax-target: option<player-id>,
-        /// Seeds seized from the tax-target's pot into the garden
+        /// Seeds reclaimed from the tax-target's pot into the garden
         /// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
         /// minimum of 2 seeds). Zero when there was no tax.
-        tax-seized: u8,
-        /// ((garden-total + tax-seized) * 2) / group-size, paid to every player.
+        tax-collected: u8,
+        /// ((garden-total + tax-collected) * 2) / group-size, paid to every player.
         /// The garden is flatly DOUBLED — there is no diversity multiplier.
         garden-payout: f32,
     }
@@ -113,7 +113,7 @@ interface types {
         /// every player — including you — broadcast this round.
         signals: list<signal-broadcast>,
         /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
-        /// (after plants are revealed) so a ballot can target a hoarder.
+        /// (after plants are revealed) so a ballot can target a selfish player.
         plants: list<player-action>,
     }
 
@@ -162,7 +162,7 @@ interface player {
         /// Vote phase: after every plant is revealed (`state.plants`), cast a
         /// ballot — name one player to tax, or `none` to abstain. A target named by
         /// >= 2 distinct voters with the uniquely highest vote-weight (and kept > 2)
-        /// has seeds seized into the garden.
+        /// has seeds reclaimed into the garden.
         /// Contributors — players who planted >= 3 THIS round — cast 2 votes;
         /// everyone else casts 1. Micro always abstains. Must respect the budget.
         vote: func(state: round-state) -> result<ballot>;

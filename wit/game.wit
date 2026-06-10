@@ -121,7 +121,7 @@ interface runner {
         plant: func() -> result<list<player-action>, string>;
         /// Vote phase for the current round: collect one ballot per seat (default
         /// abstain on a trapped seat), tally vote-weight (contributors who
-        /// planted >= 3 cast 2 votes, others 1), seize the plurality target's tax
+        /// planted >= 3 cast 2 votes, others 1), reclaim the plurality target's tax
         /// into the garden, fold in the scores, and return the round outcome
         /// (including whether the match is over).
         vote: func() -> result<round-outcome, string>;

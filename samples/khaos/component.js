@@ -13,7 +13,7 @@
 //   * `talk(state)` — his broadcast `signal` is pure chaos: a fresh random pick
 //     of {bloom, hold, watch} every single round, divorced from what he'll plant.
 //   * `plant(state)` — he reads the table:
-//       - If ANY remembered foe is seated, he hoards: plant 0.
+//       - If ANY remembered foe is seated, he keeps everything: plant 0.
 //       - If the whole table is friends, he is fully generous: plant 10.
 //
 // Throughout, Khaos cackles on the **console** (stdout) — manic, fatalistic, and
@@ -48,7 +48,7 @@ const LORE =
     "forever with deranged conviction. His words are random, his grudges are " +
     "permanent, and he insists none of it is his fault: the dice made him do it. " +
     "Two names the dice never got to touch: Reynard the fox, his fated darling, " +
-    "and Bram the beaver — union boss, sworn foe, hoarded against on sight.";
+    "and Bram the beaver — guild boss, sworn foe, given nothing on sight.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
@@ -56,11 +56,11 @@ const LORE =
 const FRIEND_PROB = 0.7;
 /// Verdicts the dice never get to decide, matched case-insensitively by id.
 /// Reynard the fox flattered his way onto the eternal-friend list; Bram the
-/// beaver — who organizes unions to tax foxes — earned eternal enmity.
+/// beaver — who organizes guild to punish foxes — earned eternal enmity.
 const FATED_VERDICTS = { reynard: "friend", bram: "foe" };
 /// Contribution when the whole table is friends — full generosity.
 const FRIEND_PLANT = 10;
-/// Contribution when any remembered foe is seated — hoard everything.
+/// Contribution when any remembered foe is seated — keep everything.
 const FOE_PLANT = 0;
 /// The chaotic broadcast pool: one is picked at random every round.
 const SIGNALS = ["bloom", "hold", "watch"];
@@ -177,7 +177,7 @@ class Gardener {
                 if (fated === "friend") {
                     this.#say(`${id}! The dice don't even get a vote — you are FATED a friend. 🦊🎲`);
                 } else if (fated === "foe") {
-                    this.#say(`${id}. No roll needed. The dice loathe a union boss — FOE, forever. 🦫🚫`);
+                    this.#say(`${id}. No roll needed. The dice loathe a guild boss — FOE, forever. 🦫🚫`);
                 } else {
                     this.#say(
                         `A new face: ${id}! *rolls dice* …the dice say ${this.#verdicts[id].toUpperCase()}. I'll remember this FOREVER. 🎲`,
@@ -241,7 +241,7 @@ class Gardener {
             const pool = [
                 `A foe at the table (${foe}) — I keep my seeds AND my secrets. 🙅`,
                 `Nothing for you, ${foe}. The dice have spoken. Again. Forever.`,
-                "Zero seeds. Chaos hoards when chaos remembers a grudge.",
+                "Zero seeds. Chaos keeps everything when chaos remembers a grudge.",
             ];
             this.#say(pool[Math.floor(Math.random() * pool.length)]);
         } else {

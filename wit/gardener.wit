@@ -50,7 +50,7 @@ interface types {
 
     /// A tax-phase ballot: the id of the player to tax this round, or none to
     /// abstain. A target named by at least two distinct voters, with the uniquely
-    /// highest vote-weight, has seeds seized from their pot into the garden; a lone
+    /// highest vote-weight, has seeds reclaimed from their pot into the garden; a lone
     /// voter, a tie for the top weight, or a target who kept <= 2 (the untaxable
     /// minimum) → no tax.
     type ballot = option<player-id>;
@@ -85,11 +85,11 @@ interface types {
         /// voters agreed, the top weight tied, or the target kept <= 2 (the
         /// untaxable minimum).
         tax-target: option<player-id>,
-        /// Seeds seized from the tax-target's pot and added to the garden
+        /// Seeds reclaimed from the tax-target's pot and added to the garden
         /// (floor((kept - 2) / 2), minimum 1; every player keeps an untaxable
         /// minimum of 2 seeds). Zero when there was no tax.
-        tax-seized: u8,
-        /// ((garden-total + tax-seized) * 2) / group-size, paid to every player.
+        tax-collected: u8,
+        /// ((garden-total + tax-collected) * 2) / group-size, paid to every player.
         /// The garden is flatly DOUBLED — there is no diversity multiplier; the
         /// "better together" pressure now comes from the coalition vote, not a
         /// payout curve.
@@ -127,7 +127,7 @@ interface types {
         /// every player — including you — broadcast this round.
         signals: list<signal-broadcast>,
         /// This round's plants. Empty in `talk` and `plant`; populated in `vote`
-        /// (after plants are revealed) so a ballot can target a hoarder. The
+        /// (after plants are revealed) so a ballot can target a selfish player. The
         /// entries carry each player's plant + signal for the current round.
         plants: list<player-action>,
     }
@@ -177,7 +177,7 @@ interface player {
         /// Vote phase: after every plant is revealed (`state.plants`), cast a
         /// ballot — name one player to tax, or `none` to abstain. A target named by
         /// at least two distinct voters, with the uniquely highest vote-weight, has
-        /// seeds seized from their pot into the garden (a target who kept <= 2 — the
+        /// seeds reclaimed from their pot into the garden (a target who kept <= 2 — the
         /// untaxable minimum — is immune). Contributors — players who planted >= 3 THIS round —
         /// cast 2 votes; everyone else casts 1. Abstaining is free and common
         /// (Micro always abstains). Must respect the 10 ms / 16 MB budget.

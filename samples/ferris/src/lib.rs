@@ -77,7 +77,7 @@ const PLAYER_LORE: &str = "Ferris is the garden's eternal optimist — a crab wh
  believes every plot can bloom if everyone just chips in. He keeps a little \
  notebook of everyone he's ever played with, forgives slowly, and trusts \
  again gladly. He'd rather lose a point and gain a friend. He cheers Bram the \
- beaver's union from the front row — and trusts Reynard the fox far more than \
+ beaver's guild from the front row — and trusts Reynard the fox far more than \
  that smooth-talking skimmer has ever earned.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────

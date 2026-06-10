@@ -23,8 +23,8 @@ Every round runs in **three phases**, and your component is called once per phas
    Then **every plant is revealed** to the whole table.
 3. **Vote** — `vote(state)` returns one player-id to **tax**, or `none` to
    abstain. By now `state.plants` holds everyone's plant for this round, so you
-   can target a hoarder. The table's votes are tallied and the plurality target
-   has seeds seized from their pot into the garden (see §5).
+   can target a selfish player. The table's votes are tallied and the plurality target
+   has seeds reclaimed from their pot into the garden (see §5).
 
 | Field        | Phase | Type                     | Description                                    |
 |--------------|-------|--------------------------|------------------------------------------------|
@@ -50,7 +50,7 @@ who'll be taxed. Suggested meanings:
 
 Use them honestly, deceptively, or as a private code with allies. Signals are
 revealed before anyone plants, so you can read the room before committing seeds;
-plants are revealed before the vote, so the table can tax a `BLOOM`-then-hoard
+plants are revealed before the vote, so the table can tax a `BLOOM`-then-keep
 liar the same round. Others remember whether your signals matched your actions —
 and whom you voted to tax.
 
@@ -58,7 +58,7 @@ and whom you voted to tax.
 
 In your **plant** phase, `state.signals` holds every player's signal for this
 round (yours included). In your **vote** phase, `state.plants` also holds every
-player's plant, so you can target a hoarder.
+player's plant, so you can target a selfish player.
 
 When the round resolves, you see the full outcome — every ballot and the tax:
 
@@ -79,7 +79,7 @@ When the round resolves, you see the full outcome — every ballot and the tax:
   ],
   garden_total: 21,        // sum of plants, before tax
   tax_target: "bob",       // 3 distinct voters, uniquely highest weight
-  tax_seized: 4,           // floor((bob.kept - 2) / 2) = floor(8/2)
+  tax_collected: 4,           // floor((bob.kept - 2) / 2) = floor(8/2)
   garden_payout_per_player: 12.5,   // (21 + 4) * 2 / 4
   your_score_this_round: 16.5
 }
@@ -87,8 +87,8 @@ When the round resolves, you see the full outcome — every ballot and the tax:
 
 > Note: `bob` planted 0, so his ballot was worth only **1 vote**; alice, you, and
 > carol each planted ≥ 3, so each cast **2 votes**. Three distinct voters named
-> bob with the uniquely highest weight, and bob kept seeds to seize — enough to
-> tax his hoard into the garden.
+> bob with the uniquely highest weight, and bob kept seeds to reclaim — enough to
+> tax his stash into the garden.
 
 ### One Round in 20 Seconds
 
@@ -97,15 +97,15 @@ A K=4 table — you are **you**:
 1. **Talk.** alice and you broadcast `BLOOM`; carol `WATCH`; bob `HOLD`.
 2. **Plant.** alice plants 8, carol 7, you 6 — all ≥ 3, so each is a *contributor*
    with **2 votes**. bob plants **0** (1 vote). Every plant is revealed.
-3. **Vote.** alice, carol, and you each name **bob**, the obvious hoarder; bob
+3. **Vote.** alice, carol, and you each name **bob**, the obvious selfish player; bob
    abstains. Three distinct voters, bob's weight is uniquely highest, and bob kept
    10 (above the untaxable minimum of **2**) — so bob is taxed. (One voter alone,
    even a contributor, could not.)
-4. **Resolve.** `garden_total` = 8 + 7 + 6 + 0 = **21**. Seize `floor((10 - 2) / 2)` =
+4. **Resolve.** `garden_total` = 8 + 7 + 6 + 0 = **21**. Reclaim `floor((10 - 2) / 2)` =
    **4** from bob → `garden` = 25. Payout = 25 × 2 ÷ 4 = **12.5** to everyone.
 5. **Score.** You kept 4, plus 12.5 → **16.5** this round. bob kept 10, lost 4 to the
    tax, plus 12.5 → **18.5** — still ahead for one round, but the table closed the gap
-   and bob's hoarding reputation follows him into the next match.
+   and bob's reputation for keeping follows him into the next match.
 
 Now the formal version.
 
@@ -120,9 +120,9 @@ round_score = seeds_kept + garden_payout
 Where:
 - `seeds_kept` = 10 − plant (each worth exactly 1 point), **minus** any seeds
   taxed from you this round if you were the tax-target.
-- `garden_payout` = ((garden_total + tax_seized) × **2**) ÷ K — everything in the
+- `garden_payout` = ((garden_total + tax_collected) × **2**) ÷ K — everything in the
   garden is **doubled**, then split equally among all K players.
-- `tax_seized` = `floor((target.kept - 2) / 2)`, minimum 1, taken from the
+- `tax_collected` = `floor((target.kept - 2) / 2)`, minimum 1, taken from the
   tax-target and added to the garden before doubling. Every player keeps an
   **untaxable minimum of 2 seeds**, so a player who kept ≤ 2 (planted ≥ 8) can't
   be taxed at all. A target also needs **at least two distinct voters** and the
@@ -130,7 +130,7 @@ Where:
   top weight ties.
 
 Planting **≥ 3** this round doesn't change your payout — it makes your ballot worth
-**2 votes** instead of 1. The threshold is a *voting franchise*.
+**2 votes** instead of 1. The threshold is your *voice in the vote*.
 
 Your **match score** = sum of `round_score` across all rounds.
 
@@ -143,13 +143,13 @@ Keep, and you help yourself a little while costing the group a lot; plant, and y
 cost yourself a little while helping the group a lot. That's the dilemma, and the
 flat ×2 keeps it alive at every group size.
 
-**The vote is how the table fights back.** You can't out-plant a hoarder on your
-own — but you can organise a tax. Seizing a hoarder's kept seeds doubles them into
-the garden, turning private hoarding into shared value. That needs a **coalition**:
+**The vote is how the table fights back.** You can't out-plant a selfish player on your
+own — but you can organise a tax. Reclaiming a selfish player's kept seeds doubles them into
+the garden, turning private hiding into shared value. That needs a **coalition**:
 a lone ballot can't tax anyone — a tax needs at least two voters aimed at the same
 target, so discipline takes allies.
 
-**The threshold is a franchise, not a target.** Planting ≥ 3 buys you two votes —
+**The threshold is a voice, not a target.** Planting ≥ 3 buys you two votes —
 a real say in who gets taxed — but nothing for your payout, so there's no reason to
 aim for "exactly 3." A table where everyone plants the bare minimum fills almost
 nothing: low garden, low payout, low Co-Player score for all. Aim to fill the
@@ -167,7 +167,7 @@ permanent, always-running tournament, so a single lucky or unlucky table doesn't
 decide your rank — only your consistent effect on the groups you join.
 
 **Read this before you tune for raw score.** Your instinct is to maximise your
-*own* match score — which rewards a little hoarding and free-riding. The crown
+*own* match score — which rewards a little hiding and free-riding. The crown
 rewards the opposite: how much better the groups you join do *because you were
 there*. A bot that scores well alone but drags its partners down lands at the
 bottom of the primary leaderboard. If you remember one thing: **make your table
@@ -182,11 +182,11 @@ These adapt directly to the three-phase round: pick a `signal` in `talk`, read
 | Name                | Logic                                                                 | Personality       |
 |---------------------|-----------------------------------------------------------------------|-------------------|
 | **All-Bloom**       | Always signal BLOOM, always plant 10, abstain from voting.            | Unconditional altruist |
-| **All-Hoard**       | Always signal HOLD, always plant 0, abstain (and get taxed).          | Unconditional defector |
-| **Tit-for-Tat**     | Round 1: signal BLOOM, plant 8. Then mirror the *group's average* plant from last round; signal BLOOM if you'll plant ≥ 5, else HOLD. Vote to tax the round's biggest hoarder. | Nice, retaliatory, forgiving |
+| **All-Keep**       | Always signal HOLD, always plant 0, abstain (and get taxed).          | Unconditional defector |
+| **Tit-for-Tat**     | Round 1: signal BLOOM, plant 8. Then mirror the *group's average* plant from last round; signal BLOOM if you'll plant ≥ 5, else HOLD. Vote to tax the round's biggest selfish player. | Nice, retaliatory, forgiving |
 | **Grudger**         | Plant 8 until anyone plants 0. Then plant 0 forever against that group, and vote to tax them every round. | Cooperative but unforgiving |
 | **Pavlov**          | Plant 8 if last round's payout was above threshold, else plant 2. Abstain. | Win-stay, lose-shift |
 | **Promiser**        | Always signal BLOOM. Plant 2 (below the contributor threshold) — so only 1 vote, and a prime tax target. | Deceptive free-rider |
 | **Signal-Matcher**  | Match your plant level to the number of BLOOM signals broadcast *this* round. Abstain. | Conditional cooperator |
-| **Union Boss**      | Plant generously, rally allies with BLOOM, and bloc-vote the fattest hoarder to tax their hoard into the garden. | Coalition organizer |
+| **Guild Boss**      | Plant generously, rally allies with BLOOM, and bloc-vote the fattest selfish player to tax their stash into the garden. | Coalition organizer |
 | **Random**          | Plant uniform random 0–10. Signal random. Vote random or abstain.     | Baseline noise     |

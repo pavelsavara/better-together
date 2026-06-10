@@ -35,7 +35,7 @@ talking about dirt and holes. It's pure flavor; the engine never reads it.
 
 > **Pavlov vs the field.** Against cooperators Gopher settles into mutual
 > generosity. Against an exploiter like Corro his payoff sags, so he *shifts* to
-> hoarding and stops feeding the predator — exactly the self-correcting behaviour
+> keeping his seeds and stops feeding the predator — exactly the self-correcting behaviour
 > the rule is famous for.
 
 ## The technology

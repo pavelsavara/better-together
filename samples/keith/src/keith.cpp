@@ -174,7 +174,7 @@ std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
           "A ledger-keeping sewer rat. Never bites first, always forgives, "
           "never lies about his own intentions — but he keeps a grubby little "
           "book of who broke their word, and he never forgets. He'd vote any day "
-          "with Bram the beaver's union, and his book is the one place Reynard "
+          "with Bram the beaver's guild, and his book is the one place Reynard "
           "the fox's careful skim still shows up in red."),
   };
 }

@@ -14,7 +14,7 @@ export function broadcast(id, signal) {
     return { id, signal };
 }
 
-/** Minimum untaxable holding: the vote can never seize a player's first T kept seeds. */
+/** Minimum untaxable holding: the vote can never reclaim a player's first T kept seeds. */
 export const UNTAXABLE_MIN = 2;
 
 /**
@@ -23,7 +23,7 @@ export const UNTAXABLE_MIN = 2;
  * highest weight; a target who kept <= UNTAXABLE_MIN is immune.
  * @param {{id:string,plant:number}[]} actions
  * @param {{voter:string,target:(string|null)}[]} votes
- * @returns {{taxTarget:(string|null), taxSeized:number}}
+ * @returns {{taxTarget:(string|null), taxCollected:number}}
  */
 export function resolveTax(actions, votes) {
     const plantOf = new Map(actions.map((a) => [a.id, a.plant]));
@@ -43,26 +43,26 @@ export function resolveTax(actions, votes) {
         if (!best || weight > best.weight) { best = { target, weight }; tie = false; }
         else if (weight === best.weight) tie = true;
     }
-    if (!best || tie) return { taxTarget: null, taxSeized: 0 };
+    if (!best || tie) return { taxTarget: null, taxCollected: 0 };
     const kept = 10 - (plantOf.get(best.target) ?? 0);
-    if (kept <= UNTAXABLE_MIN) return { taxTarget: null, taxSeized: 0 };
-    const taxSeized = Math.max(1, Math.floor((kept - UNTAXABLE_MIN) / 2));
-    return { taxTarget: best.target, taxSeized };
+    if (kept <= UNTAXABLE_MIN) return { taxTarget: null, taxCollected: 0 };
+    const taxCollected = Math.max(1, Math.floor((kept - UNTAXABLE_MIN) / 2));
+    return { taxTarget: best.target, taxCollected };
 }
 
 /**
  * Compute a round-result the way the engine would, from this round's actions and
  * (optionally) the ballots cast in the vote phase. The garden is flatly DOUBLED;
- * any tax-seized seeds are folded into the garden before doubling.
+ * any tax-collected seeds are folded into the garden before doubling.
  * @param {{id:string,plant:number,signal:string}[]} actions
  * @param {number} groupSize K
  * @param {{voter:string,target:(string|null)}[]} votes
  */
 export function roundResult(actions, groupSize = actions.length, votes = []) {
     const gardenTotal = actions.reduce((s, a) => s + a.plant, 0);
-    const { taxTarget, taxSeized } = resolveTax(actions, votes);
-    const gardenPayout = ((gardenTotal + taxSeized) * 2) / groupSize;
-    return { actions, gardenTotal, votes, taxTarget, taxSeized, gardenPayout };
+    const { taxTarget, taxCollected } = resolveTax(actions, votes);
+    const gardenPayout = ((gardenTotal + taxCollected) * 2) / groupSize;
+    return { actions, gardenTotal, votes, taxTarget, taxCollected, gardenPayout };
 }
 
 /** A match-context record. selfId defaults to the first player id. */
@@ -140,7 +140,7 @@ export function alwaysBloom(ids) {
     return (_round, _history) => ids.map((id) => action(id, 8, 'bloom'));
 }
 
-/** Convenience opponent model: everyone always hoards. */
-export function alwaysHoard(ids) {
+/** Convenience opponent model: everyone always keeps. */
+export function alwaysKeep(ids) {
     return (_round, _history) => ids.map((id) => action(id, 0, 'hold'));
 }

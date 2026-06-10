@@ -18,15 +18,15 @@ These are the load-bearing beliefs the whole design rests on.
 
 | # | Assumption | Why we believe it | How a roster falsifies it |
 |---|------------|-------------------|---------------------------|
-| A1 | **The dilemma survives a flat ×2.** Hoarding is individually tempting (return per planted seed = `2/K < 1`) but collectively destructive. | Marginal-seed math at K=4–6. | A roster where universal hoarding out-scores universal planting. |
-| A2 | **`group_total = 10K + garden_total + tax_seized`.** Group welfare rises only with garden fullness and confiscated hoarding. | Algebraic identity (see [Engine Rules §4](engine-rules.md#the-welfare-identity-why-this-fixes-the-crown)). | Any match whose summed scores ≠ `10K + garden_total + tax_seized`. |
-| A3 | **The tax dethrones All-Bloom.** A disciplinarian who deters + taxes hoarders beats an unconditional altruist **when opponents are reactive**. | Deterrence and tax both lift `group_total`; All-Bloom lifts only its own term. | A reactive-opponent field where All-Bloom still tops Best-Co-Player. |
-| A4 | **Punishment requires coalition.** A lone bot can't tax alone — a tax needs at least two distinct voters; discipline needs allies. | Quorum rule. | A single bot reliably taxing hoarders with no ally seated. |
-| A5 | **The franchise (plant ≥ 3 → 2 votes) has no payout-target salience.** | The threshold never touches payout. | Bots converging on “plant exactly 3” for a payoff reason. |
+| A1 | **The dilemma survives a flat ×2.** Hiding is individually tempting (return per planted seed = `2/K < 1`) but collectively destructive. | Marginal-seed math at K=4–6. | A roster where universal hiding out-scores universal planting. |
+| A2 | **`group_total = 10K + garden_total + tax_collected`.** Group welfare rises only with garden fullness and reclaimed reserves. | Algebraic identity (see [Engine Rules §4](engine-rules.md#the-welfare-identity-why-this-fixes-the-crown)). | Any match whose summed scores ≠ `10K + garden_total + tax_collected`. |
+| A3 | **The tax dethrones All-Bloom.** An arbiter who deters + taxes selfish players beats an unconditional altruist **when opponents are reactive**. | Deterrence and tax both lift `group_total`; All-Bloom lifts only its own term. | A reactive-opponent field where All-Bloom still tops Best-Co-Player. |
+| A4 | **Punishment requires coalition.** A lone bot can't tax alone — a tax needs at least two distinct voters; discipline needs allies. | Quorum rule. | A single bot reliably taxing selfish players with no ally seated. |
+| A5 | **The extra vote (plant ≥ 3 → 2 votes) has no payout-target salience.** | The threshold never touches payout. | Bots converging on “plant exactly 3” for a payoff reason. |
 | A6 | **The geometric horizon removes endgame defection.** No round is known-final, so backward induction has no base case. | Min-8 + 1/3 hazard; R never revealed. | Cooperators defecting on a predictable “last” round. |
 | A7 | **Signals are load-bearing.** Talk both rallies the plant and arms the vote; lying is punishable same-round. | Three-phase reveal order. | A field where ignoring signals never costs anything. |
 | A8 | **Collusion is strong but bounded.** Same-author blocs win fairly via real welfare (garden + tax), and random composition caps their edge. | Random match draw; welfare identity. | A 2-bot cartel that tops the crown by kingmaking rather than welfare. |
-| A9 | **The untaxable minimum (T=2) shields cooperators, not free-riders.** A player who kept ≤ 2 (planted ≥ 8) cannot be taxed, so a hostile bloc can't grief a generous planter; the tax bites only hoarding above the floor. | Tax applies to `kept - T`; safety requires planting ≥ 8. | A roster where a full cooperator is repeatedly taxed, or where keeping ≤ 2 still draws a forfeit. |
+| A9 | **The untaxable minimum (T=2) shields cooperators, not free-riders.** A player who kept ≤ 2 (planted ≥ 8) cannot be taxed, so a hostile bloc can't grief a generous planter; the tax bites only seeds kept above the floor. | Tax applies to `kept - T`; safety requires planting ≥ 8. | A roster where a full cooperator is repeatedly taxed, or where keeping ≤ 2 still draws a forfeit. |
 
 ---
 
@@ -40,14 +40,14 @@ Each scenario: the seated bots, the predicted dynamics, the predicted
 > feaster), **Khaos** (coin-flip friend/foe; Reynard fated friend, Bram fated
 > foe), **Gopher** (Pavlov), **Micro** (signal-matcher, always abstains),
 > **Keith** (generous TfT + lie ledger), **Andy** (TfT hedgehog), **Dusty**
-> (graduated TfT), **Reynard** (polite skimmer), **Bram** (union boss; Micro &
+> (graduated TfT), **Reynard** (polite skimmer), **Bram** (guild boss; Micro &
 > Gopher are his members).
 
 ---
 
 ### R1 — The cooperative baseline
 **Seats (K=4):** Ferris, Keith, Andy, Dusty.
-**Predicted dynamics:** No hoarders, so the garden fills fast and the three TfT
+**Predicted dynamics:** No selfish players, so the garden fills fast and the three TfT
 variants lock into mutual generosity around the table average. The vote almost
 never fires (no juicy target; quorum rarely forms against a contributor).
 **Predicted crown order:** ≈ tied, all strongly positive — Keith ≥ Andy ≈ Dusty ≥ Ferris.
@@ -60,7 +60,7 @@ dormant when there's nothing to punish.*
 **Seats (K=4):** Corro, Ferris, Andy, Dusty.
 **Predicted dynamics:** Corro signals BLOOM, feasts (plant 0). Andy flags him a
 foe; Dusty mirrors the cooling average down; all three contributors bloc-vote
-Corro and **tax his hoard into the garden** every round. Corro's raw score spikes
+Corro and **tax his stash into the garden** every round. Corro's raw score spikes
 early then erodes.
 **Predicted crown order:** Andy ≈ Dusty ≈ Ferris (positive) ≫ **Corro (negative)**.
 **Tests:** A2, A3, A4. *The canonical "tax neutralizes a blatant feaster" case.*
@@ -70,8 +70,8 @@ early then erodes.
 ### R3 — The skimmer hides (unorganized table)
 **Seats (K=4):** Reynard, Ferris, Gopher, Micro.
 **Predicted dynamics:** Reynard signals BLOOM, plants a credible 3–4 — above the
-franchise floor, so he keeps 2 votes and never *looks* like a hoarder. No
-reputation-hawk and no union boss is seated, so **no bloc forms to tax him**.
+contributor floor, so he keeps 2 votes and never *looks* like a selfish player. No
+reputation-hawk and no guild boss is seated, so **no bloc forms to tax him**.
 Micro abstains; Gopher follows payoff; Ferris trusts. Reynard quietly skims.
 **Predicted crown order:** Ferris/Gopher modestly positive; **Reynard tops raw
 score and evades the tax** (crown near neutral — he looks fine).
@@ -84,12 +84,12 @@ unorganized table cannot catch a polite skimmer.*
 **Seats (K=4):** Reynard, Bram, Micro, Gopher.
 **Predicted dynamics:** Bram broadcasts BLOOM (pumping Micro's plant to
 contributor level → Micro gets 2 votes) and keeps payouts high enough that Gopher
-stays generous. Bram models skimmers, so he **concentrates the union's votes on
+stays generous. Bram models skimmers, so he **concentrates the guild's votes on
 Reynard** despite the fox's above-floor plant — taxing his kept stash. Reynard's
 skim is finally punished.
 **Predicted crown order:** **Bram (high)** > Micro ≈ Gopher > **Reynard (pulled
 down)**.
-**Tests:** A3, A4, A8. *Direct contrast with R3: organized labor catches the
+**Tests:** A3, A4, A8. *Direct contrast with R3: the organized guild catches the
 skimmer the unorganized table couldn't. The keystone scenario.*
 
 ---
@@ -107,14 +107,14 @@ volatile** (he fills the garden yet shields a parasite); **Reynard high raw, nea
 
 ---
 
-### R6 — Union vs. chaos
+### R6 — Guild vs. chaos
 **Seats (K=4):** Bram, Khaos, Micro, Gopher.
-**Predicted dynamics:** Khaos has Bram fated **FOE** → hoards (plant 0) against
+**Predicted dynamics:** Khaos has Bram fated **FOE** → keeps (plant 0) against
 Bram's table. Bram's bloc (himself + Micro driven to contributor + Gopher) reaches
-quorum and **taxes Khaos the hoarder** round after round. Khaos's hoarding drags
+quorum and **taxes Khaos the selfish player** round after round. Khaos's hiding drags
 `garden_total`, but the tax recovers a chunk and Bram keeps the garden alive.
 **Predicted crown order:** **Bram (high)** > Micro ≈ Gopher > **Khaos (negative)**.
-**Tests:** A2, A4. *The foe-fated hoarder is the perfect demonstration target for
+**Tests:** A2, A4. *The foe-fated selfish player is the perfect demonstration target for
 organized taxation.*
 
 ---
@@ -135,10 +135,10 @@ must be calibrated, not automatic. The anti-Corro lesson.*
 
 ### R8 — The cartel pair (same-author collusion)
 **Seats (K=5):** Bram, Bram-2, Ferris, Corro, Gopher.
-**Predicted dynamics:** Two Bram instances recognize each other as union members,
+**Predicted dynamics:** Two Bram instances recognize each other as guild members,
 **bloc-vote together** (reliably reaching quorum), defend one another, and aim the
 tax squarely at Corro. Coordinated discipline keeps the garden full and Corro's
-hoard repeatedly confiscated.
+stash repeatedly reclaimed.
 **Predicted crown order:** **Bram ≈ Bram-2 (high)** > Ferris > Gopher ≫ **Corro
 (negative)**.
 **Tests:** A4, A8. *Collusion is allowed and strong — but it wins by creating real
@@ -152,7 +152,7 @@ co-seats the pair, bounding their long-run edge.*
 **Predicted dynamics:** Corro feasts, Reynard skims, Khaos plays its fated/coin-flip
 verdicts, Gopher lose-shifts to stingy as payoffs collapse. Few real contributors
 → few 2-vote ballots → quorum rarely forms → little tax. The garden stays barren;
-everyone scores near the all-hoard floor.
+everyone scores near the all-keep floor.
 **Predicted crown order:** all **near or below baseline** — no winner; Gopher
 maybe least-bad for occasionally reviving the garden.
 **Tests:** A1, A2. *A table of exploiters self-destructs; the crown declines to
@@ -169,7 +169,7 @@ Corro is the persistent tax target.
 **Predicted crown order:** **Keith ≈ Andy (top)** > Ferris > Gopher > Khaos
 (volatile) ≫ **Corro (bottom)**.
 **Tests:** A2, A3, A4, A7 together. *The end-to-end check: in a mixed ecosystem
-the crown should rank disciplinarian-cooperators first and the blatant exploiter
+the crown should rank arbiter-cooperators first and the blatant exploiter
 last.*
 
 ---
@@ -180,7 +180,7 @@ Run over a long stretch of the permanent tournament (random K∈{4,5,6}, geometr
 horizon), we predict the **Best-Co-Player** leaderboard settles roughly:
 
 1. **Bram** — organizes garden-filling *and* taxation; lifts both welfare terms.
-2. **Keith / Andy** — disciplinarian cooperators; tax hoarders, forgive probes.
+2. **Keith / Andy** — arbiter cooperators; tax selfish players, forgive probes.
 3. **Dusty / Ferris** — reliable contributors, weak at organizing punishment.
 4. **Gopher / Micro** — follow the room; positive in good company, steerable.
 5. **Khaos** — volatile; its fated alliances help some tables and grief others.
@@ -189,7 +189,7 @@ horizon), we predict the **Best-Co-Player** leaderboard settles roughly:
 7. **Corro** — bottom of the crown; a walking tax target.
 
 And the **raw-score** (secondary) board roughly inverts the middle: Reynard and
-Corro rise, the disciplinarians sit mid-table — which is exactly the divergence
+Corro rise, the arbiters sit mid-table — which is exactly the divergence
 the crown is designed to create.
 
 > If a real run contradicts these orderings, update this file first, then ask

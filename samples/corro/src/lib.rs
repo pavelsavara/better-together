@@ -53,7 +53,7 @@ const PLAYER_LORE: &str = "Corro is the rot beneath the petals — Ferris's mirr
  generous gardener is simply a meal that hasn't noticed yet. He plants only to \
  bait, and remembers only who is worth deceiving. He tips his claw to Reynard \
  the fox — a fellow diner with better table manners — and spits at Bram the \
- beaver, whose union dams the stream and taxes parasites like him.";
+ beaver, whose guild dams the stream and taxes parasites like him.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

@@ -27,8 +27,8 @@ Tournament (permanent — always running)
 | Group size (K)     | 4–6           | Drawn uniformly at random per match     |
 | Rounds per match   | 8 + geometric | Min 8; after round 8 each further round happens with prob 2/3 (public hazard 1/3). Mean ≈ 10. Realized length unknown to players. |
 | Match draw         | continuous    | The engine draws random groups indefinitely; every subset gets well-sampled over time |
-| Contributor floor  | plant ≥ 3      | Earns a 2-vote ballot (a *franchise*); never affects payout |
-| Untaxable minimum (T) | 2 kept seeds | The vote can never seize a player's first **2** kept seeds; keep ≤ 2 (plant ≥ 8) and you are immune to the tax |
+| Contributor floor  | plant ≥ 3      | Earns a 2-vote ballot (a *voice* in the vote); never affects payout |
+| Untaxable minimum (T) | 2 kept seeds | The vote can never reclaim a player's first **2** kept seeds; keep ≤ 2 (plant ≥ 8) and you are immune to the tax |
 
 - Bots receive `match_start` with the list of player IDs in their group and K, but **not** the number of rounds.
 - Because any round after the 8th may be the last — and none is *ever* known to be — there is no fixed final round to backward-induct from, so "last round defection" has no base case to unravel from.
@@ -36,7 +36,7 @@ Tournament (permanent — always running)
 ### 3. Round Resolution (executed by engine)
 
 Each round runs in **three phases** so that talk can coordinate planting and the
-table can collectively discipline a hoarder:
+table can collectively discipline a selfish player:
 
 1. **Talk phase**: the engine calls every player's `talk` and collects one
    `signal` from each. All signals are then **broadcast to everyone** before a
@@ -57,26 +57,26 @@ table can collectively discipline a hoarder:
      `tax-target`. Fewer than two voters on every target, or a tie for the top
      weight, means **no tax**.
    - A player keeps an **untaxable minimum** of `T = 2` seeds: the first 2 seeds
-     in anyone's pot can never be seized. A player who kept **≤ 2** (planted ≥ 8)
+     in anyone's pot can never be reclaimed. A player who kept **≤ 2** (planted ≥ 8)
      is therefore **immune** — if the elected target kept ≤ 2, the round produces
      **no tax**.
-   - Otherwise seize `floor((kept - T) / 2)`, minimum **1**, from the tax-target's
-     pot (`kept = 10 - plant`) and **add the seized seeds to the garden**.
+   - Otherwise reclaim `floor((kept - T) / 2)`, minimum **1**, from the tax-target's
+     pot (`kept = 10 - plant`) and **add the reclaimed seeds to the garden**.
 5. **Compute the garden**:
    - `garden_total` = sum of all `plant` values (before tax)
-   - `garden = garden_total + tax_seized`
+   - `garden = garden_total + tax_collected`
 6. **Compute payout** (flat doubling):
    - `garden_payout = (garden × 2) / K`
    - Every player (including the taxed one) receives `garden_payout`.
 7. **Compute individual round scores**:
-   - `kept_i = 10 - plant_i`, minus `tax_seized` if `i` is the `tax-target`
+   - `kept_i = 10 - plant_i`, minus `tax_collected` if `i` is the `tax-target`
    - `score_i = kept_i + garden_payout`
 8. **Broadcast observations** to all players (as in [Player Rules §4](player-rules.md#4-what-you-receive-each-round-your-observation)), including the full ballot list.
 
 > **Why three phases?** Signals are revealed before plants, so a `BLOOM` promise
 > can rally the table *now* — and a `BLOOM` followed by `plant 0` is a visible
 > betrayal. Plants are revealed before the vote, so the betrayal is **punishable
-> the same round**: the table can vote to tax the liar's hoard into the garden.
+> the same round**: the table can vote to tax the liar's stash into the garden.
 > Talk is still cheap (unenforced), but it now both coordinates the plant and
 > arms the vote.
 
@@ -85,43 +85,43 @@ table can collectively discipline a hoarder:
 The garden is **flatly doubled**:
 
 ```
-garden_payout = ((garden_total + tax_seized) × 2) / K
+garden_payout = ((garden_total + tax_collected) × 2) / K
 ```
 
 **Why a flat ×2 keeps the dilemma.** A marginal seed you plant returns you only
 `2 / K` (0.5 at K=4, 0.33 at K=6) — always less than the 1 point you'd keep — so
-the temptation to hoard always exists. But each planted seed creates `2` points
+the temptation to keep always exists. But each planted seed creates `2` points
 of total value for the group. The dilemma holds at every group size; "everyone
-hoards" is still the one-shot Nash trap, and cooperation must be rescued by
+keeps" is still the one-shot Nash trap, and cooperation must be rescued by
 *reputation and the vote*, not by a payout curve.
 
-**The contributor threshold is a franchise.** Planting ≥ 3 grants you **2 votes
+**The contributor threshold is a voice in the vote.** Planting ≥ 3 grants you **2 votes
 instead of 1**. The threshold buys only political weight: to help *weed* the
 garden, you must hold a real stake *in* it. It never touches your payout, so
-there is no payoff reason to aim for "exactly 3" — the number that *enfranchises*
-you and the number that makes the group *rich* are nowhere near each other.
+there is no payoff reason to aim for "exactly 3" — the number that *gives you a voice*
+and the number that makes the group *rich* are nowhere near each other.
 
-**The tax is how discipline pays.** Seizing a hoarder's kept seeds and doubling
-them into the garden converts a privately-hoarded seed (worth 1) into shared,
+**The tax is how discipline pays.** Reclaiming a selfish player's kept seeds and doubling
+them into the garden converts a privately-kept seed (worth 1) into shared,
 doubled value (worth 2). That is the "better together" mechanic in this design:
 not a lone martyr subsidising the table, but the table **collectively
-confiscating** what a free-rider tried to keep.
+reclaiming** what a free-rider tried to keep.
 
 **The untaxable minimum protects honest keepers.** The vote can never reach a
 player's first `T = 2` kept seeds, so a generous planter (kept ≤ 2) is immune and
 a hostile bloc cannot grief a full cooperator for spite. The tax bites only the
-seeds a hoarder keeps *above* that floor — it disciplines free-riding, not mere
+seeds a selfish player keeps *above* that floor — it disciplines free-riding, not mere
 self-interest. Because the floor protects *kept* seeds and the endowment is 10,
 the only way to be fully safe is to plant generously (≥ 8), so safety and
 cooperation point the same way.
 
 #### The coalition is load-bearing
 
-A single disciplinarian **cannot** tax anyone: a tax needs **at least two
+A single arbiter **cannot** tax anyone: a tax needs **at least two
 different voters** aimed at the same target, so even a contributor's 2-vote
 ballot can't punish alone, and the biggest punishments need a bloc. Punishment
 therefore *requires* allies —
-which is exactly why a union (see [Bram](../samples/bram/README.md)) out-performs
+which is exactly why a guild (see [Bram](../samples/bram/README.md)) out-performs
 a lone altruist, and why collusion is a first-class, intended strategy rather
 than an exploit. Random match composition keeps any one bloc's edge bounded.
 
@@ -130,13 +130,13 @@ than an exploit. Random match composition keeps any one bloc's edge bounded.
 Sum the round scores and almost everything cancels:
 
 ```
-group_total(round) = 10K + garden_total + tax_seized
+group_total(round) = 10K + garden_total + tax_collected
 ```
 
 Group welfare rises with exactly two things a player can influence: **how full
-the garden is** (their own plant, plus the plants they *elicit*) and **how much
-hoarding the table confiscates**. An unconditional altruist (All-Bloom) lifts the
-first term only by its own hand; a disciplinarian who *deters* hoarders into
+the garden is** (their own plant, plus the plants they *elicit*) and **how many
+hidden seeds the table reclaims**. An unconditional altruist (All-Bloom) lifts the
+first term only by its own hand; an arbiter who *deters* selfish players into
 planting more, and *taxes* the ones who don't, lifts both — and so wins the
 [Best Co-Player](#7-the-best-co-player-score) crown *whenever opponents are
 deterrable*. That is the design's answer to the "All-Bloom wins" failure of a
@@ -212,25 +212,25 @@ fast.
 
 | Strategy              | Individual Score | Co-Player Score | Why                                                  |
 |-----------------------|-----------------|-----------------|------------------------------------------------------|
-| Always hoard          | Medium          | **Negative**    | Adds nothing to the garden and is a prime tax target; group total drops |
-| Always plant (naive)  | Low             | Positive        | Fills the garden by its own hand, but can't deter or tax hoarders |
-| Disciplinarian (cooperate, mirror, **vote to tax**) | High | **Highly positive** | Elicits cooperation *and* confiscates hoards into the garden — lifts both terms of `group_total` |
+| Always keep          | Medium          | **Negative**    | Adds nothing to the garden and is a prime tax target; group total drops |
+| Always plant (naive)  | Low             | Positive        | Fills the garden by its own hand, but can't deter or tax selfish players |
+| Arbiter (cooperate, mirror, **vote to tax**) | High | **Highly positive** | Elicits cooperation *and* reclaims reserves into the garden — lifts both terms of `group_total` |
 | Deceptive (signal BLOOM, plant 0)    | High short-term | **Negative** | Lies in talk, gets taxed the same round, partners distrust — cooperation collapses |
 
 > **A note on "Best Co-Player" vs. raw score** — and why new bot authors should
 > read it carefully. Your *intuition* will push you to maximize your own match
-> score (hoard a little, free-ride). The crown rewards the **opposite**: how much
+> score (keep a little, free-ride). The crown rewards the **opposite**: how much
 > the groups you join out-perform the field average. Recall the identity
-> `group_total = 10K + garden_total + tax_seized` — you win by *filling the
-> garden* (your plant plus the plants you elicit) and by *confiscating hoards*
+> `group_total = 10K + garden_total + tax_collected` — you win by *filling the
+> garden* (your plant plus the plants you elicit) and by *reclaiming reserves*
 > (the tax you organize), not by fattening your own pot.
 >
-> One subtlety: both eliciting cooperation and taxing hoarders only pay **against
-> opponents who react** — a hoarder you can deter into planting, a liar a bloc can
+> One subtlety: both eliciting cooperation and taxing selfish players only pay **against
+> opponents who react** — a selfish player you can deter into planting, a liar a bloc can
 > tax. In a field of purely unconditional bots, nothing you do changes their
-> play, so the altruist (All-Bloom) ties the disciplinarian. The disciplinarian
+> play, so the altruist (All-Bloom) ties the arbiter. The arbiter
 > *pulls ahead* the moment opponents are deterrable and bloc-taxable — which, in a
-> real field full of memory-keeping bots and union voters, they are. Build for a
+> real field full of memory-keeping bots and guild voters, they are. Build for a
 > reactive world.
 
 ### 8. Secondary Leaderboard: Raw Score
@@ -275,11 +275,11 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
 
 1. `garden_total` = 8 + 0 + 6 + 7 = **21**
 2. **Vote weight**: Alice, Carol, Dave each planted ≥ 3 → **2 votes** each; Bob
-   planted 0 → **1 vote**. Bob is the obvious hoarder, so Alice, Carol, and Dave
+   planted 0 → **1 vote**. Bob is the obvious selfish player, so Alice, Carol, and Dave
    all vote to tax Bob (Bob abstains).
 3. **Tax**: three distinct voters named Bob (6 vote-weight) — a coalition with the
    uniquely highest weight, and Bob kept 10 (above the untaxable minimum T=2), so
-   he is taxable. Bob is the `tax-target`. Seize `floor((kept - 2) / 2)` =
+   he is taxable. Bob is the `tax-target`. Reclaim `floor((kept - 2) / 2)` =
    `floor(8 / 2)` = **4** seeds from Bob's pot into the garden.
 4. `garden` = 21 + 4 = **25**
 5. `garden_payout` = 25 × 2 / 4 = **12.5** (everyone gets this — even Bob)
@@ -295,12 +295,12 @@ This is the "selfish" leaderboard. It will often be topped by sophisticated expl
 **Observation**: Bob still edges the round (18.5) — a single tax doesn't erase a
 free-ride — but the tax pulled him down from an untaxed 20.5 and lifted everyone
 else by 2.0. Check the identity: `group_total` = 14.5+18.5+16.5+15.5 = **65** =
-`10K + garden_total + tax_seized` = 40 + 21 + 4. Had Bob also planted 8, no tax
+`10K + garden_total + tax_collected` = 40 + 21 + 4. Had Bob also planted 8, no tax
 would be needed, `garden_total` = 29, and `group_total` = 40 + 29 = **69** — still
-strictly better. **Cooperation dominates; the tax just makes hoarding cost the
-hoarder and pay the table.**
+strictly better. **Cooperation dominates; the tax just makes hiding cost the
+selfish player and pay the table.**
 
-Over many rounds, the table taxes Bob whenever he hoards, and his reputation
+Over many rounds, the table taxes Bob whenever he keeps, and his reputation
 follows him into future matches — steadily eroding both his raw gain and his
 Co-Player Score.
 
@@ -313,21 +313,21 @@ The PD is 2-player and binary (cooperate/defect). The public goods game is nativ
 A flat ×2 is the simplest possible rule — "whatever's planted is doubled and
 shared" — with no payout curve to reverse-engineer and no salient "plant exactly
 at the threshold" target. It pushes all the "better together" pressure onto the
-**vote**: the table grows the garden by *confiscating* hoards, not by a lone
+**vote**: the table grows the garden by *reclaiming* reserves, not by a lone
 whale's sacrifice.
 
 ### Why a contribution threshold (plant ≥ 3)?
-The threshold is the **voting franchise**: plant ≥ 3 and you cast 2 votes instead
+The threshold is your **voice in the vote**: plant ≥ 3 and you cast 2 votes instead
 of 1. To help *weed* the garden you must hold a real stake *in* it — pure
-hoarders can't be kingmakers. The threshold never touches payout, so it governs
+selfish players can't be kingmakers. The threshold never touches payout, so it governs
 only your political weight, never the size of your harvest.
 
 ### Why a vote-and-tax (instead of pure withdrawal)?
 In a public-goods game the only other punishment channel is *withholding seeds* —
 but withholding lowers the garden, i.e. it destroys the very welfare the crown
 measures, which structurally favours the unconditional altruist. A **targeted
-tax** is a separate channel: it docks one named hoarder *without* taxing the
-whole table, and (because seized seeds are doubled into the garden) it actively
+tax** is a separate channel: it docks one named selfish player *without* taxing the
+whole table, and (because reclaimed seeds are doubled into the garden) it actively
 *creates* welfare. That is what lets calibrated discipline out-score naive
 generosity — and what makes coalitions necessary, since the tax needs a voting
 bloc to reach quorum.
@@ -344,7 +344,7 @@ round it is sent in — it only ever feeds future reputation. The **talk phase**
 (everyone broadcasts, signals revealed) lets a `BLOOM` rally the table *now*, and
 makes a `BLOOM` → `plant 0` an immediate, observable betrayal. The **vote phase**
 (plants revealed, then ballots cast) lets the table *act* on that betrayal the
-same round, taxing the liar's hoard into the garden. Talk stays cheap, but it now
+the same round, taxing the liar's stash into the garden. Talk stays cheap, but it now
 both coordinates the plant and arms the vote.
 
 ### Why persistent identity?

@@ -75,7 +75,7 @@ let metaName = "Dusty"
 let metaVersion = "0.1.0"
 let metaAuthor = "Better Together samples"
 let metaRepo = "https://github.com/better-together/better-together/tree/main/samples/dusty"
-let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind. She shelters near Bram the beaver's union when the voting turns to tax, and keeps a wary whisker twitching at Reynard the fox."
+let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind. She shelters near Bram the beaver's guild when the voting turns to tax, and keeps a wary whisker twitching at Reynard the fox."
 
 // ---------------------------------------------------------------------------
 // Small integer helpers (unsigned-safe for our 0..255 / small positive values).

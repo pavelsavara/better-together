@@ -9,7 +9,7 @@
 //            leans to plant 10; persists ferris-memory.json at match-end with the
 //            opponents it observed. A remembered defector -> plant 3, hold.
 //   khaos  : random per-opponent friend/foe with cross-match memory; loads
-//            seeded verdicts from its memory file and hoards against a known foe.
+//            seeded verdicts from its memory file and keeps everything against a known foe.
 //   keith  : ledger-keeping forgiver; persists a TSV ledger at match-end and
 //            distrusts a seeded known cheat (pockets his seeds).
 //   andy   : Tit-for-Tat hedgehog; persists a JSON friend-book and gives a
@@ -24,7 +24,7 @@ import assert from 'node:assert/strict';
 import { loadGardener, resolveSample } from './lib/harness.mjs';
 import {
     matchContext, roundState, matchSummary, action, broadcast, roundResult,
-    runMatch, alwaysBloom, alwaysHoard, SIGNALS,
+    runMatch, alwaysBloom, alwaysKeep, SIGNALS,
 } from './lib/fixtures.mjs';
 import { test, runAll, skipTest } from './lib/runner.mjs';
 
@@ -342,7 +342,7 @@ export function register() {
     // Cross-match memory (read path): jsco's in-memory VFS does not mirror guest
     // writes back into the seed Map, but it DOES serve seeded reads. Seed a verdict
     // file marking opponent 'a' as a foe and prove khaos loads it: a seated foe
-    // makes khaos hoard (plant 0), and it never re-rolls 'a' (no "new face: a").
+    // makes khaos keep (plant 0), and it never re-rolls 'a' (no "new face: a").
     test('khaos: loads remembered verdicts from a seeded memory file', async () => {
         const seed = new TextEncoder().encode(JSON.stringify({ version: 1, verdicts: { a: 'foe' } }));
         const p = await loadOrSkip('khaos', { fs: new Map([['khaos-memory.json', seed]]) });
@@ -350,7 +350,7 @@ export function register() {
             const h = await p.create();
             await p.matchStart(h, matchContext({ players: ['self', 'a', 'b'], selfId: 'self' }));
             const plant = await p.plant(h, roundState({ round: 1, signals: [broadcast('a', 'bloom')] }));
-            assert.equal(plant, 0, 'a remembered foe makes khaos hoard');
+            assert.equal(plant, 0, 'a remembered foe makes khaos keep');
             const out = p.stdout();
             assert.doesNotMatch(out, /A new face: a[!\b]/, "khaos loaded 'a' from memory, did not re-roll it");
             assert.match(out, /A new face: b/, "'b' was unknown and got a fresh roll");
