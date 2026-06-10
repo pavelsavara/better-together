@@ -41,9 +41,13 @@ export const DEFAULT_ENABLED: readonly string[] = [
 ];
 
 function selectedJscoDist(): string | null {
-    const arg = process.argv.find((a) => a.startsWith('--jsco='));
+    // Read `process` off globalThis so this stays type-safe in the browser build
+    // (no @types/node) as well as Node/CI. Browsers have no process → null.
+    const proc = (globalThis as { process?: { argv?: string[]; env?: Record<string, string | undefined> } }).process;
+    if (!proc) return null;
+    const arg = proc.argv?.find((a: string) => a.startsWith('--jsco='));
     if (arg) return arg.slice('--jsco='.length);
-    return process.env.JSCO_DIST ?? null;
+    return proc.env?.JSCO_DIST ?? null;
 }
 
 let cached: Promise<InstantiateWasiComponent> | null = null;
