@@ -63,6 +63,27 @@ jobs:
           namespace="$(echo "${COMPONENT_NAMESPACE}" | tr '[:upper:]' '[:lower:]')"
           sha_tag="sha-${GITHUB_SHA::12}"
           source_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          # GHCR intermittently returns transient errors during a push: a stale
+          # bearer token surfaces as 401 UNAUTHORIZED, and the registry itself
+          # occasionally answers with 502/503/504 gateway errors. A fresh `wkg`
+          # invocation re-authenticates, so retry each push a few times with
+          # backoff before giving up.
+          push_with_retry() {
+            local attempt=1 max=5 delay=5
+            while true; do
+              if wkg oci push "$@"; then
+                return 0
+              fi
+              if [ "${attempt}" -ge "${max}" ]; then
+                echo "    push failed after ${max} attempts"
+                return 1
+              fi
+              echo "    push attempt ${attempt}/${max} failed; retrying in ${delay}s"
+              sleep "${delay}"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
           failed=()
           for sample in ferris corro khaos gopher nib keith andy dusty; do
             ref="${REGISTRY}/${namespace}/${sample}"
@@ -88,8 +109,8 @@ jobs:
               --annotation "org.opencontainers.image.description=${description}"
             )
             echo "==> publishing ${ref} (tags: latest, ${sha_tag})"
-            if wkg oci push "${annotations[@]}" "${ref}:${sha_tag}" "dist/${sample}.wasm" \
-              && wkg oci push "${annotations[@]}" "${ref}:latest" "dist/${sample}.wasm"; then
+            if push_with_retry "${annotations[@]}" "${ref}:${sha_tag}" "dist/${sample}.wasm" \
+              && push_with_retry "${annotations[@]}" "${ref}:latest" "dist/${sample}.wasm"; then
               echo "    ${sample}: OK"
             else
               echo "::error::failed to publish ${sample} to ${ref}"

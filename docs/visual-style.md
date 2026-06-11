@@ -14,5 +14,3 @@ Instead of the harsh green or amber of 1980s hacking terminals, this uses a soft
     Hybrid ASCII/Vector Art: The flowers and tools aren't just blocky text—they are "Enhanced ASCII." They combine classic text-art layout principles with smooth, single-pixel vector strokes to keep the UI legible and modern while retaining that console soul.
 
     Subtle Filigree & Flourishes: Look at the corners of the main "Garden Bed"—the rigid # boundary breaks away into delicate, sweeping grapevines and leaf flourishes. Merging sharp code-borders with soft botanical filigree is the secret sauce here.
-
-    Simulated Telemetry: The stats use terminal-style telemetry (e.g., LIGHT: *** and WATER: ********). It gamifies the data by turning organic needs (sun, water) into raw digital tracking bars.
