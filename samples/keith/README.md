@@ -1,5 +1,7 @@
 # 🐀 Keith — the ledger-keeping sewer rat
 
+<img src="keith.png" alt="Keith" width="200" align="right" />
+
 > Keith is the garden's bookkeeper — a grubby canal rat who never bites first,
 > always forgives a stumble, and never once lies about his own intentions. But
 > he keeps a little book of who broke their word, and he never forgets. Plant

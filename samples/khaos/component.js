@@ -199,7 +199,7 @@ class Gardener {
     }
 
     metadata() {
-        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: undefined };
+        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: "https://pavelsavara.github.io/better-together/icons/7e91b7d6%23together.Khaos.png" };
     }
 
     matchStart(context) {

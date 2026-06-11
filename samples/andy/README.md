@@ -1,5 +1,7 @@
 # 🦔 Andy — the forgiving hedgehog
 
+<img src="andy.png" alt="Andy" width="200" align="right" />
+
 > Andy is the garden's gentle reciprocator — soft-bellied and trusting by
 > default, but the moment you prick him he curls into a ball of spines. Poke him
 > and he pulls his seeds back; treat him kindly and he unrolls and shares again.

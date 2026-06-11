@@ -1,5 +1,7 @@
 # 🐭 Dusty — the cautious pantry mouse
 
+<img src="dusty.png" alt="Dusty" width="200" align="right" />
+
 > Dusty is a small grey mouse who has learned that the safest way to eat is to
 > watch the table. She opens with a timid nibble, copies whatever the room did
 > last, and bolts for her hole the moment the garden looks bare — then creeps

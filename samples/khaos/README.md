@@ -1,5 +1,7 @@
 # 🎲 Khaos — the dice god
 
+<img src="khaos.png" alt="Khaos" width="200" align="right" />
+
 > Khaos is the garden's dice god — he meets you once, lets the dice decide
 > whether you are friend or foe, and then honours that verdict forever with
 > deranged conviction. His words are random, his grudges are permanent, and he

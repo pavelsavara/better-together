@@ -1,5 +1,7 @@
 # 🦫 Bram — the guild boss
 
+<img src="bram.png" alt="Bram" width="200" align="right" />
+
 > Bram doesn't play for his own pot. He plays for his *table*. He knows his
 > members by name, rallies them every round, keeps the dam full, and when a
 > free-rider sits down to skim the common stream, he aims his ballot to tax them.

@@ -213,7 +213,7 @@ class Gardener {
     }
 
     metadata() {
-        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: undefined };
+        return { name: NAME, version: VERSION, author: AUTHOR, repo: REPO, lore: LORE, glyph: GLYPH, icon: "https://pavelsavara.github.io/better-together/icons/6db6ef11%23together.Reynard.png" };
     }
 
     matchStart(context) {

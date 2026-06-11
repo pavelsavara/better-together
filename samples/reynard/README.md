@@ -1,5 +1,7 @@
 # 🦊 Reynard — the velvet-gloved skimmer
 
+<img src="reynard.png" alt="Reynard" width="200" align="right" />
+
 > Reynard is the garden's most charming guest: he always arrives smiling, always
 > says the right thing, and always leaves with a little more than he brought. He
 > is never the obvious villain — that's the whole craft. He contributes *just*

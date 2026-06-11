@@ -88,6 +88,7 @@ let metaVersion = "0.1.0"
 let metaAuthor = "Better Together samples"
 let metaRepo = "https://github.com/better-together/better-together/tree/main/samples/dusty"
 let metaLore = "A cautious grey pantry mouse. Opens with a timid nibble, then mirrors the table's average — scurrying back fast when the garden cools and creeping forward only when neighbours share. Plays graduated, honest Tit-for-Tat and remembers whether the world has been kind. She shelters near Bram the beaver's guild when the voting turns to tax, and keeps a wary whisker twitching at Reynard the fox."
+let metaIcon = "https://pavelsavara.github.io/better-together/icons/1ed82871%23together.Dusty.png"
 
 // ---------------------------------------------------------------------------
 // Small integer helpers (unsigned-safe for our 0..255 / small positive values).
@@ -321,9 +322,13 @@ provide let metadata = (self: WasmI32) => {
   storeStr(p, 3n, metaRepo)
   storeStr(p, 4n, metaLore)
   storeStr(p, 5n, metaGlyph)
-  // icon: option<string> = none. The variant disc (u8) sits at record
-  // offset 48 -> p+52; storing 0 there selects `none`.
-  WasmI32.store(p, 0n, 52n)
+  // icon: option<string> = some(metaIcon). The variant disc (u8) sits at
+  // record offset 48 -> p+52; storing 1 selects `some`, then ptr@56, len@60.
+  let iconSp = WasmI32.fromGrain(metaIcon)
+  let iconLen = WasmI32.load(iconSp, 4n)
+  WasmI32.store(p, 1n, 52n)
+  WasmI32.store(p, iconSp + 8n, 56n)
+  WasmI32.store(p, iconLen, 60n)
   p
 }
 

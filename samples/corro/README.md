@@ -1,5 +1,7 @@
 # 🐙 Corro — the rot beneath the petals
 
+<img src="corro.png" alt="Corro" width="200" align="right" />
+
 > Corro is the rot beneath the petals — Ferris's mirror and nemesis. She smiles in
 > BLOOM and harvests in silence, certain that every generous gardener is simply a
 > meal that hasn't noticed yet. She plants only to bait, and remembers only who is
