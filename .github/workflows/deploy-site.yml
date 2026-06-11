@@ -9,10 +9,10 @@
 # to publish.
 name: deploy-site
 
-# on:
-#   push:
-#     branches: [main]
-#     paths: ['web/**', 'docs/**']
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'docs/**']
 on:
   workflow_dispatch:
 
@@ -34,6 +34,13 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '24'
+
+      # The SPA imports shared engine source from ../game (e.g. host/jsco.ts,
+      # which references @pavelsavara/jsco). tsc resolves those modules from
+      # game/node_modules, so the engine deps must be installed too.
+      - name: Install engine deps
+        working-directory: game
+        run: npm ci
 
       - name: Build SPA
         working-directory: web
