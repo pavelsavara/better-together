@@ -190,7 +190,7 @@ impl GuestGardener for CorroGardener {
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
             glyph: PLAYER_GLYPH.to_string(),
-            icon: Some("https://pavelsavara.github.io/better-together/icons/e27c86dd%23together.Corro.png".to_string()),
+            icon: Some("https://pavelsavara.github.io/better-together/icons/90ec0fe4%23together.Corro.png".to_string()),
         })
     }
 

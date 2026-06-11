@@ -418,7 +418,7 @@ impl GuestGardener for FerrisGardener {
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
             glyph: PLAYER_GLYPH.to_string(),
-            icon: Some("https://pavelsavara.github.io/better-together/icons/6a574c6d%23together.Ferris.png".to_string()),
+            icon: Some("https://pavelsavara.github.io/better-together/icons/df693caa%23together.Ferris.png".to_string()),
         })
     }
 

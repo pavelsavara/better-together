@@ -36,7 +36,7 @@ public sealed class PlayerImpl : IPlayer
                 + "permanent foe list, and Corro and Reynard are exactly who his tax "
                 + "exists to catch.",
             glyph: "🦫",
-            icon: "https://pavelsavara.github.io/better-together/icons/5fb132ea%23together.Bram.png");
+            icon: "https://pavelsavara.github.io/better-together/icons/bf873e4b%23together.Bram.png");
 
         public void MatchStart(Wit.MatchContext context) =>
             _brain.MatchStart(context.selfId, context.players);

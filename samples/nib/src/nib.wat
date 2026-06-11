@@ -161,7 +161,7 @@
     (data (i32.const 1184) "Nib is the smallest gardener: a single seed, hand-written in raw wasm text. It keeps no memory and bears no grudge - each round it matches the table's promises and adds a little more.")
     (data (i32.const 1408) "\f0\9f\8c\b1")
     (data (i32.const 1600) "nib: i match what you pledge, then plant a little extra.\n")
-    (data (i32.const 1664) "https://pavelsavara.github.io/better-together/icons/59cbb443%23together.Nib.png")
+    (data (i32.const 1664) "https://pavelsavara.github.io/better-together/icons/0744dd6e%23together.Nib.png")
   )
   (core instance $mem-inst (instantiate $mem-module))
   (alias core export $mem-inst "memory" (core memory $mem))
