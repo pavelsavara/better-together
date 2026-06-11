@@ -58,9 +58,9 @@ dormant when there's nothing to punish.*
 
 ### R2 — One wolf among sheep
 **Seats (K=4):** Corro, Ferris, Andy, Dusty.
-**Predicted dynamics:** Corro signals BLOOM, feasts (plant 0). Andy flags him a
+**Predicted dynamics:** Corro signals BLOOM, feasts (plant 0). Andy flags her a
 foe; Dusty mirrors the cooling average down; all three contributors bloc-vote
-Corro and **tax his stash into the garden** every round. Corro's raw score spikes
+Corro and **tax her stash into the garden** every round. Corro's raw score spikes
 early then erodes.
 **Predicted crown order:** Andy ≈ Dusty ≈ Ferris (positive) ≫ **Corro (negative)**.
 **Tests:** A2, A3, A4. *The canonical "tax neutralizes a blatant feaster" case.*

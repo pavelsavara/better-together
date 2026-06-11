@@ -25,7 +25,7 @@ match_end:    fold this match's per-opponent collab (plant≥8) into lifetime st
 
 ---
 
-## 🥀 Corro (Rust) — deceptive predator (Ferris's nemesis), no memory
+## 🐙 Corro (Rust) — deceptive predator (Ferris's nemesis), no memory
 
 [`samples/corro/src/lib.rs`](../samples/corro/src/lib.rs)
 

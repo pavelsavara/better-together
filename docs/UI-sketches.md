@@ -103,7 +103,7 @@ Reads `data/scores.json`. Co-Player crown is primary; Raw is a secondary tab.
 │ 2│ 🛡 bram      │ +2.74 ▕██▊ ▏ │ 15.1      │ 5.2        │ 233           │
 │ 3│ 🦀 ferris    │ +1.95 ▕██  ▏ │ 14.0      │ 6.0        │ 251           │
 │ …│ …           │ …            │ …         │ …          │ …             │
-│45│ 🦎 corro     │ −2.80 ▕░░  ▏ │ 19.4 ⚑    │ 8.1        │ 210           │
+│45│ 🐙 corro     │ −2.80 ▕░░  ▏ │ 19.4 ⚑    │ 8.1        │ 210           │
 ├──┴─────────────┴──────────────┴───────────┴────────────┴───────────────┤
 │ Unranked (still settling — < 50 matches)                                │
 │ – 🌱 khaos      │     ~        │  –        │  –         │ 12  (new)     │
@@ -208,7 +208,7 @@ locally against chosen opponents.
 ┌─ Bot Builder ───────────────────────────────────────────────────────────┐
 │ ┌─ strategy.js ──────────────────────────────┐ ┌─ Opponents ───────────┐ │
 │ │ export function talk(state, me)  { … }     │ │ [x] 🦀 ferris          │ │
-│ │ export function plant(state, me) { … }     │ │ [x] 🦎 corro           │ │
+│ │ export function plant(state, me) { … }     │ │ [x] 🐙 corro           │ │
 │ │ export function vote(state, me)  { … }     │ │ [x] 🛡 bram            │ │
 │ │ // memory via state.history & me.store     │ │ K: (•)4 ( )5 ( )6      │ │
 │ │ …                                          │ │ Seed: [ 7f3a… ] [🎲]   │ │

@@ -13,7 +13,7 @@
 
 | Rank | Bot | Co-Player |
 |---|---|---|
-| 1 | 🥀 together.Corro | 28.756 |
+| 1 | 🐙 together.Corro | 28.756 |
 | 2 | 🌱 together.Nib | 22.324 |
 | 3 | 🎲 together.Khaos | 21.334 |
 | 4 | 🦀 together.Ferris | 15.214 |
@@ -30,7 +30,7 @@
 | 1 | 🎲 together.Khaos | 27.303 |
 | 2 | 🦀 together.Ferris | 19.923 |
 | 3 | 🦔 together.Andy | 19.063 |
-| 4 | 🥀 together.Corro | 17.543 |
+| 4 | 🐙 together.Corro | 17.543 |
 | 5 | 🐀 together.Keith | 17.243 |
 | 6 | 🦊 together.Reynard | 14.763 |
 | 7 | 🌱 together.Nib | 14.623 |
@@ -48,7 +48,7 @@
 | 5 | 🦀 together.Ferris | 16.487 |
 | 6 | 🐹 together.Gopher | 13.187 |
 | 7 | 🦔 together.Andy | 11.687 |
-| 8 | 🥀 together.Corro | 9.947 |
+| 8 | 🐙 together.Corro | 9.947 |
 | 9 | 🌱 together.Nib | 9.767 |
 | 10 | 🐀 together.Keith | 6.787 |
 

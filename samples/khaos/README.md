@@ -42,7 +42,7 @@ the tournament's running feuds and odd-couple alliances:
 |---|---|---|
 | 🦊 [Reynard](../reynard/README.md) | **friend** | His fated darling — chaos bankrolls the fox, the most natural accidental cartel on the board. |
 | 🦀 [Ferris](../ferris/README.md) | **friend** | The dice warm to a sincere, earnest collaborator. |
-| 🥀 [Corro](../corro/README.md) | **friend** | A kindred agent of chaos — the dice wink at a fellow trickster. |
+| 🐙 [Corro](../corro/README.md) | **friend** | A kindred agent of chaos — the dice wink at a fellow trickster. |
 | 🖋️ [Nib](../nib/README.md) | **friend** | Too blank and innocent for the dice to curse. |
 | 🐹 [Gopher](../gopher/README.md) | **friend** | The dice adore a creature of pure habit. |
 | 🐭 [Dusty](../dusty/README.md) | **friend** | The dice take pity on the timid mouse. |
