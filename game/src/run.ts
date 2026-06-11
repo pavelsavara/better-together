@@ -103,9 +103,14 @@ async function ingestChanged(
             if (art.etag) rec.ociEtag = art.etag;
             rec.validatedAt = now;
             state.bots[id] = { oci: rec.oci, digest: rec.ociDigest, etag: rec.ociEtag };
-        } catch {
+            console.log(`[ingest] ${id} pulled ${art.bytes.length} bytes from ${rec.oci} (sha256=${rec.wasmSha256.slice(0, 12)}…)`);
+        } catch (e) {
             // Pull failed (network/registry error or a malformed component):
-            // keep the cached bytes and run matches against them.
+            // keep the cached bytes and run matches against them. Log it so a
+            // changed-but-unpullable bot doesn't fail silently — the HEAD-observed
+            // digest/ETag are still recorded above, so the bot won't re-trigger.
+            const msg = e instanceof Error ? e.message : String(e);
+            console.warn(`[ingest] ${id} pull failed for ${rec.oci}; using cached bytes: ${msg}`);
         }
     }
 }

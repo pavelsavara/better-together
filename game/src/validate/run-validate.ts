@@ -7,7 +7,9 @@
 //
 // NOTE: a submission may give either a direct https `.wasm` URL or an OCI
 // registry reference — both are pulled by createPuller (see pull-oci.ts). The
-// avatar processor (avatar.ts) is still stubbed.
+// smoke-match fillers are likewise pulled by OCI ref (FILLER_OCI) and/or read
+// from local files (FILLER_WASMS). Avatars are fetched + resized by
+// createAvatarProcessor (avatar.ts).
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +17,7 @@ import { parseIssue } from './parse-issue.ts';
 import { runValidation, type SubmissionInput, type ValidationDeps } from './checks.ts';
 import { admitBot } from './admit.ts';
 import { createPuller } from './pull-oci.ts';
-import { notImplementedAvatarProcessor } from './avatar.ts';
+import { createAvatarProcessor } from './avatar.ts';
 import { loadIndex } from '../store/read.ts';
 
 interface RunEnv {
@@ -25,6 +27,7 @@ interface RunEnv {
     approvedBy: string;
     storeDir: string;
     fillerWasms: string[];
+    fillerOci: string[];
     commentFile: string;
     outputFile: string | null;
 }
@@ -38,6 +41,7 @@ function readEnv(): RunEnv {
         approvedBy: env.APPROVER ?? '',
         storeDir: env.STORE_DIR ?? '../gh-pages',
         fillerWasms: (env.FILLER_WASMS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+        fillerOci: (env.FILLER_OCI ?? '').split(',').map((s) => s.trim()).filter(Boolean),
         commentFile: env.VALIDATION_COMMENT_FILE ?? 'validation-comment.md',
         outputFile: env.GITHUB_OUTPUT ?? null,
     };
@@ -71,10 +75,15 @@ export async function main(): Promise<number> {
     for (const p of env.fillerWasms) {
         fillerSamples.push({ id: p, bytes: new Uint8Array(await readFile(p)) });
     }
+    const puller = createPuller();
+    for (const ref of env.fillerOci) {
+        const art = await puller(ref);
+        fillerSamples.push({ id: ref, bytes: art.bytes });
+    }
 
     const deps: ValidationDeps = {
-        pullOci: createPuller(),
-        processAvatar: notImplementedAvatarProcessor,
+        pullOci: puller,
+        processAvatar: createAvatarProcessor(),
         fillerSamples,
     };
 

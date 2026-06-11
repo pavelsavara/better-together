@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  packages: read # authenticated GHCR pulls for the OCI manifest check + component pull
 
 concurrency:
   # Single-writer discipline: only one tournament run writes scores/vfs/logs.
@@ -48,6 +49,9 @@ jobs:
           STORE_DIR: ${{ github.workspace }}/gh-pages
           # A run-level master seed; stored in each match log for replay.
           MASTER_SEED: ${{ github.run_id }}-${{ github.run_attempt }}
+          # Authenticated registry pulls: raises the GHCR rate limit and allows
+          # private same-org packages. Public images pull fine without it.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node --experimental-wasm-jspi src/run-tournament.ts
 
       - name: Commit results to gh-pages
