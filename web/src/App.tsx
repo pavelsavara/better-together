@@ -9,8 +9,8 @@ import { Builder } from './pages/Builder.tsx';
 import { Panel } from './components/Panel.tsx';
 
 const NAV = [
-    { to: '/', label: 'Home', end: true },
-    { to: '/scores', label: 'Top Scores', end: false },
+    { to: '/', label: 'Game', end: true },
+    { to: '/scores', label: 'Gardeners', end: false },
     { to: '/submit', label: 'Submit', end: false },
     { to: '/builder', label: 'Builder', end: false },
     { to: '/about', label: 'About', end: false },

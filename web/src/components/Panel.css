@@ -38,26 +38,16 @@
 
 .pf-frame>*:not(.pf-content) {
     position: absolute;
-    background-repeat: no-repeat;
 }
 
-/* ---- top rail tiles on either side of the centered header plate ---- */
-.pf-edge-top-l,
-.pf-edge-top-r {
+/* ---- edges (drawn first, corners overlap them) ---- */
+.pf-edge-top {
     top: 0;
+    left: calc(var(--pf-lw) * var(--pf-s));
+    right: calc(var(--pf-rw) * var(--pf-s));
     height: calc(var(--pf-top-h) * var(--pf-s));
     background-repeat: repeat-x;
     background-size: calc(var(--pf-tile-x) * var(--pf-s)) calc(var(--pf-top-h) * var(--pf-s));
-}
-
-.pf-edge-top-l {
-    left: calc(var(--pf-lw) * var(--pf-s));
-    right: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
-}
-
-.pf-edge-top-r {
-    left: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
-    right: calc(var(--pf-rw) * var(--pf-s));
 }
 
 .pf-edge-left,
@@ -79,42 +69,55 @@
     background-size: calc(var(--pf-rw) * var(--pf-s)) calc(var(--pf-tile-y) * var(--pf-s));
 }
 
-/* bottom rail runs continuously between the bottom corners */
-.pf-edge-bottom {
+/* bottom rail tiles on either side of the centered button box */
+.pf-edge-bottom-l,
+.pf-edge-bottom-r {
     bottom: 0;
-    left: calc(var(--pf-bcw) * var(--pf-s));
-    right: calc(var(--pf-bcw) * var(--pf-s));
     height: calc(var(--pf-bh) * var(--pf-s));
     background-repeat: repeat-x;
     background-size: calc(var(--pf-tile-x) * var(--pf-s)) calc(var(--pf-bh) * var(--pf-s));
 }
 
-/* ---- top-center header plate (fixed, centered) ---- */
-.pf-center-top {
-    top: 0;
+.pf-edge-bottom-l {
+    left: calc(var(--pf-bcw) * var(--pf-s));
+    right: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
+}
+
+.pf-edge-bottom-r {
+    left: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
+    right: calc(var(--pf-bcw) * var(--pf-s));
+}
+
+/* ---- bottom-center button box (fixed, centered) ---- */
+.pf-center-bottom {
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     width: calc(var(--pf-btn-w) * var(--pf-s));
     height: calc(var(--pf-bh) * var(--pf-s));
+    background-repeat: no-repeat;
     background-size: 100% 100%;
     z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: visible;
 }
 
-/* Title text sits centered on the plate, free to overrun its narrow width. */
+/* Title sits in the empty slot between the button rails (rails are at ~51% and
+   ~74% of the slice height). Font scales with the frame so it always fits the
+   box — matches web/public/frame/frame-demo.html. */
 .pf-label {
+    position: absolute;
+    top: 62%;
+    transform: translateY(-50%);
     margin: 0;
-    padding: 0 0.6rem;
+    padding: 0;
     border: 0;
     background: none;
     color: var(--accent-glow, #d4bdf2);
     font-family: var(--font-mono);
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-size: calc(15px * var(--pf-s));
+    letter-spacing: 0.15em;
     white-space: nowrap;
     text-shadow: var(--glow-soft, 0 1px 6px rgba(178, 146, 230, 0.28));
     cursor: inherit;
@@ -131,6 +134,7 @@ button.pf-label:hover {
 
 /* ---- corners (on top) ---- */
 .pf-corner {
+    background-repeat: no-repeat;
     background-size: 100% 100%;
     z-index: 2;
 }
@@ -174,9 +178,9 @@ button.pf-label:hover {
     padding: calc(var(--pf-th) * var(--pf-s) * 0.55) calc(var(--pf-rw) * var(--pf-s) * 0.55) calc(var(--pf-bh) * var(--pf-s) * 0.55) calc(var(--pf-lw) * var(--pf-s) * 0.55);
 }
 
-/* When a header plate is present, drop the content below it. */
+/* When a title is present in the bottom box, clear the content above it. */
 .pf-has-header .pf-content {
-    padding-top: calc(var(--pf-bh) * var(--pf-s) + 0.85rem);
+    padding-bottom: calc(var(--pf-bh) * var(--pf-s) + 0.85rem);
 }
 
 .pf-content>h2:first-child {

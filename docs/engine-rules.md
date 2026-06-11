@@ -1,7 +1,5 @@
 # Engine Rules
 
-[← Back to README](../README.md) · See also: [Player Rules](player-rules.md)
-
 *This is how the tournament host operates. Players don't need to read this section to compete, but advanced strategists will benefit from understanding the scoring system.*
 
 ### 1. Tournament Structure

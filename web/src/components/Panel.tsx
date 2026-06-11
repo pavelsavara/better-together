@@ -7,9 +7,9 @@ const url = (name: string) => `url(${FRAME_BASE}${name})`;
 export interface PanelProps {
     /** Panel body. */
     children?: ReactNode;
-    /** Title shown in the top-center header plate. Omit to leave it empty. */
+    /** Title shown in the bottom-center button box. Omit to leave it empty. */
     label?: ReactNode;
-    /** If set, the header renders as a clickable button invoking this handler. */
+    /** If set, the box renders as a clickable button invoking this handler. */
     onLabelClick?: () => void;
     /** Whole-frame chrome scale (native pieces are large). Defaults to 0.25. */
     scale?: number;
@@ -22,9 +22,8 @@ export interface PanelProps {
 /**
  * Ornamental botanical-terminal frame, assembled from the 9-slice PNG pieces in
  * web/public/frame/. Edges tile responsively (background-repeat); corners and
- * the center header plate are fixed. The header plate sits at the top center
- * (the top rail splits around it) and holds the section title; content renders
- * inside the chrome.
+ * the bottom-center button box are fixed. The button box holds the section
+ * title; content renders inside the chrome above it.
  */
 export function Panel({ children, label, onLabelClick, scale = 0.25, className, style }: PanelProps) {
     const frameStyle = { '--pf-s': String(scale), ...style } as CSSProperties;
@@ -33,13 +32,13 @@ export function Panel({ children, label, onLabelClick, scale = 0.25, className, 
     if (className) classes.push(className);
     return (
         <div className={classes.join(' ')} style={frameStyle}>
-            <div className="pf-edge-top-l" style={{ backgroundImage: url('edge-top.png') }} />
-            <div className="pf-edge-top-r" style={{ backgroundImage: url('edge-top.png') }} />
+            <div className="pf-edge-top" style={{ backgroundImage: url('edge-top.png') }} />
             <div className="pf-edge-left" style={{ backgroundImage: url('edge-left.png') }} />
             <div className="pf-edge-right" style={{ backgroundImage: url('edge-right.png') }} />
-            <div className="pf-edge-bottom" style={{ backgroundImage: url('edge-bottom.png') }} />
+            <div className="pf-edge-bottom-l" style={{ backgroundImage: url('edge-bottom.png') }} />
+            <div className="pf-edge-bottom-r" style={{ backgroundImage: url('edge-bottom.png') }} />
 
-            <div className="pf-center-top" style={{ backgroundImage: url('center-bottom.png') }}>
+            <div className="pf-center-bottom" style={{ backgroundImage: url('center-bottom.png') }}>
                 {label != null &&
                     (onLabelClick ? (
                         <button type="button" className="pf-label" onClick={onLabelClick}>

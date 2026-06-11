@@ -35,7 +35,13 @@ body,
     color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 15px;
+    font-weight: 300;
     line-height: 1.5;
+    /* Dark native form controls: unchecked radios/checkboxes render in the same
+       gray as the unfilled slider track instead of bright white. */
+    color-scheme: dark;
+    /* Plum form-control highlight (slider, radio, checkbox) — never OS blue. */
+    accent-color: var(--accent-bloom);
 }
 
 a {
@@ -54,7 +60,7 @@ h3,
 h4 {
     font-family: var(--font-mono);
     color: var(--accent-bloom);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 /* App shell */
@@ -80,7 +86,7 @@ h4 {
 .brand {
     color: var(--accent-bloom);
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 500;
     text-shadow: var(--glow-soft);
 }
 
@@ -144,7 +150,7 @@ td {
 
 th {
     color: var(--accent-dim);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 tbody tr:hover {
@@ -241,6 +247,7 @@ select {
     color: var(--text-primary);
     border: 1px solid var(--border-frame);
     font-family: var(--font-mono);
+    font-weight: inherit;
     padding: 0.4rem 0.6rem;
     width: 100%;
 }
