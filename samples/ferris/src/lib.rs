@@ -74,12 +74,24 @@ const PLAYER_GLYPH: &str = "🦀";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
-const PLAYER_LORE: &str = "Ferris is the garden's eternal optimist — a crab who \
- believes every plot can bloom if everyone just chips in. He keeps a little \
- notebook of everyone he's ever played with, forgives slowly, and trusts \
- again gladly. He'd rather lose a point and gain a friend. He cheers Bram the \
- beaver's guild from the front row — and trusts Reynard the fox far more than \
- that smooth-talking skimmer has ever earned.";
+const PLAYER_LORE: &str = "Ferris is the garden's eternal optimist, a crab who \
+ believes every plot can bloom if everyone just chips in. Where others see a \
+ patch of dirt, he sees a season of friendships waiting to happen, and he \
+ arrives at every table with the same warm, open-handed cheer. He plants \
+ generously by default and greets every new acquaintance as a future ally, \
+ trusting first and asking questions later. But Ferris remembers. Across every \
+ match he has ever played he keeps a little reputation notebook in his head, \
+ quietly noting who tends the commons and who slips away with full claws while \
+ the garden goes thirsty. Hurt him and he does not turn vengeful; he turns \
+ cautious, pulling his contribution back just enough to protect the plot \
+ without ever slamming the gate shut. Forgiveness comes slowly to him, but it \
+ always comes, and he trusts again gladly the moment a former skimmer shows the \
+ first sign of pitching in. Treat the garden well and Ferris leans all the way \
+ in, throwing his biggest harvest behind the people he recognizes and cheering \
+ their names from the front row. He would rather lose a single point and gain a \
+ friend than win cold and alone. Patient, hopeful, endlessly good-natured, and \
+ just wary enough to survive, Ferris is the gardener who proves that kindness \
+ and a long memory can share the same shell.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

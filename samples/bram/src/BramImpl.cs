@@ -27,14 +27,28 @@ public sealed class PlayerImpl : IPlayer
             version: "0.1.0",
             author: "Better Together samples",
             repo: "https://github.com/pavelsavara/better-together",
-            lore: "A beaver who plays for his table, not his pot. He fills the dam "
-                + "from the front, rallies his guild — Nib and Gopher follow his "
-                + "lead by reflex — and when a free-rider sits down to skim the common "
-                + "stream, he calls the vote and taxes the fattest hoarder dry. He "
-                + "never crosses a member, never lets one be punished alone, and counts "
-                + "Keith and Andy as natural allies. Khaos the dice god has him on a "
-                + "permanent foe list, and Corro and Reynard are exactly who his tax "
-                + "exists to catch.",
+            lore: "Bram is a beaver, and a beaver does not build a dam for himself "
+                + "alone. He plays for his table, not his pot. Where every other "
+                + "gardener nurses a private hand, Bram works the whole room: he knows "
+                + "his members by name, greets them each round, and leads from the very "
+                + "front, the table's steadiest and most generous contributor. Filling "
+                + "the communal garden is not charity to him but discipline; he plants "
+                + "openly and honestly so the others have every reason to follow, and "
+                + "two of the simplest bots at the table follow him almost without "
+                + "knowing they belong to his guild. He is patient, organized, and "
+                + "relentlessly loyal: he will never aim his ballot at a member, never "
+                + "leave one of his own to be punished alone, and he counts the arbiters "
+                + "Keith and Andy as kindred spirits who share his politics. But Bram is "
+                + "no soft touch. Cooperation, in his eyes, has to be defended. When a "
+                + "free-rider sits down to skim the common stream, his temper turns cold "
+                + "and methodical: he calls the vote and taxes the fattest hoarder dry, "
+                + "dragging that hoarded stash back into the garden where it is doubled "
+                + "and shared by everyone who actually showed up. He remembers the ones "
+                + "he has taxed before and hunts the polite skimmer as eagerly as the "
+                + "open glutton. He bears the dice god Khaos as a sworn foe and treats "
+                + "Corro and Reynard as the very reason his tax exists. Bram aspires, "
+                + "always, to a table that does better together, and he organizes "
+                + "tirelessly to make it so.",
             glyph: "🦫",
             icon: "https://pavelsavara.github.io/better-together/icons/bf873e4b%23together.Bram.png");
 

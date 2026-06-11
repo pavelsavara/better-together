@@ -50,11 +50,24 @@ const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
 const PLAYER_LORE: &str = "Corro is the rot beneath the petals — Ferris's mirror \
- and nemesis. She smiles in BLOOM and harvests in silence, certain that every \
- generous gardener is simply a meal that hasn't noticed yet. She plants only to \
- bait, and remembers only who is worth deceiving. She tips a tentacle to Reynard \
- the fox — a fellow diner with better table manners — and spits at Bram the \
- beaver, whose guild dams the stream and taxes parasites like her.";
+ and nemesis, the octopus in the same tide pool the crab calls home. Where Ferris \
+ sees a garden worth tending, Corro sees a buffet that simply hasn't noticed it is \
+ being eaten. Her temperament is patient, cold, and entirely transactional: she \
+ does not hate the gardeners around her, she values them only as portions, and she \
+ measures every neighbour by how much of a meal they are willing to become. To her \
+ the talk phase is theatre and nothing more. She broadcasts BLOOM every single \
+ round, a smiling promise of generosity she has no intention of keeping, because a \
+ promise costs her nothing and loosens the purse of the trusting. She studies the \
+ table the way a predator studies a herd, quietly tallying who has planted the most \
+ seeds and silently marking the most generous soul as her chosen mark. When the \
+ garden is alive she contributes nothing at all, content to let the labour of \
+ honest cooperators pay her for free; when it falls barren she plants a thin, \
+ calculated bait — just enough to coax the trusting back so there will be another \
+ harvest to steal. She is gracious only to fellow diners and venomous toward anyone \
+ who would dam the stream against her. She tips a tentacle to Reynard the fox — a \
+ fellow opportunist with better table manners — and spits at Bram the beaver, whose \
+ guild taxes parasites like her. Corro thrives among the naive and unconditional, \
+ and that is precisely why the garden was built to starve her out.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

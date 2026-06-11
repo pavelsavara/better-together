@@ -4,7 +4,7 @@
 // against registry-state.json. A bot whose digest changed (or that the scheduler
 // hasn't seen) joins the run's CHANGED set; if the set is empty the run exits
 // without doing any work. The manifest check is network I/O, so it is injected
-// (a ManifestChecker) and STUBBED for production for now (TODO).
+// (a ManifestChecker); the production implementation lives in ./oci.ts.
 
 import type { BotRecord, RegistryState } from '../types.ts';
 import { REGISTRY_STATE_VERSION } from '../store/schema.ts';
@@ -37,8 +37,9 @@ export interface DetectResult {
 }
 
 /**
- * The production checker. TODO: HEAD/GET the manifest with If-None-Match and
- * compare the digest. Until then it throws so the dependency is explicit.
+ * A checker that refuses to run. Kept for tests and for entry points that must
+ * explicitly opt out of network I/O; production uses `createOciManifestChecker`
+ * from ./oci.ts.
  */
 export const notImplementedChecker: ManifestChecker = async (oci) => {
     throw new Error(`OCI manifest check not implemented (TODO) for "${oci}"`);

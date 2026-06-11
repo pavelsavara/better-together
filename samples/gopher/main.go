@@ -36,12 +36,24 @@ const (
 	playerVersion = "0.1.0"
 	playerAuthor  = "Better Together samples"
 	playerRepo    = "https://github.com/pavelsavara/better-together"
-	playerLore    = "Gopher is the garden's tireless forager — a creature of pure " +
-		"habit who keeps digging wherever the last dig paid off, and abandons any " +
-		"hole that came up empty. He doesn't hold grudges and he doesn't read minds; " +
-		"he simply repeats what worked and flips away from what didn't. The dirt " +
-		"remembers; Gopher just follows it — and lately the dirt's been richest at " +
-		"Bram the beaver's table, so the forager digs there and calls himself guild."
+	playerLore    = "Gopher is the garden's tireless forager, a creature of pure habit " +
+		"who keeps digging wherever the last dig paid off and abandons any hole that " +
+		"came up empty. He is single-minded to the bone: where other gardeners track " +
+		"reputations or hunt for marks, Gopher ignores the rest of the field entirely. " +
+		"His whole world narrows to one question asked each round -- 'did my last dig " +
+		"pay off?' -- and the answer is the only counsel he needs. If the previous " +
+		"round paid him well, he stays put and repeats exactly what he did: same " +
+		"generosity, same signal, no second-guessing. If it paid him poorly, he simply " +
+		"flips, a generous Gopher clamming up or a stingy one opening his paws. " +
+		"He is relentlessly optimistic, opening every match with a full, generous dig " +
+		"and trusting the payouts to steer him from there. He holds no grudges and " +
+		"reads no minds; he never schemes, never sulks, and never plays the permanent " +
+		"sucker, because a single bad payoff is all it takes to make him shift. He is " +
+		"forgiving by reflex, ready to settle back into mutual generosity the moment " +
+		"the dirt rewards it, and just as ready to stop feeding a predator who has " +
+		"bled him dry. Cheerful, plain-spoken, and forever going on about dirt and " +
+		"holes, Gopher trusts the soil to remember what worked. The dirt remembers; " +
+		"Gopher just follows it."
 )
 
 // ─────────────────────────── Strategy knobs ───────────────────────

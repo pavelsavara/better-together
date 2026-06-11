@@ -1,24 +1,20 @@
 # Tournament Engine — the change-gated hourly run (docs/architecture.md §4.1).
 #
-# Each tick does a cheap conditional OCI manifest check per active bot; if a
-# bot's digest changed it runs ~500 matches seating the changed bot(s), updates
-# the leaderboard + VFS + match logs, and makes a SINGLE commit to gh-pages. If
-# nothing changed it exits without committing.
-#
-# NOT ENABLED YET: the OCI manifest checker in game/src/scan/detect.ts is still
-# stubbed (TODO). This workflow is authored so enabling the tournament is a
-# single follow-up once the checker lands.
+# Each tick does a cheap conditional OCI manifest check per active bot; a bot
+# whose digest changed (or a new submission) is ingested — its fresh .wasm is
+# pulled and re-cached — then ~500 matches seat the changed bot(s), the
+# leaderboard + VFS + match logs update, and a SINGLE commit lands on gh-pages.
+# If nothing changed the tick exits without committing.
 name: tournament
 
-# Disabled until the OCI manifest checker is implemented. Re-enable the schedule.
-# on:
-#   schedule:
-#     - cron: '0 * * * *' # hourly
 on:
+  schedule:
+    - cron: '0 * * * *' # hourly
   workflow_dispatch:
 
 permissions:
   contents: write
+  packages: read # authenticated GHCR pulls for the OCI manifest check + component pull
 
 concurrency:
   # Single-writer discipline: only one tournament run writes scores/vfs/logs.
@@ -53,6 +49,9 @@ jobs:
           STORE_DIR: ${{ github.workspace }}/gh-pages
           # A run-level master seed; stored in each match log for replay.
           MASTER_SEED: ${{ github.run_id }}-${{ github.run_attempt }}
+          # Authenticated registry pulls: raises the GHCR rate limit and allows
+          # private same-org packages. Public images pull fine without it.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node --experimental-wasm-jspi src/run-tournament.ts
 
       - name: Commit results to gh-pages
@@ -61,7 +60,7 @@ jobs:
           git config user.name "better-together-bot"
           git config user.email "bot@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add data matches vfs
+            git add data matches vfs wasm
             git commit -m "tournament: run ${{ github.run_id }}"
             git push origin gh-pages
           else

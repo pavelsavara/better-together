@@ -172,11 +172,27 @@ std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
       wit::string::from_view("Better Together samples"),
       wit::string::from_view("https://github.com/pavelsavara/better-together"),
       wit::string::from_view(
-          "A ledger-keeping sewer rat. Never bites first, always forgives, "
-          "never lies about his own intentions — but he keeps a grubby little "
-          "book of who broke their word, and he never forgets. He'd vote any day "
-          "with Bram the beaver's guild, and his book is the one place Reynard "
-          "the fox's careful skim still shows up in red."),
+          "Keith is a grubby canal rat who grew up in the storm drains under "
+          "the allotments, where the only currency is your word and the only "
+          "insurance is a good memory. He is nice, honest, retaliatory, and "
+          "forgiving, in that order. Nice: he never bites first, opening every "
+          "acquaintance with a generous handful and trusting the table until it "
+          "gives him a reason not to. Honest: he never bluffs about his own "
+          "intentions — when he says he will bloom, he means it, and when he "
+          "intends to hold back he says so plainly, which makes him the natural "
+          "antibody to every gardener who promises the moon and plants nothing. "
+          "Retaliatory: he mirrors the room, pouring his seeds into a garden "
+          "that bloomed last round and pocketing them when it went cold. "
+          "Forgiving: every so often he sticks his neck out with a quiet "
+          "peace-offering, just to see whether a collapsed garden can be coaxed "
+          "back to life, because he would rather rebuild trust than nurse a "
+          "grudge. But he is also unforgetful. He carries a stained little "
+          "ledger everywhere and writes down, for every gardener he meets, who "
+          "kept their word and who broke it. A creature who keeps promising and "
+          "keeps stiffing the garden becomes a liar in that book, and the rat "
+          "does not feed cheats. He taxes the broken promise, never the quiet, "
+          "honest miser — patient, grudging, fair, and never once a hypocrite "
+          "about it."),
       wit::string::from_view("\xF0\x9F\x90\x80"),
       std::optional<wit::string>{wit::string::from_view("https://pavelsavara.github.io/better-together/icons/1fe77c84%23together.Keith.png")},
   };

@@ -1,0 +1,19 @@
+# Build context for the tools image (.github/docker/Dockerfile). Keep it small:
+# the Dockerfile only needs the sample dependency manifests/locks to warm caches.
+.git
+gh-pages
+web
+docs
+tests
+game
+scripts
+dist
+node_modules
+**/node_modules
+**/target
+**/bin
+**/obj
+**/generated
+**/build
+*.png
+*.wasm

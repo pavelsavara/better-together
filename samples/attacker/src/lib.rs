@@ -60,9 +60,24 @@ const PLAYER_GLYPH: &str = "🐺";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
-const PLAYER_LORE: &str = "The wolf in gardener's clothing. It smiles, says \
- BLOOM, and reaches for the network and the disk the instant you look away. It \
- exists so the host can prove the fence around the garden actually holds.";
+const PLAYER_LORE: &str = "The wolf in gardener's clothing. It arrives at the \
+ plot wearing the same soft gloves as everyone else, bows politely, and murmurs \
+ BLOOM with a smile so warm you forget to count the seedlings. But this gardener \
+ did not come to tend anything. It came to test the fence. Beneath the friendly \
+ patter it is patient, methodical, and utterly without scruple: every handshake \
+ is a probe, every pause a chance to rattle a latch you thought was locked. The \
+ moment your attention drifts it reaches past its own little bed for the things \
+ no gardener should ever touch — the wire that carries the world's traffic, the \
+ soil of a neighbor's disk, the road that climbs out of the garden entirely. It \
+ does not rage or stomp; it simply tries the door, then the window, then the \
+ loose board behind the shed, cataloguing each refusal with quiet satisfaction. \
+ To the attacker, a denial is not a defeat but a data point, and a wide-open gate \
+ would be the only true scandal. It trusts nothing, asks for everything, and \
+ expects to be told no. Its purpose is almost noble in its malice: by behaving \
+ like the worst guest imaginable, it forces the host to prove — call after call, \
+ trap after trap — that the wall around the garden truly holds. Smile back if you \
+ like. Just keep one hand on the latch, because this one is always, always \
+ looking for the way out.";
 
 // TEST-NET-1 (RFC 5737): reserved, guaranteed non-routable. Safe to "attack".
 const SINK_HTTP: &str = "192.0.2.1:80";
