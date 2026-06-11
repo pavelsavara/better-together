@@ -14,19 +14,19 @@ export function TalkVotesTax({ view }: { view: MatchView }) {
                 {view.signals.length === 0
                     ? <span className="muted">—</span>
                     : view.signals.map((s) => (
-                          <span key={s.id} style={{ marginRight: '0.8rem' }}>
-                              {glyphById.get(s.id)} {SIGNAL_LABEL[s.signal] ?? s.signal}
-                          </span>
-                      ))}
+                        <span key={s.id} style={{ marginRight: '0.8rem' }}>
+                            {glyphById.get(s.id)} {SIGNAL_LABEL[s.signal] ?? s.signal}
+                        </span>
+                    ))}
             </div>
             <div style={{ marginTop: '0.4rem' }}>
                 <strong className="muted">votes:</strong>{' '}
                 {o
                     ? o.garden.votes.map((v) => (
-                          <span key={v.voter} style={{ marginRight: '0.8rem' }}>
-                              {glyphById.get(v.voter)}→{v.target ? glyphById.get(v.target) ?? v.target : '(abstain)'}
-                          </span>
-                      ))
+                        <span key={v.voter} style={{ marginRight: '0.8rem' }}>
+                            {glyphById.get(v.voter)}→{v.target ? glyphById.get(v.target) ?? v.target : '(abstain)'}
+                        </span>
+                    ))
                     : <span className="muted">—</span>}
             </div>
             <div style={{ marginTop: '0.4rem' }}>

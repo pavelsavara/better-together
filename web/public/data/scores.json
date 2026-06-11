@@ -1,7 +1,9 @@
 {
     "version": 1,
     "computedAt": "2026-06-10T12:00:00Z",
-    "window": { "matchesPerBot": 500 },
+    "window": {
+        "matchesPerBot": 500
+    },
     "minMatchesToRank": 50,
     "baselineMeanGroupTotal": 64.2,
     "leaderboard": [

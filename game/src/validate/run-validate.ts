@@ -91,7 +91,7 @@ export async function main(): Promise<number> {
         env,
         'accepted',
         `✅ Admitted as \`${record.id}\` (${record.glyph} ${record.name} v${record.version}).\n\n` +
-            `Cached \`${record.wasm}\`${record.icon ? ` and \`${record.icon}\`` : ''}.`,
+        `Cached \`${record.wasm}\`${record.icon ? ` and \`${record.icon}\`` : ''}.`,
     );
     return 0;
 }

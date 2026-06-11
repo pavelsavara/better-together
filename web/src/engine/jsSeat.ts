@@ -56,12 +56,12 @@ export function createJsSeat(code: string, id: string, glyph: string, name: stri
             'me',
             'console',
             `"use strict";\n${code}\n return {` +
-                `talk: typeof talk === 'function' ? talk : undefined,` +
-                `plant: typeof plant === 'function' ? plant : undefined,` +
-                `vote: typeof vote === 'function' ? vote : undefined,` +
-                `matchStart: typeof matchStart === 'function' ? matchStart : undefined,` +
-                `matchEnd: typeof matchEnd === 'function' ? matchEnd : undefined,` +
-                `};`,
+            `talk: typeof talk === 'function' ? talk : undefined,` +
+            `plant: typeof plant === 'function' ? plant : undefined,` +
+            `vote: typeof vote === 'function' ? vote : undefined,` +
+            `matchStart: typeof matchStart === 'function' ? matchStart : undefined,` +
+            `matchEnd: typeof matchEnd === 'function' ? matchEnd : undefined,` +
+            `};`,
         );
         strategy = (factory(me, consoleProxy) ?? {}) as Strategy;
     } catch (e) {
@@ -110,7 +110,7 @@ export function createJsSeat(code: string, id: string, glyph: string, name: stri
             seat,
             view: { id, glyph, name },
             stdout: () => out.join('\n'),
-            dispose: () => {},
+            dispose: () => { },
         },
     };
 }

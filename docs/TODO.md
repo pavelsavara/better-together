@@ -1,0 +1,5 @@
+ - validate 10ms on each call
+ - validate test cases vs rules
+ - punish non compliance
+ - implement bot who remembers top score and tax it
+ - implement bot who remembers who voted against him and fight back

@@ -4,7 +4,7 @@ import type { BotRecord } from '../data/types.ts';
 
 /** React wrapper around MatchController: exposes the view + control methods. */
 export function useMatch() {
-    const [view, setView] = useState<MatchView>(() => new MatchController(() => {}).view);
+    const [view, setView] = useState<MatchView>(() => new MatchController(() => { }).view);
     const ref = useRef<MatchController | null>(null);
 
     if (!ref.current) {

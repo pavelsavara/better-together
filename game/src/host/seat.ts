@@ -103,7 +103,7 @@ export async function withWatchdog<T>(
         return { value: value as T, elapsedMs };
     } finally {
         if (timer) clearTimeout(timer);
-        call.catch(() => {}); // swallow a late rejection from the losing call
+        call.catch(() => { }); // swallow a late rejection from the losing call
     }
 }
 

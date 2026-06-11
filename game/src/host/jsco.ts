@@ -13,7 +13,7 @@ export interface JscoHostConfig {
     stderr?: WritableStream;
     env?: Array<[string, string]>;
     enabledInterfaces?: string[];
-    limits?: { maxVfsBytes?: number; [k: string]: unknown };
+    limits?: { maxVfsBytes?: number;[k: string]: unknown };
     network?: unknown;
     [k: string]: unknown;
 }

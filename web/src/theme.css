@@ -36,6 +36,7 @@ a {
     color: var(--accent-bloom);
     text-decoration: none;
 }
+
 a:hover {
     color: var(--accent-glow);
     text-shadow: 0 0 6px var(--accent-glow);
@@ -69,20 +70,24 @@ h4 {
     border-bottom: 1px solid var(--border-frame);
     padding: 1rem 0;
 }
+
 .brand {
     color: var(--accent-bloom);
     font-size: 1.2rem;
     font-weight: 700;
     text-shadow: 0 0 8px rgba(185, 140, 255, 0.4);
 }
+
 .nav {
     display: flex;
     flex-wrap: wrap;
     gap: 0.9rem;
 }
+
 .nav a {
     color: var(--text-muted);
 }
+
 .nav a.active {
     color: var(--accent-glow);
     text-shadow: 0 0 6px var(--accent-glow);
@@ -111,7 +116,8 @@ h4 {
     padding: 1rem 1.25rem;
     margin: 0 0 1.25rem;
 }
-.panel > h2 {
+
+.panel>h2 {
     margin-top: 0;
     border-bottom: 1px dashed var(--accent-dim);
     padding-bottom: 0.4rem;
@@ -122,16 +128,19 @@ table {
     width: 100%;
     border-collapse: collapse;
 }
+
 th,
 td {
     text-align: left;
     padding: 0.4rem 0.6rem;
     border-bottom: 1px solid var(--border-frame);
 }
+
 th {
     color: var(--accent-dim);
     font-weight: 600;
 }
+
 tbody tr:hover {
     background: rgba(185, 140, 255, 0.06);
 }
@@ -141,6 +150,7 @@ tbody tr:hover {
     gap: 0.5rem;
     margin-bottom: 0.75rem;
 }
+
 .tab {
     background: transparent;
     border: 1px solid var(--border-frame);
@@ -149,6 +159,7 @@ tbody tr:hover {
     padding: 0.3rem 0.8rem;
     cursor: pointer;
 }
+
 .tab.active {
     color: var(--accent-glow);
     border-color: var(--accent-bloom);
@@ -158,9 +169,11 @@ tbody tr:hover {
 .positive {
     color: var(--state-positive);
 }
+
 .warn {
     color: var(--state-warn);
 }
+
 .muted {
     color: var(--text-muted);
 }
@@ -171,6 +184,7 @@ tbody tr:hover {
     align-items: center;
     gap: 0.4rem;
 }
+
 .whisker .bar {
     position: relative;
     height: 0.6rem;
@@ -178,14 +192,16 @@ tbody tr:hover {
     background: rgba(109, 90, 153, 0.25);
     border: 1px solid var(--border-frame);
 }
-.whisker .bar > .fill {
+
+.whisker .bar>.fill {
     position: absolute;
     top: 0;
     bottom: 0;
     background: var(--accent-bloom);
     opacity: 0.8;
 }
-.whisker .bar > .err {
+
+.whisker .bar>.err {
     position: absolute;
     top: 50%;
     height: 1px;
@@ -222,6 +238,7 @@ select {
     padding: 0.4rem 0.6rem;
     width: 100%;
 }
+
 .btn {
     display: inline-block;
     background: transparent;
@@ -231,6 +248,7 @@ select {
     padding: 0.45rem 1rem;
     cursor: pointer;
 }
+
 .btn:hover {
     color: var(--accent-glow);
     border-color: var(--accent-glow);
@@ -240,6 +258,7 @@ select {
 .field {
     margin-bottom: 1rem;
 }
+
 .field label {
     display: block;
     color: var(--accent-dim);
@@ -250,14 +269,17 @@ select {
 .markdown {
     color: var(--text-primary);
 }
+
 .markdown table {
     margin: 1rem 0;
 }
+
 .markdown code {
     color: var(--state-positive);
     background: rgba(126, 224, 200, 0.08);
     padding: 0 0.25rem;
 }
+
 .markdown pre {
     background: var(--bg-void);
     border: 1px solid var(--border-frame);

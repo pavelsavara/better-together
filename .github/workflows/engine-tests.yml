@@ -1,0 +1,41 @@
+# Engine tests — runs the deterministic match core + host/store/validation
+# suites (game/) on every PR and on pushes to main. Unlike the other workflows
+# (validate-bot, tournament, deploy-site) this one is ENABLED: it neither writes
+# to gh-pages nor pulls OCI images, so it is safe to run on untrusted PRs.
+#
+# Tests that need built sample components skip gracefully when the .wasm files
+# are absent, so this job does not build the samples.
+name: engine-tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install engine deps
+        working-directory: game
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: game
+        run: npm run typecheck
+
+      - name: Run engine tests
+        working-directory: game
+        run: npm test

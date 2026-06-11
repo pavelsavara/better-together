@@ -8,11 +8,11 @@ function mockSeat(id: string, signal: Signal, plant: number, vote: Ballot = null
     return {
         id,
         metadata: () => ({ name: `together.${id}`, version: '1.0.0', author: 'test', repo: '', lore: '', glyph: '🌱', icon: null }),
-        matchStart: (_ctx: MatchContext) => {},
+        matchStart: (_ctx: MatchContext) => { },
         talk: (_s: RoundState) => signal,
         plant: (_s: RoundState) => plant,
         vote: (_s: RoundState) => vote,
-        matchEnd: (_s: MatchSummary) => {},
+        matchEnd: (_s: MatchSummary) => { },
     };
 }
 
@@ -87,7 +87,7 @@ test('a trapping seat degrades to defaults without aborting the match', async ()
     const bad: Seat = {
         id: 'bad',
         metadata: () => ({ name: 'together.bad', version: '1.0.0', author: '', repo: '', lore: '', glyph: '💥', icon: null }),
-        matchStart: () => {},
+        matchStart: () => { },
         talk: () => {
             throw new Error('boom');
         },
@@ -97,7 +97,7 @@ test('a trapping seat degrades to defaults without aborting the match', async ()
         vote: () => {
             throw new Error('boom');
         },
-        matchEnd: () => {},
+        matchEnd: () => { },
     };
     const seats: Seat[] = [bad, mockSeat('a', 'bloom', 8), mockSeat('b', 'bloom', 8), mockSeat('c', 'bloom', 8)];
     const { outcomes, report } = await runMatch({ matchId: 'm3', seed: 'trap', seats });
