@@ -4,7 +4,32 @@
 
 How to develop, test, and operate the Better Together tournament. The engine
 lives in [`game/`](../game) (Node + jsco) and the exhibition SPA in
-[`web/`](../web) (Vite + React + jsco). State is files on the `gh-pages` branch.
+[`web/`](../web) (Vite + React + jsco). State is files on the `gh-pages` branch,
+published as a GitHub Pages **project** site at
+**https://pavelsavara.github.io/better-together/**.
+
+---
+
+## 0. The `gh-pages` store worktree
+
+The `gh-pages` branch is an **orphan** (disconnected, no shared history with
+`main`/`engine`): it holds only the data store + built SPA, served verbatim from
+the `/better-together/` project subpath. Check it out as a git **worktree** in a
+`gh-pages/` subfolder next to the repo root so you can read/write the store
+locally without a second clone:
+
+```bash
+# one-time: create the orphan branch as a worktree (already done in this repo)
+git worktree add --orphan -b gh-pages ./gh-pages
+# or, if the branch already exists on the remote:
+git worktree add ./gh-pages gh-pages
+```
+
+The `gh-pages/` directory is git-ignored on the working branches so the nested
+worktree never shows up as untracked. The engine defaults `STORE_DIR` to
+`../gh-pages` (relative to [`game/`](../game)), so local runs read/write that
+store with no extra configuration; CI sets `STORE_DIR` explicitly to its own
+checkout of the branch.
 
 ---
 
@@ -68,7 +93,9 @@ injected dependencies that are currently stubbed (each throws a clear TODO):
 Then re-enable the triggers (uncomment `on: issues` / `on: schedule` /
 `on: push`) and set `FILLER_WASMS` in `validate-bot.yml` to built sample paths.
 Single-writer discipline is enforced by the shared `store-writer` `concurrency`
-group; the deploy workflow writes only the SPA bundle (`keep_files: true`).
+group; the deploy workflow writes only the SPA bundle (`keep_files: true`) and
+builds it with `--base=/better-together/` so assets resolve under the project
+subpath (the local `vite.config.ts` keeps `base: './'` for dev/preview).
 
 ---
 

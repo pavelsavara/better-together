@@ -37,9 +37,12 @@ jobs:
 
       - name: Build SPA
         working-directory: web
+        # vite.config.ts keeps base './' for local dev/preview; pin the absolute
+        # project subpath only here so assets resolve under
+        # https://pavelsavara.github.io/better-together/.
         run: |
           npm ci
-          npm run build
+          npm run build -- --base=/better-together/
 
       - name: Publish bundle to gh-pages (SPA only)
         uses: peaceiris/actions-gh-pages@v4

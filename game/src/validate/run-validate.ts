@@ -36,7 +36,7 @@ function readEnv(): RunEnv {
         issueNumber: Number(env.ISSUE_NUMBER ?? '0'),
         submittedBy: env.ISSUE_AUTHOR ?? '',
         approvedBy: env.APPROVER ?? '',
-        storeDir: env.STORE_DIR ?? '.',
+        storeDir: env.STORE_DIR ?? '../gh-pages',
         fillerWasms: (env.FILLER_WASMS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
         commentFile: env.VALIDATION_COMMENT_FILE ?? 'validation-comment.md',
         outputFile: env.GITHUB_OUTPUT ?? null,

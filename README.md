@@ -5,6 +5,8 @@
 
 ---
 
+Live site at [https://pavelsavara.github.io/better-together/](https://pavelsavara.github.io/better-together/)
+
 ## The Pitch
 
 1. Every round you get **10 seeds** — plant each one in your **own pot** (safe, worth 1 point) or in the **shared garden**.

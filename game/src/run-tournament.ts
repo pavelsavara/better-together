@@ -11,7 +11,9 @@ import { notImplementedChecker } from './scan/detect.ts';
 
 export async function main(): Promise<number> {
     const env = process.env;
-    const base = env.STORE_DIR ?? '.';
+    // Defaults to the gh-pages worktree checked out alongside the repo root
+    // (see docs/runbook.md §1). CI overrides STORE_DIR explicitly.
+    const base = env.STORE_DIR ?? '../gh-pages';
     const masterSeed = env.MASTER_SEED ?? new Date().toISOString();
     const budget = env.BUDGET ? Number(env.BUDGET) : undefined;
     const callBudgetMs = env.CALL_BUDGET_MS ? Number(env.CALL_BUDGET_MS) : undefined;

@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: gh-pages
-          path: store
+          path: gh-pages
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -56,7 +56,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
           APPROVER: ${{ github.actor }}
-          STORE_DIR: ${{ github.workspace }}/store
+          STORE_DIR: ${{ github.workspace }}/gh-pages
           VALIDATION_COMMENT_FILE: ${{ github.workspace }}/validation-comment.md
           # Built sample components fill the smoke-match roster (>= 3 required).
           # These must be built first (see build-samples.yml) before enabling.
@@ -89,7 +89,7 @@ jobs:
 
       - name: Commit registry change to gh-pages
         if: ${{ steps.validate.outputs.outcome == 'accepted' }}
-        working-directory: store
+        working-directory: gh-pages
         run: |
           git config user.name "better-together-bot"
           git config user.email "bot@users.noreply.github.com"
