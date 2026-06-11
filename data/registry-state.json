@@ -1,54 +1,54 @@
 {
   "bots": {
-    "1ed82871#together.Dusty": {
+    "0744dd6e#together.Nib": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/dusty:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/nib:latest"
     },
-    "5020cbad#together.Gopher": {
+    "1fe77c84#together.Keith": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/gopher:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/keith:latest"
     },
-    "59cbb443#together.Nib": {
+    "3ae4ab80#together.Dusty": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/nib:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/dusty:latest"
     },
-    "5fb132ea#together.Bram": {
+    "5efad061#together.Andy": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/bram:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/andy:latest"
     },
-    "6a574c6d#together.Ferris": {
+    "7239b496#together.Gopher": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/ferris:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/gopher:latest"
     },
-    "6db6ef11#together.Reynard": {
+    "90ec0fe4#together.Corro": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/reynard:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/corro:latest"
     },
-    "7e91b7d6#together.Khaos": {
+    "9317c131#together.Khaos": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/khaos:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/khaos:latest"
     },
-    "9dbf8705#together.Keith": {
+    "ae2d9ec0#together.Reynard": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/keith:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/reynard:latest"
     },
-    "b6200cec#together.Andy": {
+    "bf873e4b#together.Bram": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/andy:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/bram:latest"
     },
-    "e27c86dd#together.Corro": {
+    "df693caa#together.Ferris": {
       "digest": "sha256:local",
       "etag": null,
-      "oci": "local/corro:dev"
+      "oci": "https://ghcr.io/pavelsavara/better-together/ferris:latest"
     }
   },
   "checkedAt": "2026-06-11T08:31:37.518Z",
