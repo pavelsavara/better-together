@@ -152,3 +152,6 @@ samples/keith/build/
 bin
 obj
 generated
+
+# gh-pages worktree (separate orphan branch checked out into ./gh-pages)
+/gh-pages/

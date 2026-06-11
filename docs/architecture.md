@@ -10,8 +10,8 @@ how the web UI consumes it. It is the contract between the four moving parts:
 2. **Validation Action** — GitHub Action that validates a submitted bot.
 3. **Tournament engine** — a TypeScript/Node orchestrator that runs matches on a
    schedule (`game/`).
-4. **Web UI** — a serverless Vite + jsco SPA (`web/`) served from
-   `github.io`.
+4. **Web UI** — a serverless Vite + jsco SPA (`web/`) served from GitHub Pages
+   at **https://pavelsavara.github.io/better-together/**.
 
 All four are **serverless**: there is no always-on backend. State is a set of
 files on the `gh-pages` branch; compute happens inside GitHub Actions
@@ -34,7 +34,7 @@ flowchart TB
         ENG -->|run matches for changed bots, update scores + VFS + match log| GP
     end
 
-    GP -->|served as static site| PAGES[username.github.io]
+    GP -->|served as static site| PAGES[pavelsavara.github.io/better-together]
     PAGES --> UI[Web UI SPA<br/>Vite + jsco]
     UI -->|fetch index.json, scores.json, .wasm| PAGES
     UI -->|"Submit bot" deep-link| ISSUE
@@ -49,7 +49,11 @@ CORS, no proxy, no runtime OCI pulls from the browser.
 
 ## 2. Data store (the `gh-pages` branch)
 
-Everything is committed to `gh-pages` and served verbatim from `github.io`.
+Everything is committed to `gh-pages` and served verbatim from
+`https://pavelsavara.github.io/better-together/`. Because it is a GitHub Pages
+**project** site, the whole store is served under the `/better-together/`
+subpath — the SPA addresses everything relatively (Vite `base`, `HashRouter`)
+so the subpath needs no special handling at runtime.
 
 ```
 gh-pages/

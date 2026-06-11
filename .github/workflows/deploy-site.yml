@@ -1,0 +1,53 @@
+# Deploy the exhibition SPA to the gh-pages site (docs/architecture.md §5).
+#
+# Builds web/ and publishes the bundle ALONGSIDE the data store (data/, wasm/,
+# icons/) that the validation + tournament workflows write. Single-writer
+# discipline: this workflow writes ONLY the SPA bundle (index.html + assets/),
+# never the data files.
+#
+# NOT ENABLED YET: enable by uncommenting the push trigger once the site is ready
+# to publish.
+name: deploy-site
+
+# on:
+#   push:
+#     branches: [main]
+#     paths: ['web/**', 'docs/**']
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build SPA
+        working-directory: web
+        # vite.config.ts keeps base './' for local dev/preview; pin the absolute
+        # project subpath only here so assets resolve under
+        # https://pavelsavara.github.io/better-together/.
+        run: |
+          npm ci
+          npm run build -- --base=/better-together/
+
+      - name: Publish bundle to gh-pages (SPA only)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: web/dist
+          # Keep the data store (data/, wasm/, icons/, vfs/, matches/) intact.
+          keep_files: true

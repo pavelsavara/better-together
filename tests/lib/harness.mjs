@@ -19,23 +19,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-// Which jsco build to test against. Defaults to the package dependency (the
-// `dist/debug` build, with isDebug tracing). Pass `--jsco=release` (or set
-// JSCO_DIST=release) to run the same suite against the optimized `dist/release`
-// build instead, e.g. `npm run test:release`. The named builds are resolved
-// from the sibling jsco checkout (../../jsco/dist/<name>).
-function selectedJscoDist() {
-    const arg = process.argv.find((a) => a.startsWith('--jsco='));
-    if (arg) return arg.slice('--jsco='.length);
-    return process.env.JSCO_DIST ?? null;
-}
-
-const JSCO_DIST = selectedJscoDist();
-const { instantiateWasiComponent } = JSCO_DIST
-    ? await import(new URL(`../../../jsco/dist/${JSCO_DIST}/index.js`, import.meta.url))
-    : await import('@pavelsavara/jsco');
-
-console.log(`# jsco build: ${JSCO_DIST ?? 'debug (package default)'}`);
+const { instantiateWasiComponent } = await import('@pavelsavara/jsco');
 
 const ROOT = new URL('../../', import.meta.url); // repo root (tests/lib -> repo)
 

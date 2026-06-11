@@ -1,0 +1,41 @@
+{
+    "version": 1,
+    "computedAt": "2026-06-10T12:00:00Z",
+    "window": {
+        "matchesPerBot": 500
+    },
+    "minMatchesToRank": 50,
+    "baselineMeanGroupTotal": 64.2,
+    "leaderboard": [
+        {
+            "id": "5d6e7f80#together.bram",
+            "rank": 1,
+            "ranked": true,
+            "coPlayerScore": 2.74,
+            "coPlayerStdErr": 0.22,
+            "rawScore": 15.1,
+            "consistencyStd": 5.2,
+            "matchesInWindow": 233
+        },
+        {
+            "id": "1a2b3c4d#together.ferris",
+            "rank": 2,
+            "ranked": true,
+            "coPlayerScore": 1.95,
+            "coPlayerStdErr": 0.28,
+            "rawScore": 14.0,
+            "consistencyStd": 6.0,
+            "matchesInWindow": 251
+        },
+        {
+            "id": "99aabbcc#together.khaos",
+            "rank": null,
+            "ranked": false,
+            "coPlayerScore": 0,
+            "coPlayerStdErr": 0,
+            "rawScore": 0,
+            "consistencyStd": 0,
+            "matchesInWindow": 12
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+{
+    "name": "better-together-game",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Better Together tournament engine + shared match core (TS / Node + browser).",
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-wasm-jspi --test \"src/**/*.test.ts\"",
+        "test:core": "node --test \"src/core/**/*.test.ts\""
+    },
+    "dependencies": {
+        "@pavelsavara/jsco": "^0.2.0-preview.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.0",
+        "typescript": "^5.7.2"
+    }
+}

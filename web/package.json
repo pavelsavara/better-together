@@ -1,0 +1,27 @@
+{
+    "name": "better-together-web",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Better Together exhibition SPA (Vite + React + jsco).",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit && vite build",
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@pavelsavara/jsco": "^0.2.0-preview.0",
+        "marked": "^14.1.2",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-router-dom": "^6.26.2"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.11",
+        "@types/react-dom": "^18.3.0",
+        "@vitejs/plugin-react": "^4.3.2",
+        "typescript": "^5.7.2",
+        "vite": "^5.4.8"
+    }
+}

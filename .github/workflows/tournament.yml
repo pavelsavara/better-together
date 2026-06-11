@@ -1,0 +1,69 @@
+# Tournament Engine — the change-gated hourly run (docs/architecture.md §4.1).
+#
+# Each tick does a cheap conditional OCI manifest check per active bot; if a
+# bot's digest changed it runs ~500 matches seating the changed bot(s), updates
+# the leaderboard + VFS + match logs, and makes a SINGLE commit to gh-pages. If
+# nothing changed it exits without committing.
+#
+# NOT ENABLED YET: the OCI manifest checker in game/src/scan/detect.ts is still
+# stubbed (TODO). This workflow is authored so enabling the tournament is a
+# single follow-up once the checker lands.
+name: tournament
+
+# Disabled until the OCI manifest checker is implemented. Re-enable the schedule.
+# on:
+#   schedule:
+#     - cron: '0 * * * *' # hourly
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Single-writer discipline: only one tournament run writes scores/vfs/logs.
+  group: store-writer
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (engine)
+        uses: actions/checkout@v6
+
+      - name: Checkout gh-pages (data store)
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install engine deps
+        working-directory: game
+        run: npm ci
+
+      - name: Run tournament tick
+        working-directory: game
+        env:
+          STORE_DIR: ${{ github.workspace }}/gh-pages
+          # A run-level master seed; stored in each match log for replay.
+          MASTER_SEED: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node --experimental-wasm-jspi src/run-tournament.ts
+
+      - name: Commit results to gh-pages
+        working-directory: gh-pages
+        run: |
+          git config user.name "better-together-bot"
+          git config user.email "bot@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add data matches vfs
+            git commit -m "tournament: run ${{ github.run_id }}"
+            git push origin gh-pages
+          else
+            echo "no changes — nothing committed"
+          fi

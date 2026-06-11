@@ -1,0 +1,50 @@
+name: Submit a gardener
+description: Register a WASI 0.2 gardener component (published as an OCI artifact) for the Better Together tournament.
+title: "[gardener] "
+labels: ["submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Your bot is a **WASI 0.2 component** published as an **OCI artifact**.
+        A maintainer will review and add the `approved` label; we then pull the
+        image, extract the `.wasm`, and validate it. Metadata (name, glyph, lore,
+        …) comes from the component bundle — not from this form.
+  - type: input
+    id: oci
+    attributes:
+      label: OCI image reference
+      description: Where your gardener component is published.
+      placeholder: ghcr.io/yourname/yourbot:1.0.0
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author handle
+      placeholder: "@yourname"
+    validations:
+      required: true
+  - type: input
+    id: blurb
+    attributes:
+      label: Short description
+      description: One line on what your gardener does.
+      placeholder: A reputation-aware, naively collaborative gardener.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist before you submit
+      options:
+        - label: Exports `better-together:gardener/player@0.1.0`
+          required: true
+        - label: metadata.name is `namespace.name` (namespace `^[a-z][a-z0-9-]*$`)
+          required: true
+        - label: glyph is a single emoji/character
+          required: true
+        - label: No network use (no `wasi:sockets` / `wasi:http`)
+          required: true
+        - label: Component is ≤ 15 MB
+          required: true
