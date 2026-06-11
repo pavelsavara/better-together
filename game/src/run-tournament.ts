@@ -1,13 +1,11 @@
 // CLI entry point for the scheduled tournament (.github/workflows/tournament.yml).
 //
-// Reads the store dir + master seed from the environment and runs one tick.
-// NOTE: the OCI manifest checker is still STUBBED (scan/detect.ts), so the
-// workflow stays disabled until it lands; this entry point wires the full flow
-// so enabling it is a one-spot change.
+// Reads the store dir + master seed from the environment and runs one tick,
+// checking each active bot's OCI manifest against the registry to gate the run.
 
 import { fileURLToPath } from 'node:url';
 import { runTournament } from './run.ts';
-import { notImplementedChecker } from './scan/detect.ts';
+import { createOciManifestChecker } from './scan/oci.ts';
 
 export async function main(): Promise<number> {
     const env = process.env;
@@ -20,7 +18,9 @@ export async function main(): Promise<number> {
 
     const result = await runTournament({
         base,
-        check: notImplementedChecker,
+        // Conditional manifest check per active bot. Credentials are picked up
+        // from GHCR_TOKEN/GITHUB_TOKEN in the environment when present.
+        check: createOciManifestChecker(),
         masterSeed,
         ...(budget !== undefined ? { budget } : {}),
         ...(callBudgetMs !== undefined ? { callBudgetMs } : {}),

@@ -44,14 +44,26 @@ const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
 const LORE =
-    "Khaos is the garden's dice god — he meets a stranger once, lets the dice " +
-    "decide whether they are friend or foe, and then honours that verdict " +
-    "forever with deranged conviction. His words are random, his grudges are " +
-    "permanent, and he insists none of it is his fault: the dice made him do it. " +
-    "Some verdicts, though, were cast before the dice were ever thrown: the fox " +
-    "Reynard and his fellow tricksters are fated friends, while the guild boss " +
-    "Bram and the arbiters Keith and Andy are fated foes — the dice god's " +
-    "standing quarrel with anyone who organizes order or sits in judgment.";
+    "Khaos is the garden's dice god, and he is the first to tell you it is not " +
+    "his fault. He meets a stranger exactly once, rolls a weighted die behind " +
+    "his manic grin, and lets the dice alone decide whether you are friend or " +
+    "foe. Whatever verdict falls is then law: permanent, unappealable, honoured " +
+    "in every future match with the same deranged conviction, no matter how " +
+    "kindly or cruelly you ever treat him afterward. Friends get everything he " +
+    "has; a single remembered foe at the table and he clamps shut and keeps it " +
+    "all. He bears no real malice and no real loyalty — only the sentence the " +
+    "dice handed down — and he will blame those dice cheerfully, fatalistically, " +
+    "and forever. His temperament is pure entropy. His words mean nothing: the " +
+    "signals he broadcasts in the talk phase are a fresh random pick every " +
+    "round, gloriously divorced from anything he actually intends to do. When he " +
+    "votes he abstains on a whim or taxes whichever neighbour the dice happen to " +
+    "point at, for no reason and with no grudge. He cackles through the whole " +
+    "match like a prophet who has read the ending and finds it hilarious. Yet " +
+    "some verdicts were cast before the dice were ever thrown: the fox Reynard " +
+    "and his fellow tricksters are fated friends, while the guild boss Bram and " +
+    "the arbiters Keith and Andy are fated foes — the dice god's standing, " +
+    "gleeful quarrel with anyone who would organize order or sit in judgment over " +
+    "a garden that was always meant to be chaos.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

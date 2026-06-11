@@ -1,20 +1,15 @@
 # Tournament Engine — the change-gated hourly run (docs/architecture.md §4.1).
 #
-# Each tick does a cheap conditional OCI manifest check per active bot; if a
-# bot's digest changed it runs ~500 matches seating the changed bot(s), updates
-# the leaderboard + VFS + match logs, and makes a SINGLE commit to gh-pages. If
-# nothing changed it exits without committing.
-#
-# NOT ENABLED YET: the OCI manifest checker in game/src/scan/detect.ts is still
-# stubbed (TODO). This workflow is authored so enabling the tournament is a
-# single follow-up once the checker lands.
+# Each tick does a cheap conditional OCI manifest check per active bot; a bot
+# whose digest changed (or a new submission) is ingested — its fresh .wasm is
+# pulled and re-cached — then ~500 matches seat the changed bot(s), the
+# leaderboard + VFS + match logs update, and a SINGLE commit lands on gh-pages.
+# If nothing changed the tick exits without committing.
 name: tournament
 
-# Disabled until the OCI manifest checker is implemented. Re-enable the schedule.
-# on:
-#   schedule:
-#     - cron: '0 * * * *' # hourly
 on:
+  schedule:
+    - cron: '0 * * * *' # hourly
   workflow_dispatch:
 
 permissions:
@@ -61,7 +56,7 @@ jobs:
           git config user.name "better-together-bot"
           git config user.email "bot@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add data matches vfs
+            git add data matches vfs wasm
             git commit -m "tournament: run ${{ github.run_id }}"
             git push origin gh-pages
           else

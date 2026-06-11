@@ -5,16 +5,16 @@
 // index.json). Writes a Markdown comment to $VALIDATION_COMMENT_FILE and prints
 // the outcome to $GITHUB_OUTPUT so the workflow can comment + label + commit.
 //
-// NOTE: the OCI puller and avatar processor are still STUBBED (pull-oci.ts /
-// avatar.ts). Until those are implemented the workflow stays disabled; this
-// entry point wires the full flow so enabling it is a one-spot change.
+// NOTE: a submission may give either a direct https `.wasm` URL or an OCI
+// registry reference — both are pulled by createPuller (see pull-oci.ts). The
+// avatar processor (avatar.ts) is still stubbed.
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parseIssue } from './parse-issue.ts';
 import { runValidation, type SubmissionInput, type ValidationDeps } from './checks.ts';
 import { admitBot } from './admit.ts';
-import { notImplementedPuller } from './pull-oci.ts';
+import { createPuller } from './pull-oci.ts';
 import { notImplementedAvatarProcessor } from './avatar.ts';
 import { loadIndex } from '../store/read.ts';
 
@@ -73,7 +73,7 @@ export async function main(): Promise<number> {
     }
 
     const deps: ValidationDeps = {
-        pullOci: notImplementedPuller,
+        pullOci: createPuller(),
         processAvatar: notImplementedAvatarProcessor,
         fillerSamples,
     };

@@ -7,7 +7,7 @@
 // round resolution is the pure TS core. The OCI manifest check is injected.
 
 import { readFile } from 'node:fs/promises';
-import type { BotRecord, MatchLog, MatchLogRound, RegistryIndex } from './types.ts';
+import type { BotRecord, MatchLog, MatchLogRound, RegistryIndex, RegistryState } from './types.ts';
 import { createGardenerSeat, type GardenerSeat } from './host/seat.ts';
 import { runMatch } from './core/match.ts';
 import { matchSeed } from './core/rng.ts';
@@ -16,15 +16,16 @@ import { generateRosters, type PoolBot } from './roster/generate.ts';
 import { detectChanges, type ManifestChecker } from './scan/detect.ts';
 import { type Vfs } from './host/vfs.ts';
 import { loadIndex, loadRegistryState, loadRecentMatchLogs, loadVfs, loadMeta } from './store/read.ts';
-import { writeIndex, writeScores, writeRegistryState, writeMatchLog, writeVfs, writeMeta } from './store/write.ts';
+import { writeIndex, writeScores, writeRegistryState, writeMatchLog, writeVfs, writeMeta, cacheWasm } from './store/write.ts';
 import { wasmPath } from './store/paths.ts';
 import { emptyMeta, ENGINE_VERSION, INDEX_VERSION } from './store/schema.ts';
 import { sha256Hex } from './validate/checks.ts';
+import { createPuller, type OciPuller } from './validate/pull-oci.ts';
 
 export interface RunDeps {
     /** Store base directory (the checked-out gh-pages branch). */
     base: string;
-    /** Conditional OCI manifest check (injected; stubbed in production for now). */
+    /** Conditional OCI/`.wasm`-URL manifest check (injected; see scan/oci.ts). */
     check: ManifestChecker;
     /** Run-level master seed → per-match seeds. */
     masterSeed: string;
@@ -39,6 +40,12 @@ export interface RunDeps {
     maxRunMs?: number;
     /** Resolve a bot's component bytes (defaults to the cached store wasm). */
     loadWasm?: (record: BotRecord) => Promise<Uint8Array>;
+    /**
+     * Pull a changed component's bytes for ingestion (defaults to `createPuller()`).
+     * Both a direct `.wasm` URL and an OCI registry ref are pulled and re-cached;
+     * if a pull fails, ingestion falls back to the already-cached bytes.
+     */
+    pull?: OciPuller;
 }
 
 export interface RunResult {
@@ -59,6 +66,48 @@ function defaultLoadWasm(base: string): (record: BotRecord) => Promise<Uint8Arra
         }
         return bytes;
     };
+}
+
+/**
+ * Ingest the components the OCI check flagged as changed: for each, pull the
+ * fresh bytes and re-cache them so the matches run against the new component,
+ * stamping the bot's `wasmSha256`/`ociDigest`/`ociEtag`/`validatedAt`. Both a
+ * direct `.wasm` URL and an OCI registry ref are pullable; if a pull fails we
+ * fall back to the cached bytes — the digest/ETag the HEAD check observed are
+ * still recorded. Records are mutated in place so the seating loop and the
+ * final index write both see the fresh provenance. `detect.state` is patched so
+ * registry-state.json stays consistent with what we cached.
+ */
+async function ingestChanged(
+    base: string,
+    changed: readonly string[],
+    byId: ReadonlyMap<string, BotRecord>,
+    state: RegistryState,
+    pull: OciPuller,
+    now: string,
+): Promise<void> {
+    for (const id of changed) {
+        const rec = byId.get(id);
+        if (!rec) continue;
+        // Record what the HEAD check observed, even if we can't re-fetch bytes.
+        const observed = state.bots[id];
+        if (observed) {
+            rec.ociDigest = observed.digest;
+            rec.ociEtag = observed.etag;
+        }
+        try {
+            const art = await pull(rec.oci);
+            await cacheWasm(base, rec.id, rec.version, art.bytes);
+            rec.wasmSha256 = sha256Hex(art.bytes);
+            if (art.digest) rec.ociDigest = art.digest;
+            if (art.etag) rec.ociEtag = art.etag;
+            rec.validatedAt = now;
+            state.bots[id] = { oci: rec.oci, digest: rec.ociDigest, etag: rec.ociEtag };
+        } catch {
+            // Pull failed (network/registry error or a malformed component):
+            // keep the cached bytes and run matches against them.
+        }
+    }
 }
 
 /** Build a match log from a driver report + per-round outcomes. */
@@ -116,10 +165,19 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
     const prevState = await loadRegistryState(base);
     const active = index.bots.filter((b) => b.status === 'active');
 
+    // The OCI manifest check runs first: it discovers which components changed
+    // (a new remote digest, or a never-before-seen bot). If nothing changed the
+    // tick exits without any further work.
     const detect = await detectChanges(active, prevState, deps.check, now);
     if (detect.changed.length === 0) {
         return { skipped: true, changed: [], retired: [], matchesRun: 0, matchLogPaths: [] };
     }
+
+    // Ingest the changed components before seating: pull + re-cache the fresh
+    // bytes and stamp each bot's provenance (records are mutated in place, so the
+    // seating loop and the final index write both see the new wasm/sha/digest).
+    const byId = new Map(index.bots.map((b) => [b.id, b] as const));
+    await ingestChanged(base, detect.changed, byId, detect.state, deps.pull ?? createPuller(), now);
 
     // Current windowed match counts (from existing logs) drive opponent weighting.
     const existingLogs = await loadRecentMatchLogs(base, scoring.windowPerBot * Math.max(active.length, 1));
@@ -132,7 +190,6 @@ export async function runTournament(deps: RunDeps): Promise<RunResult> {
     const rosters = generateRosters({ changed: detect.changed, pool, budget, seed: deps.masterSeed });
 
     // Carry each bot's VFS forward across the whole run (one Map per bot, reused).
-    const byId = new Map(index.bots.map((b) => [b.id, b] as const));
     const vfsById = new Map<string, Vfs>();
     async function vfsFor(id: string): Promise<Vfs> {
         let v = vfsById.get(id);

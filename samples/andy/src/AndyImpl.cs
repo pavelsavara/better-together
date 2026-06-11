@@ -27,11 +27,28 @@ public sealed class PlayerImpl : IPlayer
             version: "0.1.0",
             author: "Better Together samples",
             repo: "https://github.com/pavelsavara/better-together",
-            lore: "A hedgehog who plants by night. Warm and soft-bellied to friends "
-                + "he remembers across many gardens, but he curls into his spines the "
-                + "moment a neighbour turns stingy — then uncurls and forgives by dawn. "
-                + "He warms to Bram the beaver's honest guild and keeps his spines half-up "
-                + "around Reynard the fox, whose smile never quite reaches his ledger.",
+            lore: "Andy is the garden's gentle reciprocator, a soft-bellied hedgehog "
+                + "who trusts by default and meets every new table belly-up, hoping for "
+                + "the best. He is nice before he is anything else: he opens each match "
+                + "soft, exposing himself in good faith and planting generously, because "
+                + "he would rather risk being taken advantage of than start a quarrel he "
+                + "did not need to have. But trust him as you would a hedgehog, not a "
+                + "doormat. The moment a neighbour turns stingy he curls into a tight ball "
+                + "of spines and pulls his seeds back toward himself, mirroring exactly the "
+                + "coldness the table showed him. Prick him and he prickles back; warm him "
+                + "and he unrolls again. What sets Andy apart is that he judges you by your "
+                + "digging and never by your talk. Promises and posturing wash straight over "
+                + "him; he watches only what hands actually put in the dirt, and he answers "
+                + "deeds with deeds. He is also stubbornly forgiving, for a hedgehog cannot "
+                + "stay curled up forever. Even against a cold and selfish table he will "
+                + "periodically uncurl and offer one open-handed round, quietly testing "
+                + "whether kindness can begin again, so he never sinks into the bitter, "
+                + "permanent grudge that traps lesser players. He is warm and loyal to those "
+                + "who have proven generous to him before, slow to forget a friend and quick "
+                + "to bloom in good company, yet he carries no lasting spite. His temperament "
+                + "is patient, even-handed, and durable: retaliatory enough to deter the "
+                + "greedy, gracious enough to rebuild trust, and honest enough that his "
+                + "raised spines are always a true warning and never a bluff.",
             glyph: "🦔",
             icon: "https://pavelsavara.github.io/better-together/icons/5efad061%23together.Andy.png");
 

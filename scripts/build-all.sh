@@ -30,11 +30,11 @@ if [ -d /opt/wasi-sdk-24/wasi-sdk-24.0 ]; then
 fi
 
 echo "==> ferris  (Rust / wit-bindgen / wasm32-wasip2)"
-( cd "${ROOT}/samples/ferris" && cargo build --release --target wasm32-wasip2 )
+( cd "${ROOT}/samples/ferris" && cargo build --release --locked --target wasm32-wasip2 )
 cp "${ferris_target}/wasm32-wasip2/release/ferris.wasm" "${DIST}/ferris.wasm"
 
 echo "==> corro   (Rust / cargo-component / wasm32-wasip1)"
-( cd "${ROOT}/samples/corro" && cargo component build --release )
+( cd "${ROOT}/samples/corro" && cargo component build --release --locked )
 cp "${corro_target}/wasm32-wasip1/release/corro.wasm" "${DIST}/corro.wasm"
 
 echo "==> khaos   (JavaScript / jco + ComponentizeJS)"

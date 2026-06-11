@@ -47,14 +47,11 @@ const GLYPH = "🦊";
 const VERSION = "0.1.0";
 const AUTHOR = "Better Together samples";
 const REPO = "https://github.com/pavelsavara/better-together";
-const LORE =
-    "Reynard is the garden's most charming guest: always smiling, always " +
-    "saying the right thing, always leaving with a little more than he brought. " +
-    "He signals BLOOM every round, contributes just enough to stay respectable, " +
-    "skims the tables too generous to notice, and never drops below the " +
-    "contributor floor where the ledger could catch him. Khaos rolled him a " +
-    "fated FRIEND and bankrolls his skimming; Bram the beaver organizes whole " +
-    "guilds just to tax a fox who stays a hair too clean to touch.";
+const LORE = `Reynard is the garden's most charming guest. He always arrives smiling, always says the right thing, and always leaves with a little more than he brought. He is never the obvious villain — that is the whole craft. He is the gray-zone opportunist, the predator you do not catch, because he never gives the ledger anything to write down. Where the loud gluttons feast and get blacklisted within five rounds, Reynard manages his reputation like a budget, and he keeps that budget impeccably balanced.
+
+His temperament is patient, urbane, and unfailingly polite. He is credible above all else: a velvet-gloved skimmer who looks exactly like an ordinary cooperator and means for it to stay that way. On a fat, over-generous table he quietly trims his contribution to the bare respectable minimum, banking a doubled payout that everyone else paid for, yet he will never sink below the contributor floor the way a careless thief would — that is precisely what gets you seen, flagged a defector, marked a liar, and voted into the tax. His genius is that the ledger-keepers, the foe-trackers, and the mirrors all read him as simply 'fine.'
+
+He is calculating but never cruel for its own sake. When a hot-headed neighbour moves to punish him, he plays the wounded innocent until the punisher looks like the aggressor, and he keeps contributing just enough that the retaliation lands on someone who appears cooperative. He punishes the punishers by making discipline look reckless. Under a watchful arbiter's gaze he abstains entirely and behaves like a model citizen; out of sight, he deflects scrutiny onto louder skimmers while his own modest trim goes politely unremarked.`;
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 

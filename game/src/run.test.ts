@@ -175,3 +175,74 @@ test('the same master seed reproduces identical match logs', { skip: !HAVE ? 'ne
     }
     assert.deepEqual(await once(), await once());
 });
+
+test('a changed bot is ingested: fresh bytes are pulled, re-cached, and the index provenance updated', { skip: !HAVE ? 'need 5 built samples' : false }, async () => {
+    const base = await mkdtemp(join(tmpdir(), 'bt-run-ingest-'));
+    try {
+        const { ociById } = await seedStore(base);
+        // The puller returns each bot's own sample bytes with a fresh ETag/digest,
+        // standing in for a freshly published component.
+        const bytesByOci = new Map<string, Uint8Array>();
+        for (const n of NAMES) {
+            const oci = `ghcr.io/test/${n}:1.0.0`;
+            bytesByOci.set(oci, new Uint8Array(await readFile(path(n))));
+        }
+        const pull = async (ref: string) => {
+            const bytes = bytesByOci.get(ref);
+            if (!bytes) throw new Error(`no bytes for ${ref}`);
+            return { bytes, digest: `sha256:${sha256Hex(bytes)}`, etag: '"fresh"' };
+        };
+
+        const result = await runTournament({
+            base,
+            check: mapChecker(new Map()), // every bot is first-seen → changed
+            pull,
+            masterSeed: 'ingest',
+            budget: 4,
+            callBudgetMs: 0,
+            scoring: { windowPerBot: 500, minMatchesToRank: 1 },
+            now: () => '2026-06-11T00:00:00Z',
+        });
+        assert.equal(result.skipped, false);
+
+        const index = await loadIndex(base);
+        for (const [id, oci] of ociById) {
+            const rec = index.bots.find((b) => b.id === id)!;
+            const expectedSha = sha256Hex(bytesByOci.get(oci)!);
+            assert.equal(rec.wasmSha256, expectedSha, `${id} wasmSha256 reflects the pulled bytes`);
+            assert.equal(rec.ociEtag, '"fresh"', `${id} ETag updated from the pull`);
+            assert.equal(rec.ociDigest, `sha256:${expectedSha}`, `${id} digest updated from the pull`);
+            assert.equal(rec.validatedAt, '2026-06-11T00:00:00Z', `${id} validatedAt stamped`);
+        }
+    } finally {
+        await rm(base, { recursive: true, force: true });
+    }
+});
+
+test('ingestion is best-effort: a bot whose pull fails keeps its cached bytes and still plays', { skip: !HAVE ? 'need 5 built samples' : false }, async () => {
+    const base = await mkdtemp(join(tmpdir(), 'bt-run-ingest-fail-'));
+    try {
+        const { ids } = await seedStore(base);
+        // A puller that always fails (mirrors the still-stubbed OCI-registry path).
+        const pull = async (ref: string): Promise<never> => {
+            throw new Error(`cannot pull ${ref}`);
+        };
+        const result = await runTournament({
+            base,
+            check: mapChecker(new Map()),
+            pull,
+            masterSeed: 'ingest-fail',
+            budget: 6,
+            callBudgetMs: 0,
+            scoring: { windowPerBot: 500, minMatchesToRank: 1 },
+            now: () => '2026-06-11T00:00:00Z',
+        });
+        // Matches still ran against the cached bytes despite every pull failing.
+        assert.equal(result.skipped, false);
+        assert.equal(result.changed.length, ids.length);
+        const logs = await loadRecentMatchLogs(base);
+        assert.ok(logs.length > 0, 'matches ran on the cached bytes');
+    } finally {
+        await rm(base, { recursive: true, force: true });
+    }
+});

@@ -187,36 +187,33 @@ ENV CARGO_TARGET_DIR=/opt/cargo-target \
     GOCACHE=/opt/go-build \
     XDG_CACHE_HOME=/opt/xdg-cache
 
-# Rust: ferris (wit-bindgen, serde, serde_json) + corro (wit-bindgen-rt).
-# Compiling these into the shared CARGO_TARGET_DIR (for both wasip2 and wasip1,
-# with the samples' release profile so the fingerprints match) lets CI reuse the
-# dependency artifacts; only the leaf crates recompile (~1s each).
+# Rust: warm the registry + compiled-dependency caches for ferris and corro
+# from their REAL manifests and lockfiles (copied from the build context), so
+# the exact crate versions CI resolves are already downloaded and the shared
+# CARGO_TARGET_DIR holds their compiled dependency artifacts. A synthetic
+# combined project would unify versions differently and resolve a different set,
+# defeating the cache; using each sample's own Cargo.lock guarantees a match.
+# Only the leaf crates recompile in CI. Requires the build context to be the
+# repo root (see .github/workflows/build-tools-image.yml).
+COPY samples/ferris/Cargo.toml samples/ferris/Cargo.lock /tmp/warm-ferris/
+COPY samples/corro/Cargo.toml samples/corro/Cargo.lock /tmp/warm-corro/
 RUN <<'SH'
 set -eux
-mkdir -p /tmp/rustwarm/src
-cat > /tmp/rustwarm/Cargo.toml <<'TOML'
-[package]
-name = "rustwarm"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-[dependencies]
-wit-bindgen = "0.41"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-wit-bindgen-rt = { version = "0.44.0", features = ["bitflags"] }
-
-[profile.release]
-opt-level = "s"
-lto = true
-strip = true
-TOML
-: > /tmp/rustwarm/src/lib.rs
-cd /tmp/rustwarm
-cargo build --release --target wasm32-wasip2
-cargo build --release --target wasm32-wasip1
-rm -rf /tmp/rustwarm
+# ferris -> wasm32-wasip2. An empty lib still pulls and compiles the full
+# dependency graph from the lockfile into CARGO_HOME + CARGO_TARGET_DIR.
+mkdir -p /tmp/warm-ferris/src
+: > /tmp/warm-ferris/src/lib.rs
+cd /tmp/warm-ferris
+cargo fetch --locked
+cargo build --release --locked --target wasm32-wasip2
+# corro -> wasm32-wasip1. cargo-component's metadata is ignored by plain cargo,
+# which is fine here: we only need its dependency crate downloaded + compiled.
+mkdir -p /tmp/warm-corro/src
+: > /tmp/warm-corro/src/lib.rs
+cd /tmp/warm-corro
+cargo fetch --locked
+cargo build --release --locked --target wasm32-wasip1
+rm -rf /tmp/warm-ferris /tmp/warm-corro
 SH
 
 # .NET: restore the componentize-dotnet toolchain packages (the LLVM ilcompiler
