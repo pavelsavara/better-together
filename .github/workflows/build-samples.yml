@@ -97,7 +97,7 @@ jobs:
             done
           }
           failed=()
-          for sample in ferris corro khaos gopher nib keith andy dusty; do
+          for sample in ferris corro khaos gopher nib keith andy dusty bram reynard; do
             ref="${REGISTRY}/${namespace}/${sample}"
             readme="samples/${sample}/README.md"
             # OCI annotation values cannot contain newlines/tabs/CR (registries
