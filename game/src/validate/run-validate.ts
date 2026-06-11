@@ -57,15 +57,17 @@ async function emit(env: RunEnv, outcome: 'accepted' | 'rejected', comment: stri
 export async function main(): Promise<number> {
     const env = readEnv();
     const { value, errors } = parseIssue(env.issueBody);
-    if (errors.length > 0 || !value.oci || !value.author || !value.blurb) {
+    if (errors.length > 0 || !value.oci || !value.blurb) {
         await emit(env, 'rejected', `❌ Could not read the submission form:\n\n- ${errors.join('\n- ')}`);
         return 1;
     }
 
     const input: SubmissionInput = {
         oci: value.oci,
-        author: value.author,
         blurb: value.blurb,
+        // The author credit is the GitHub issue author (read from the GitHub API
+        // by the workflow and passed as ISSUE_AUTHOR), not a form field.
+        author: env.submittedBy,
         submittedBy: env.submittedBy,
         approvedBy: env.approvedBy,
         issue: env.issueNumber,

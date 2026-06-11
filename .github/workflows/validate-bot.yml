@@ -54,13 +54,29 @@ jobs:
           ns="ghcr.io/${owner}/better-together"
           echo "refs=${ns}/corro:latest,${ns}/nib:latest,${ns}/gopher:latest" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve issue author
+        id: issue
+        if: ${{ github.event_name == 'issues' }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            // Read the GitHub API about the submission issue: the author credit
+            // for the bot is the issue author's handle, not a form field.
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+            });
+            core.setOutput('author', issue.user.login);
+            core.setOutput('number', String(issue.number));
+
       - name: Run validator
         id: validate
         working-directory: game
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number || github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author || github.event.issue.user.login }}
           APPROVER: ${{ github.actor }}
           STORE_DIR: ${{ github.workspace }}/gh-pages
           VALIDATION_COMMENT_FILE: ${{ github.workspace }}/validation-comment.md
@@ -90,6 +106,17 @@ jobs:
               issue_number: context.payload.issue.number,
               labels: [label],
             });
+            // An accepted bot is admitted to the registry, so the submission is
+            // done — close the issue as completed.
+            if (label === 'accepted') {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+            }
 
       - name: Commit registry change to gh-pages
         if: ${{ steps.validate.outputs.outcome == 'accepted' }}

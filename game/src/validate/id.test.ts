@@ -42,15 +42,11 @@ test('graphemeCount counts an emoji glyph as one', () => {
     assert.equal(graphemeCount(''), 0);
 });
 
-test('parseIssue extracts fields and strips @ from the author handle', () => {
+test('parseIssue extracts fields', () => {
     const body = [
         `### ${ISSUE_LABELS.oci}`,
         '',
         'ghcr.io/jane/ferris:1.0.0',
-        '',
-        `### ${ISSUE_LABELS.author}`,
-        '',
-        '@jane',
         '',
         `### ${ISSUE_LABELS.blurb}`,
         '',
@@ -60,7 +56,6 @@ test('parseIssue extracts fields and strips @ from the author handle', () => {
     const { value, errors } = parseIssue(body);
     assert.deepEqual(errors, []);
     assert.equal(value.oci, 'ghcr.io/jane/ferris:1.0.0');
-    assert.equal(value.author, 'jane');
     assert.equal(value.blurb, 'A reputation-aware gardener.');
 });
 
@@ -70,13 +65,9 @@ test('parseIssue reports missing and _No response_ fields', () => {
         '',
         '_No response_',
         '',
-        `### ${ISSUE_LABELS.author}`,
-        '',
-        '@jane',
-        '',
     ].join('\n');
     const { value, errors } = parseIssue(body);
-    assert.equal(value.author, 'jane');
+    assert.equal(value.oci, undefined);
     assert.ok(errors.some((e) => e.includes(ISSUE_LABELS.oci)));
     assert.ok(errors.some((e) => e.includes(ISSUE_LABELS.blurb)));
 });

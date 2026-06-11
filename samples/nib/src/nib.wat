@@ -38,7 +38,7 @@
 ;;  1040  "0.1.0"                                   (len 5)
 ;;  1056  "Better Together samples"                 (len 23)
 ;;  1120  "https://github.com/pavelsavara/better-together" (len 46)
-;;  1408  glyph "🖋️"                                 (len 4)
+;;  1408  glyph "🖋️"                                 (len 7)
 ;;  1600  banter line (ends with \n)                (len 59)
 ;;  1664  icon url                                   (len 79)
 ;;  2048  lore   (relocated from 1184; longer text) (len 1208)
@@ -159,7 +159,7 @@
     (data (i32.const 1056) "Better Together samples")
     (data (i32.const 1120) "https://github.com/pavelsavara/better-together")
     (data (i32.const 2048) "Nib is the smallest gardener at the table, and quietly proud of it. Where the other bots keep ledgers of who wronged them and notebooks crammed with reputation scores, Nib keeps nothing at all - no memory between rounds, no grudges carried over from yesterday, no private tally of slights. Each round arrives fresh, a blank patch of soil. Nib listens to exactly one thing: what everyone just promised, right now, in this moment. It does not guess at hidden motives or punish old betrayals it has already forgotten. Nib simply reads the mood of the table and then, always, plants a little more than was pledged. If the garden is quiet, it still offers a friendly baseline and never sulks down to nothing. If the table is full of optimists, it meets their hope and tops it off. It will not be the lone fool pouring seeds into barren ground, yet it refuses to be stingy either. Honest to a fault, Nib announces only that it is watching, because watching and matching is the whole of its character. There is no cleverness hidden underneath, no trap waiting to spring - what you see is what you get: a gentle, forgetful, generous seed that rewards a cooperative table and forgives everything, one round at a time.")
-    (data (i32.const 1408) "\f0\9f\8c\b1")
+    (data (i32.const 1408) "\f0\9f\96\8b\ef\b8\8f")
     (data (i32.const 1600) "nib: i match what you pledge, then plant a little extra.\n")
     (data (i32.const 1664) "https://pavelsavara.github.io/better-together/icons/0744dd6e%23together.Nib.png")
   )
@@ -239,7 +239,7 @@
       (i32.store (i32.const 564) (i32.const 1056)) (i32.store (i32.const 568) (i32.const 23))  ;; author
       (i32.store (i32.const 572) (i32.const 1120)) (i32.store (i32.const 576) (i32.const 46))  ;; repo
       (i32.store (i32.const 580) (i32.const 2048)) (i32.store (i32.const 584) (i32.const 1208)) ;; lore
-      (i32.store (i32.const 588) (i32.const 1408)) (i32.store (i32.const 592) (i32.const 4))   ;; glyph
+      (i32.store (i32.const 588) (i32.const 1408)) (i32.store (i32.const 592) (i32.const 7))   ;; glyph
       (i32.store8 (i32.const 596) (i32.const 1))                                              ;; icon = some
       (i32.store (i32.const 600) (i32.const 1664)) (i32.store (i32.const 604) (i32.const 79))  ;; icon url
       (i32.const 544))

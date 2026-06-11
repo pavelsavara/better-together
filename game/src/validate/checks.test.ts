@@ -47,8 +47,8 @@ const HAVE_SAMPLES = exists('ferris') && ['corro', 'nib', 'gopher'].filter(exist
 
 const sub = (oci: string): SubmissionInput => ({
     oci,
-    author: 'jane',
     blurb: 'test bot',
+    author: 'jane',
     submittedBy: 'jane',
     approvedBy: 'maintainer',
     issue: 1,

@@ -10,8 +10,16 @@ name: engine-tests
 on:
   push:
     branches: [main]
+    # The suites live entirely in game/; only run when the engine or this
+    # workflow changes.
+    paths:
+      - "game/**"
+      - ".github/workflows/engine-tests.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "game/**"
+      - ".github/workflows/engine-tests.yml"
 
 permissions:
   contents: read
