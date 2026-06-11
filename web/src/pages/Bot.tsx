@@ -63,7 +63,7 @@ export function Bot() {
                             <tr><td>oci</td><td className="muted">{bot.oci}</td></tr>
                             <tr><td>wasm</td><td className="muted">sha256 {bot.wasmSha256.slice(0, 12)}…</td></tr>
                             <tr><td>icon</td><td className="muted">{bot.icon ? 'cached 100×100' : 'glyph only'}</td></tr>
-                            <tr><td>submitted</td><td className="muted">by {bot.submittedBy} · issue #{bot.issue}</td></tr>
+                            <tr><td>submitted</td><td className="muted">by {bot.author} · issue #{bot.issue}</td></tr>
                             <tr><td>approved</td><td className="muted">by {bot.approvedBy}</td></tr>
                         </tbody>
                     </table>

@@ -11,6 +11,6 @@
         "test:attacker": "node --experimental-wasm-jspi attacker.test.mjs"
     },
     "dependencies": {
-        "@pavelsavara/jsco": "^0.2.0-preview.0"
+        "@pavelsavara/jsco": "^0.2.0-preview.2"
     }
 }
