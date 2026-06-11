@@ -16,8 +16,9 @@ import { isValidIconUrl, type AvatarProcessor } from './avatar.ts';
 
 export interface SubmissionInput {
     oci: string;
-    author: string;
     blurb: string;
+    /** GitHub handle of the issue author (read from the GitHub API), used as the bot's author credit. */
+    author: string;
     submittedBy: string;
     approvedBy: string;
     issue: number;
@@ -49,6 +50,8 @@ export interface AdmitData {
     avatarPng: Uint8Array | null;
     iconSource: string | null;
     oci: string;
+    /** GitHub handle of the issue author (read from the GitHub API). */
+    author: string;
     submittedBy: string;
     approvedBy: string;
     issue: number;
@@ -160,6 +163,7 @@ export async function runValidation(
                 avatarPng,
                 iconSource,
                 oci: input.oci,
+                author: input.author,
                 submittedBy: input.submittedBy,
                 approvedBy: input.approvedBy,
                 issue: input.issue,

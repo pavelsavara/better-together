@@ -54,13 +54,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node --experimental-wasm-jspi src/run-tournament.ts
 
+      # Match logs are NOT committed (they're gitignored on gh-pages and would
+      # bloat the branch). They're published as a per-run artifact for replay.
+      - name: Upload match logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: match-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: gh-pages/matches
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Commit results to gh-pages
         working-directory: gh-pages
         run: |
           git config user.name "better-together-bot"
           git config user.email "bot@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add data matches vfs wasm
+            git add data vfs wasm
             git commit -m "tournament: run ${{ github.run_id }}"
             git push origin gh-pages
           else

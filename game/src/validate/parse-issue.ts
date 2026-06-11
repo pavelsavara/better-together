@@ -1,16 +1,15 @@
-// Parse a "Submit a gardener" issue-form body into { oci, author, blurb }
+// Parse a "Submit a gardener" issue-form body into { oci, blurb }
 // (docs/architecture.md §3, .github/ISSUE_TEMPLATE/submit-gardener.yml).
 //
 // GitHub renders an issue *form* submission as Markdown: each field becomes a
 // "### <Label>" heading followed by the entered value (or "_No response_" when
 // left blank). We extract by label so the parser is order-independent and
-// tolerant of surrounding whitespace.
+// tolerant of surrounding whitespace. The author is NOT a form field — the
+// validator credits the GitHub issue author instead.
 
 export interface ParsedIssue {
     /** OCI image reference, e.g. ghcr.io/jane/ferris:1.0.0 */
     oci: string;
-    /** Author handle as entered (leading '@' stripped). */
-    author: string;
     /** One-line description. */
     blurb: string;
 }
@@ -18,7 +17,6 @@ export interface ParsedIssue {
 /** The field labels in .github/ISSUE_TEMPLATE/submit-gardener.yml. */
 export const ISSUE_LABELS = {
     oci: 'OCI image reference',
-    author: 'Author handle',
     blurb: 'Short description',
 } as const;
 
@@ -54,16 +52,13 @@ export function parseIssue(body: string): { value: Partial<ParsedIssue>; errors:
     const errors: string[] = [];
     const sections = parseSections(body);
     const oci = sectionValue(sections, ISSUE_LABELS.oci);
-    const authorRaw = sectionValue(sections, ISSUE_LABELS.author);
     const blurb = sectionValue(sections, ISSUE_LABELS.blurb);
 
     if (!oci) errors.push(`Missing "${ISSUE_LABELS.oci}".`);
-    if (!authorRaw) errors.push(`Missing "${ISSUE_LABELS.author}".`);
     if (!blurb) errors.push(`Missing "${ISSUE_LABELS.blurb}".`);
 
     const value: Partial<ParsedIssue> = {};
     if (oci) value.oci = oci;
-    if (authorRaw) value.author = authorRaw.replace(/^@/, '');
     if (blurb) value.blurb = blurb;
     return { value, errors };
 }

@@ -10,7 +10,19 @@ name: build-samples
 on:
   push:
     branches: [main]
+    # Only rebuild/publish when something that affects a component changes:
+    # the sample sources, the build script that compiles them, or this
+    # workflow. Samples vendor their own trimmed WIT (samples/*/wit/deps), so
+    # the root wit/ is intentionally NOT a trigger.
+    paths:
+      - "samples/**"
+      - "scripts/build-all.sh"
+      - ".github/workflows/build-samples.yml"
   pull_request:
+    paths:
+      - "samples/**"
+      - "scripts/build-all.sh"
+      - ".github/workflows/build-samples.yml"
   workflow_dispatch:
 
 env:

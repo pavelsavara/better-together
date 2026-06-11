@@ -19,7 +19,7 @@ function toRecord(a: AdmitData, wasmPath: string, iconPath: string | null): BotR
         namespace: a.namespace,
         shortName: a.shortName,
         version: a.metadata.version,
-        author: a.metadata.author || a.submittedBy,
+        author: a.author || a.metadata.author || a.submittedBy,
         repo: a.metadata.repo,
         lore: a.metadata.lore,
         glyph: a.metadata.glyph,

@@ -10,20 +10,13 @@ body:
         **OCI artifact** or as a direct **https `.wasm` URL**. A maintainer will
         review and add the `approved` label; we then fetch the component and
         validate it. Metadata (name, glyph, lore, …) comes from the component
-        bundle — not from this form.
+        bundle — not from this form, and you are credited as the issue author.
   - type: input
     id: oci
     attributes:
       label: OCI image reference
       description: Where your gardener component is published — an OCI reference or a direct https `.wasm` URL.
       placeholder: ghcr.io/yourname/yourbot:1.0.0  (or https://example.com/yourbot.wasm)
-    validations:
-      required: true
-  - type: input
-    id: author
-    attributes:
-      label: Author handle
-      placeholder: "@yourname"
     validations:
       required: true
   - type: input
