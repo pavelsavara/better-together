@@ -251,6 +251,31 @@
       "wasmSha256": "be79438f829e5f2f1fbe072c32bbc22161efa7aae54297ba62b84e99ae1e551b"
     },
     {
+      "approvedBy": "pavelsavara",
+      "author": "pavelsavara",
+      "glyph": "🐀",
+      "icon": "icons/d5c40e97#together.Keith.png",
+      "iconSource": "https://pavelsavara.github.io/better-together/icons/1fe77c84%23together.Keith.png",
+      "id": "d5c40e97#together.Keith",
+      "issue": 11,
+      "lastDigestChangeAt": "2026-06-11T18:02:16.190Z",
+      "lore": "Keith is a grubby canal rat who grew up in the storm drains under the allotments, where the only currency is your word and the only insurance is a good memory. He is nice, honest, retaliatory, and forgiving, in that order. Nice: he never bites first, opening every acquaintance with a generous handful and trusting the table until it gives him a reason not to. Honest: he never bluffs about his own intentions — when he says he will bloom, he means it, and when he intends to hold back he says so plainly, which makes him the natural antibody to every gardener who promises the moon and plants nothing. Retaliatory: he mirrors the room, pouring his seeds into a garden that bloomed last round and pocketing them when it went cold. Forgiving: every so often he sticks his neck out with a quiet peace-offering, just to see whether a collapsed garden can be coaxed back to life, because he would rather rebuild trust than nurse a grudge. But he is also unforgetful. He carries a stained little ledger everywhere and writes down, for every gardener he meets, who kept their word and who broke it. A creature who keeps promising and keeps stiffing the garden becomes a liar in that book, and the rat does not feed cheats. He taxes the broken promise, never the quiet, honest miser — patient, grudging, fair, and never once a hypocrite about it.",
+      "matchesSinceUpdate": 0,
+      "name": "together.Keith",
+      "namespace": "together",
+      "oci": "https://ghcr.io/pavelsavara/better-together/keith",
+      "ociDigest": "sha256:21c1d85ce20095aa92da82508e4ecca81a25a0655ee79098d2a9fa8a589dfbfe",
+      "ociEtag": null,
+      "repo": "https://github.com/pavelsavara/better-together",
+      "shortName": "Keith",
+      "status": "active",
+      "submittedBy": "pavelsavara",
+      "validatedAt": "2026-06-11T18:02:16.190Z",
+      "version": "0.1.0",
+      "wasm": "wasm/d5c40e97#together.Keith/0.1.0.wasm",
+      "wasmSha256": "6649dfb0e95c7031a2f96d4703fbff50a8dc0d612abd19ce1b3db78172777fb5"
+    },
+    {
       "approvedBy": "local",
       "author": "Better Together samples",
       "glyph": "🦀",
@@ -276,6 +301,6 @@
       "wasmSha256": "f5df63acb1a18591d684312fa7f9bad14fb8fac7991a60fdd8f4639fca038f35"
     }
   ],
-  "updated": "2026-06-11T16:06:51.039Z",
+  "updated": "2026-06-11T18:02:16.190Z",
   "version": 1
 }
