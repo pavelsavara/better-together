@@ -65,9 +65,8 @@ export async function main(): Promise<number> {
     const input: SubmissionInput = {
         oci: value.oci,
         blurb: value.blurb,
-        // The author credit is the GitHub issue author (read from the GitHub API
-        // by the workflow and passed as ISSUE_AUTHOR), not a form field.
-        author: env.submittedBy,
+        // The bot's author credit comes from its metadata (metadata.author);
+        // submittedBy is the GitHub login of the issue author (ISSUE_AUTHOR).
         submittedBy: env.submittedBy,
         approvedBy: env.approvedBy,
         issue: env.issueNumber,
