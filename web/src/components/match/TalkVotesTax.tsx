@@ -1,4 +1,5 @@
 import type { MatchView } from '../../engine/controller.ts';
+import { Panel } from '../Panel.tsx';
 
 const SIGNAL_LABEL: Record<string, string> = { bloom: 'BLOOM', hold: 'HOLD', watch: 'WATCH' };
 
@@ -7,8 +8,7 @@ export function TalkVotesTax({ view }: { view: MatchView }) {
     const o = view.lastOutcome;
     const glyphById = new Map(view.seats.map((s) => [s.id, s.glyph] as const));
     return (
-        <div className="panel">
-            <h2>═══| TALK · VOTES · TAX |═══</h2>
+        <Panel label="TALK · VOTES · TAX">
             <div>
                 <strong className="muted">talk:</strong>{' '}
                 {view.signals.length === 0
@@ -39,6 +39,6 @@ export function TalkVotesTax({ view }: { view: MatchView }) {
                     <span className="muted">no tax this round</span>
                 )}
             </div>
-        </div>
+        </Panel>
     );
 }

@@ -38,6 +38,14 @@ ARG CARGO_COMPONENT_VERSION=0.21.1
 # The download path embeds the major version (wasi-sdk-NN) and the full version.
 ARG WASI_SDK_MAJOR=33
 ARG WASI_SDK_VERSION=33.0
+# componentize-dotnet (andy/bram) pins its OWN, older wasi-sdk (24.0) via the
+# BytecodeAlliance.Componentize.DotNet.WitBindgen MSBuild targets. Those targets
+# DownloadFile ~118 MB on every build unless their WasiSdkRoot already exists,
+# and then OVERRIDE WASI_SDK_PATH with it — so the wasi-sdk-33 above is ignored
+# for the .NET samples. We bake this exact version into the image and point the
+# build at it via -p:WasiSdkRoot (see scripts/build-all.sh) to skip that download.
+ARG DOTNET_WASI_SDK_MAJOR=24
+ARG DOTNET_WASI_SDK_VERSION=24.0
 # wit-bindgen CLI provides the C++ (`cpp`) binding generator used by keith.
 ARG WIT_BINDGEN_VERSION=0.58.0
 # Grain compiler (dusty) — prebuilt standalone linux-x64 binary.
@@ -113,6 +121,15 @@ RUN curl -fsSL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-s
     && ln -s "/opt/wasi-sdk-${WASI_SDK_VERSION}-x86_64-linux" /opt/wasi-sdk
 ENV WASI_SDK_PATH=/opt/wasi-sdk
 
+# --- wasi-sdk 24 for componentize-dotnet (andy/bram) ------------------------
+# Extracted with --strip-components=1 so the layout (bin/, share/) lands
+# directly under <root>/wasi-sdk-24.0 — exactly what the WitBindgen targets
+# create themselves, and the path we pass as -p:WasiSdkRoot in build-all.sh.
+# Because that path then Exists(), the targets skip their 118 MB download.
+RUN mkdir -p "/opt/wasi-sdk-${DOTNET_WASI_SDK_MAJOR}/wasi-sdk-${DOTNET_WASI_SDK_VERSION}" \
+    && curl -fsSL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${DOTNET_WASI_SDK_MAJOR}/wasi-sdk-${DOTNET_WASI_SDK_VERSION}-x86_64-linux.tar.gz" \
+        | tar -C "/opt/wasi-sdk-${DOTNET_WASI_SDK_MAJOR}/wasi-sdk-${DOTNET_WASI_SDK_VERSION}" --strip-components=1 -xz
+
 # --- wit-bindgen CLI (cpp generator) ---------------------------------------
 RUN curl -fsSL "https://github.com/bytecodealliance/wit-bindgen/releases/download/v${WIT_BINDGEN_VERSION}/wit-bindgen-${WIT_BINDGEN_VERSION}-x86_64-linux.tar.gz" \
         | tar -C /tmp -xz \
@@ -150,6 +167,152 @@ RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
     && /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --install-dir "${DOTNET_ROOT}" \
     && rm -f /tmp/dotnet-install.sh \
     && dotnet --version
+
+# ---------------------------------------------------------------------------
+# Warm dependency caches
+#
+# GitHub Actions container jobs mount $HOME (/github/home) as an EMPTY volume at
+# runtime, so any cache a tool writes under $HOME is lost. We therefore relocate
+# every per-user cache to an absolute /opt path (baked into the image layers)
+# and pre-populate it here. CI then reuses these instead of re-downloading and
+# re-compiling on every run; only the small leaf crates/projects rebuild.
+#
+# Keep the versions below in sync with the sample manifests under samples/.
+# Drift is non-fatal: a mismatch just falls back to a download at CI time.
+# ---------------------------------------------------------------------------
+ENV CARGO_TARGET_DIR=/opt/cargo-target \
+    NUGET_PACKAGES=/opt/nuget \
+    npm_config_cache=/opt/npm-cache \
+    GOMODCACHE=/opt/go/pkg/mod \
+    GOCACHE=/opt/go-build \
+    XDG_CACHE_HOME=/opt/xdg-cache
+
+# Rust: ferris (wit-bindgen, serde, serde_json) + corro (wit-bindgen-rt).
+# Compiling these into the shared CARGO_TARGET_DIR (for both wasip2 and wasip1,
+# with the samples' release profile so the fingerprints match) lets CI reuse the
+# dependency artifacts; only the leaf crates recompile (~1s each).
+RUN <<'SH'
+set -eux
+mkdir -p /tmp/rustwarm/src
+cat > /tmp/rustwarm/Cargo.toml <<'TOML'
+[package]
+name = "rustwarm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+wit-bindgen = "0.41"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wit-bindgen-rt = { version = "0.44.0", features = ["bitflags"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+TOML
+: > /tmp/rustwarm/src/lib.rs
+cd /tmp/rustwarm
+cargo build --release --target wasm32-wasip2
+cargo build --release --target wasm32-wasip1
+rm -rf /tmp/rustwarm
+SH
+
+# .NET: restore the componentize-dotnet toolchain packages (the LLVM ilcompiler
+# is large) into NUGET_PACKAGES so andy/bram skip the multi-second cold restore.
+RUN <<'SH'
+set -eux
+mkdir -p /tmp/nugetwarm
+cat > /tmp/nugetwarm/nuget.config <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget" value="https://api.nuget.org/v3/index.json" />
+    <add key="dotnet-experimental" value="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-experimental/nuget/v3/index.json" />
+  </packageSources>
+</configuration>
+XML
+cat > /tmp/nugetwarm/warm.csproj <<'XML'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>library</OutputType>
+    <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+    <UseAppHost>false</UseAppHost>
+    <SelfContained>true</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="0.7.0-preview00010" />
+    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-alpha.1.25162.1" />
+  </ItemGroup>
+</Project>
+XML
+cd /tmp/nugetwarm
+dotnet restore
+rm -rf /tmp/nugetwarm
+SH
+
+# JavaScript: prime the npm cache with jco + ComponentizeJS so khaos/reynard's
+# `npm install` resolves offline from npm_config_cache.
+RUN <<'SH'
+set -eux
+mkdir -p /tmp/npmwarm
+cat > /tmp/npmwarm/package.json <<'JSON'
+{
+  "name": "npmwarm",
+  "private": true,
+  "devDependencies": {
+    "@bytecodealliance/componentize-js": "^0.18.4",
+    "@bytecodealliance/jco": "^1.20.0"
+  }
+}
+JSON
+cd /tmp/npmwarm
+npm install
+rm -rf /tmp/npmwarm
+SH
+
+# Go / TinyGo: download go.bytecodealliance.org/cm into GOMODCACHE and compile
+# the TinyGo wasip2 runtime/stdlib once (cached under XDG_CACHE_HOME/tinygo) via
+# a trivial component, so gopher only recompiles its own package.
+RUN <<'SH'
+set -eux
+mkdir -p /tmp/gowarm/wit
+cat > /tmp/gowarm/go.mod <<'GOMOD'
+module gowarm
+
+go 1.23.0
+
+require go.bytecodealliance.org/cm v0.3.0
+GOMOD
+cat > /tmp/gowarm/main.go <<'GO'
+package main
+
+import _ "go.bytecodealliance.org/cm"
+
+func main() {}
+GO
+cat > /tmp/gowarm/wit/warm.wit <<'WIT'
+package warm:warm;
+
+world warm {}
+WIT
+cd /tmp/gowarm
+export GOFLAGS=-buildvcs=false
+# go get writes the go.sum entries that the tinygo build below requires.
+go get go.bytecodealliance.org/cm@v0.3.0
+go mod download
+# This compiles the TinyGo wasip2 runtime + stdlib into GOCACHE (the slow part
+# we want cached). The final component-packaging step may fail for this trivial
+# empty world (it lacks the WASI imports the Go runtime references), which is
+# fine: the compilation cache is already warm by then.
+tinygo build -target=wasip2 --wit-package ./wit --wit-world warm -o /tmp/gowarm/warm.wasm . \
+    || echo "warm: tinygo packaging skipped (caches are warm)"
+rm -rf /tmp/gowarm
+SH
 
 WORKDIR /work
 

@@ -1,23 +1,23 @@
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from '../data/store.tsx';
 import { Avatar } from '../components/Avatar.tsx';
+import { Panel } from '../components/Panel.tsx';
 
 export function Bot() {
     const { id } = useParams();
     const decoded = id ? decodeURIComponent(id) : undefined;
     const { index, scores, loading } = useStore();
 
-    if (loading) return <div className="panel"><p className="muted">Loading…</p></div>;
+    if (loading) return <Panel><p className="muted">Loading…</p></Panel>;
     const bot = decoded ? index?.bots.find((b) => b.id === decoded) : undefined;
-    if (!bot) return <div className="panel"><h2>Bot not found</h2><p className="muted">No bot with id {decoded}.</p></div>;
+    if (!bot) return <Panel label="Bot not found"><p className="muted">No bot with id {decoded}.</p></Panel>;
 
     const standing = scores?.leaderboard.find((r) => r.id === bot.id);
     const hashSeg = bot.id.split('#')[0] ?? '';
     const iconSrc = bot.icon ? `${import.meta.env.BASE_URL}${bot.icon}` : null;
 
     return (
-        <div className="panel">
-            <h2>═══| BOT DETAIL |═══</h2>
+        <Panel label="BOT DETAIL">
             <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <Avatar bot={bot} src={iconSrc} />
                 <div>
@@ -69,6 +69,6 @@ export function Bot() {
                     </table>
                 </div>
             </div>
-        </div>
+        </Panel>
     );
 }

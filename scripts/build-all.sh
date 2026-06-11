@@ -12,13 +12,30 @@ ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 DIST="${ROOT}/dist"
 mkdir -p "${DIST}"
 
+# The tools image pre-compiles the common Rust dependency crates into a shared
+# target directory (CARGO_TARGET_DIR) so CI reuses them instead of rebuilding
+# them every run. When CARGO_TARGET_DIR is set, cargo writes the compiled
+# artifacts there rather than under each crate's own ./target; resolve the
+# output paths accordingly so the `cp` below still finds them.
+ferris_target="${CARGO_TARGET_DIR:-${ROOT}/samples/ferris/target}"
+corro_target="${CARGO_TARGET_DIR:-${ROOT}/samples/corro/target}"
+
+# componentize-dotnet (andy/bram) otherwise downloads its pinned wasi-sdk 24.0
+# (~118 MB) on every build. The tools image bakes it at this path; when present,
+# point the build at it so the WitBindgen targets skip the download. Outside the
+# image the path won't exist, so local builds still self-provision as before.
+dotnet_wasi_sdk_args=()
+if [ -d /opt/wasi-sdk-24/wasi-sdk-24.0 ]; then
+  dotnet_wasi_sdk_args=(-p:WasiSdkRoot=/opt/wasi-sdk-24/wasi-sdk-24.0)
+fi
+
 echo "==> ferris  (Rust / wit-bindgen / wasm32-wasip2)"
 ( cd "${ROOT}/samples/ferris" && cargo build --release --target wasm32-wasip2 )
-cp "${ROOT}/samples/ferris/target/wasm32-wasip2/release/ferris.wasm" "${DIST}/ferris.wasm"
+cp "${ferris_target}/wasm32-wasip2/release/ferris.wasm" "${DIST}/ferris.wasm"
 
 echo "==> corro   (Rust / cargo-component / wasm32-wasip1)"
 ( cd "${ROOT}/samples/corro" && cargo component build --release )
-cp "${ROOT}/samples/corro/target/wasm32-wasip1/release/corro.wasm" "${DIST}/corro.wasm"
+cp "${corro_target}/wasm32-wasip1/release/corro.wasm" "${DIST}/corro.wasm"
 
 echo "==> khaos   (JavaScript / jco + ComponentizeJS)"
 ( cd "${ROOT}/samples/khaos" && npm install && npm run build )
@@ -52,8 +69,9 @@ echo "==> andy    (C# / componentize-dotnet / NativeAOT-LLVM / wasi-wasm)"
 (
   cd "${ROOT}/samples/andy"
   # Restore + build the WASI 0.2 component. componentize-dotnet downloads and
-  # caches a compatible WASI SDK + LLVM into the home dir on the first build.
-  dotnet build -c Release
+  # caches a compatible WASI SDK + LLVM into the home dir on the first build,
+  # unless WasiSdkRoot already points at the one baked into the tools image.
+  dotnet build -c Release "${dotnet_wasi_sdk_args[@]}"
 )
 cp "${ROOT}/samples/andy/bin/Release/net10.0/wasi-wasm/native/andy.wasm" "${DIST}/andy.wasm"
 
@@ -61,7 +79,7 @@ echo "==> bram    (C# / componentize-dotnet / NativeAOT-LLVM / wasi-wasm)"
 (
   cd "${ROOT}/samples/bram"
   # Same toolchain as andy: NativeAOT-LLVM emits the WASI 0.2 component.
-  dotnet build -c Release
+  dotnet build -c Release "${dotnet_wasi_sdk_args[@]}"
 )
 cp "${ROOT}/samples/bram/bin/Release/net10.0/wasi-wasm/native/bram.wasm" "${DIST}/bram.wasm"
 

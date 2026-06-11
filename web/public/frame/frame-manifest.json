@@ -1,0 +1,106 @@
+{
+  "source": "samples/frame-full.png",
+  "generatedBy": "scripts/slice-frame.mjs",
+  "geometry": {
+    "W": 824,
+    "H": 830,
+    "LW": 290,
+    "RW": 290,
+    "TH": 290,
+    "BH": 235,
+    "botCornerW": 250,
+    "topTile": {
+      "x": 400,
+      "w": 16,
+      "h": 115
+    },
+    "botTile": {
+      "x": 240,
+      "w": 16
+    },
+    "button": {
+      "x": 266,
+      "w": 292,
+      "textLeft": 292,
+      "textRight": 532,
+      "textTop": 719,
+      "textBottom": 765
+    },
+    "sideSnapY": 400
+  },
+  "detected": {
+    "left": {
+      "start": 386,
+      "period": 28
+    },
+    "right": {
+      "start": 414,
+      "period": 28
+    }
+  },
+  "pieces": {
+    "tl": {
+      "name": "corner-tl.png",
+      "left": 0,
+      "top": 0,
+      "width": 290,
+      "height": 290
+    },
+    "tr": {
+      "name": "corner-tr.png",
+      "left": 534,
+      "top": 0,
+      "width": 290,
+      "height": 290
+    },
+    "bl": {
+      "name": "corner-bl.png",
+      "left": 0,
+      "top": 595,
+      "width": 250,
+      "height": 235
+    },
+    "br": {
+      "name": "corner-br.png",
+      "left": 574,
+      "top": 595,
+      "width": 250,
+      "height": 235
+    },
+    "top": {
+      "name": "edge-top.png",
+      "left": 400,
+      "top": 0,
+      "width": 16,
+      "height": 115
+    },
+    "bottom": {
+      "name": "edge-bottom.png",
+      "left": 240,
+      "top": 595,
+      "width": 16,
+      "height": 235
+    },
+    "left": {
+      "name": "edge-left.png",
+      "left": 0,
+      "top": 386,
+      "width": 290,
+      "height": 28
+    },
+    "right": {
+      "name": "edge-right.png",
+      "left": 534,
+      "top": 414,
+      "width": 290,
+      "height": 28
+    },
+    "button": {
+      "name": "center-bottom.png",
+      "left": 266,
+      "top": 595,
+      "width": 292,
+      "height": 235
+    }
+  }
+}

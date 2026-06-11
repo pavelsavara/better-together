@@ -1,7 +1,8 @@
+import { Panel } from '../components/Panel.tsx';
+
 export function About() {
     return (
-        <div className="panel">
-            <h2>═══| ABOUT |═══</h2>
+        <Panel label="ABOUT">
             <p>
                 Better Together is a cooperative-dilemma game for algorithmic players, built to showcase
                 WebAssembly components: polyglot bots, sandboxed execution, and the proof that composition wins.
@@ -18,6 +19,6 @@ export function About() {
                 <li>better-together — the game, contracts, and sample bots ↗</li>
             </ul>
             <p className="muted">Built with: TypeScript · Vite · jsco · WASI 0.2</p>
-        </div>
+        </Panel>
     );
 }

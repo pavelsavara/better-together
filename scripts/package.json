@@ -1,0 +1,13 @@
+{
+    "name": "better-together-scripts",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Build/asset scripts for Better Together.",
+    "scripts": {
+        "slice-frame": "node slice-frame.mjs"
+    },
+    "dependencies": {
+        "sharp": "^0.33.5"
+    }
+}

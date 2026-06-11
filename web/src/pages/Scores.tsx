@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../data/store.tsx';
+import { Panel } from '../components/Panel.tsx';
 import type { ScoreRow, BotRecord } from '../data/types.ts';
 
 type Tab = 'coplayer' | 'raw';
@@ -31,9 +32,9 @@ export function Scores() {
         return m;
     }, [index]);
 
-    if (loading) return <div className="panel"><p className="muted">Loading…</p></div>;
-    if (error) return <div className="panel"><p className="warn">Could not load scores: {error}</p></div>;
-    if (!scores) return <div className="panel"><h2>Top Scores</h2><p className="muted">No scores yet — the tournament hasn’t run.</p></div>;
+    if (loading) return <Panel><p className="muted">Loading…</p></Panel>;
+    if (error) return <Panel><p className="warn">Could not load scores: {error}</p></Panel>;
+    if (!scores) return <Panel label="Top Scores"><p className="muted">No scores yet — the tournament hasn’t run.</p></Panel>;
 
     const ranked = scores.leaderboard.filter((r) => r.ranked);
     const unranked = scores.leaderboard.filter((r) => !r.ranked);
@@ -41,8 +42,7 @@ export function Scores() {
     const maxAbs = Math.max(1, ...ranked.map((r) => Math.abs(r.coPlayerScore) + r.coPlayerStdErr));
 
     return (
-        <div className="panel">
-            <h2>═══| LEADERBOARD |═══</h2>
+        <Panel label="LEADERBOARD">
             <div className="tabs">
                 <button className={`tab ${tab === 'coplayer' ? 'active' : ''}`} onClick={() => setTab('coplayer')}>Best Co-Player</button>
                 <button className={`tab ${tab === 'raw' ? 'active' : ''}`} onClick={() => setTab('raw')}>Raw Score</button>
@@ -87,7 +87,7 @@ export function Scores() {
                     </table>
                 </>
             )}
-        </div>
+        </Panel>
     );
 }
 

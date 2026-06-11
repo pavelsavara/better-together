@@ -1,2 +1,5 @@
 # Shell scripts must use LF so they run inside Linux containers.
 *.sh text eol=lf
+# Dockerfiles use heredoc (RUN <<'SH') blocks that break with CRLF line endings.
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf

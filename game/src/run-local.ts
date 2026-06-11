@@ -18,7 +18,7 @@ import { createGardenerSeat } from './host/seat.ts';
 import { manufactureId, parseName } from './validate/id.ts';
 import { sha256Hex } from './validate/checks.ts';
 import { initEmptyStore } from './store/bootstrap.ts';
-import { cacheWasm, writeIndex } from './store/write.ts';
+import { cacheWasm, cacheIcon, writeIndex } from './store/write.ts';
 import { loadScores } from './store/read.ts';
 import { runTournament } from './run.ts';
 import { mapChecker } from './scan/detect.ts';
@@ -28,12 +28,29 @@ const ROOT = new URL('../../', import.meta.url);
 /** Bots we never seat in the exhibition (the standing capability-denial fixture). */
 const EXCLUDE = new Set(['attacker']);
 
+/**
+ * Cache a sample's local 300x300 PNG icon (samples/<stem>/<stem>.png) into the
+ * store and return its store-relative path, or null when the sample ships no
+ * icon. The samples directory is resolved against the repo root.
+ */
+async function seedIcon(base: string, stem: string, botId: string): Promise<string | null> {
+    const pngFile = fileURLToPath(new URL(`samples/${stem}/${stem}.png`, ROOT));
+    let pngBytes: Uint8Array;
+    try {
+        pngBytes = new Uint8Array(await readFile(pngFile));
+    } catch {
+        return null; // sample ships no icon → glyph only
+    }
+    return cacheIcon(base, botId, pngBytes);
+}
+
 /** Instantiate one built component, read its real metadata, and build a record. */
 async function seedBot(base: string, wasmFile: string, now: string): Promise<BotRecord> {
     const bytes = new Uint8Array(await readFile(wasmFile));
-    // Synthesize a stable OCI ref so the manufactured id is deterministic.
+    // The OCI ref the sample is published under (build-samples.yml). It is the
+    // hash input for the manufactured id, so it must match the real image ref.
     const stem = basename(wasmFile).replace(/\.wasm$/, '');
-    const oci = `local/${stem}:dev`;
+    const oci = `https://ghcr.io/pavelsavara/better-together/${stem}:latest`;
 
     const seat = await createGardenerSeat(bytes, { id: oci, callBudgetMs: 0 });
     try {
@@ -42,6 +59,7 @@ async function seedBot(base: string, wasmFile: string, now: string): Promise<Bot
         if (!parsed) throw new Error(`${stem}: metadata.name "${meta.name}" is not namespace.name`);
         const id = manufactureId(oci, meta.name);
         await cacheWasm(base, id, meta.version, bytes);
+        const icon = await seedIcon(base, stem, id);
         return {
             id,
             name: meta.name,
@@ -52,7 +70,7 @@ async function seedBot(base: string, wasmFile: string, now: string): Promise<Bot
             repo: meta.repo,
             lore: meta.lore,
             glyph: meta.glyph,
-            icon: null,
+            icon,
             iconSource: meta.icon,
             oci,
             ociDigest: 'sha256:local',

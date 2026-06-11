@@ -6,6 +6,7 @@ import { Submit } from './pages/Submit.tsx';
 import { About } from './pages/About.tsx';
 import { Rules } from './pages/Rules.tsx';
 import { Builder } from './pages/Builder.tsx';
+import { Panel } from './components/Panel.tsx';
 
 const NAV = [
     { to: '/', label: 'Home', end: true },
@@ -51,9 +52,8 @@ export function App() {
 
 function NotFound() {
     return (
-        <div className="panel">
-            <h2>404</h2>
+        <Panel label="404">
             <p className="muted">No such page.</p>
-        </div>
+        </Panel>
     );
 }

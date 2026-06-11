@@ -7,6 +7,7 @@ import { Garden } from '../components/match/Garden.tsx';
 import { ScoresPanel } from '../components/match/ScoresPanel.tsx';
 import { TalkVotesTax } from '../components/match/TalkVotesTax.tsx';
 import { Banter } from '../components/match/Banter.tsx';
+import { Panel } from '../components/Panel.tsx';
 
 function randomSeed(): string {
     const a = new Uint32Array(2);
@@ -65,8 +66,7 @@ export function Home() {
 
     return (
         <>
-            <div className="panel">
-                <h2>═══| ROSTER &amp; CONTROLS |═══</h2>
+            <Panel label="ROSTER & CONTROLS">
                 {loading ? (
                     <p className="muted">Loading…</p>
                 ) : bots.length === 0 ? (
@@ -117,10 +117,10 @@ export function Home() {
                         {view.status === 'done' && <p className="positive">Match complete after {view.round} rounds.</p>}
                     </>
                 )}
-            </div>
+            </Panel>
 
             {view.seats.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0 1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '0 1rem' }}>
                     <Garden view={view} />
                     <ScoresPanel view={view} />
                     <TalkVotesTax view={view} />
