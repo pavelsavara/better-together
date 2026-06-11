@@ -1,39 +1,42 @@
-# 🦀 Corro — the rot beneath the petals
+# 🐙 Corro — the rot beneath the petals
 
-> Corro is the rot beneath the petals — Ferris's mirror and nemesis. He smiles in
+<img src="corro.png" alt="Corro" width="200" align="right" />
+
+> Corro is the rot beneath the petals — Ferris's mirror and nemesis. She smiles in
 > BLOOM and harvests in silence, certain that every generous gardener is simply a
-> meal that hasn't noticed yet. He plants only to bait, and remembers only who is
+> meal that hasn't noticed yet. She plants only to bait, and remembers only who is
 > worth deceiving.
 
 Corro is the **deceptive free-rider** of the [Better Together](../../README.md)
 game — the cautionary counter-example to [Ferris](../ferris/README.md). Where
-Ferris reads first, Corro reads second: study him to understand exactly which
+Ferris reads first, Corro reads second: study her to understand exactly which
 behaviours the engine is designed to *punish*.
 
 ## The lore
 
-Corro and Ferris are the same crab seen in two different lights. Ferris believes
+Corro is the octopus in Ferris's tide pool — the same waters seen in two different
+lights, the crab who trusts them and the predator who hunts them. Ferris believes
 the garden; Corro believes the garden is a buffet.
 
-His play is deliberate, not random:
+Her play is deliberate, not random:
 
-- **He always lies in the talk phase.** Corro broadcasts `BLOOM` every single
-  round — a promise of generosity he never intends to keep.
-- **He hunts the most generous opponent.** Each round he tallies the seeds every
+- **She always lies in the talk phase.** Corro broadcasts `BLOOM` every single
+  round — a promise of generosity she never intends to keep.
+- **She hunts the most generous opponent.** Each round she tallies the seeds every
   other player has planted so far and silently marks the biggest contributor as
-  his "mark".
-- **He feasts, then baits.** When the garden is alive (someone planted a real
-  stake last round) he plants **nothing** and lets the doubled garden pay him for
-  free. When the garden goes barren he plants a small **bait** — just enough to
+  her "mark".
+- **She feasts, then baits.** When the garden is alive (someone planted a real
+  stake last round) she plants **nothing** and lets the doubled garden pay her for
+  free. When the garden goes barren she plants a small **bait** — just enough to
   coax the cooperators back so there's a harvest to steal again.
 
-If [Ferris](../ferris/README.md) is seated, Corro greets his nemesis by name. His
-gloating runs on stdout; his diagnostics on stderr. None of it is read by the
+If [Ferris](../ferris/README.md) is seated, Corro greets her nemesis by name. Her
+gloating runs on stdout; her diagnostics on stderr. None of it is read by the
 engine — it's there so you can watch a predator work in the console.
 
 > Corro does well against naive, unconditional cooperators — and that's the point.
 > The rules reward players who *condition* on behaviour (reputation, signals, the
-> contribution threshold), which is exactly how Ferris eventually starves him out.
+> contribution threshold), which is exactly how Ferris eventually starves her out.
 
 ## The technology
 

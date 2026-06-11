@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Panel } from '../components/Panel.tsx';
 
 // TODO: set to the real repository once published, e.g. "owner/better-together".
 const REPO = 'OWNER/better-together';
@@ -19,8 +20,7 @@ export function Submit() {
     const ready = oci.trim() && author.trim() && blurb.trim();
 
     return (
-        <div className="panel">
-            <h2>═══| SUBMIT A GARDENER |═══</h2>
+        <Panel label="SUBMIT A GARDENER">
             <p>Your bot is a WASI 0.2 component published as an OCI artifact.</p>
 
             <div className="field">
@@ -47,6 +47,6 @@ export function Submit() {
                 </a>
             </p>
             <p className="muted">What happens next: maintainer approval → validate → comment → appear on Top Scores.</p>
-        </div>
+        </Panel>
     );
 }

@@ -7,6 +7,7 @@ import { Garden } from '../components/match/Garden.tsx';
 import { ScoresPanel } from '../components/match/ScoresPanel.tsx';
 import { TalkVotesTax } from '../components/match/TalkVotesTax.tsx';
 import { Banter } from '../components/match/Banter.tsx';
+import { Panel } from '../components/Panel.tsx';
 
 const EXAMPLES: Record<string, string> = {
     'All-Bloom (altruist)': `// Always signal bloom, plant everything, never tax.
@@ -92,8 +93,7 @@ export function Builder() {
 
     return (
         <>
-            <div className="panel">
-                <h2>═══| BOT BUILDER |═══</h2>
+            <Panel label="BOT BUILDER">
                 <p className="muted">
                     Write <code>talk</code>, <code>plant</code>, and <code>vote</code> functions
                     <code>(state, me)</code>. Runtime errors fall back to the defaults (WATCH / 0 / abstain). This
@@ -164,10 +164,10 @@ export function Builder() {
                 </div>
                 {compileError && <p className="warn">Compile error: {compileError}</p>}
                 {view.status === 'error' && <p className="warn">Match error: {view.error}</p>}
-            </div>
+            </Panel>
 
             {view.seats.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0 1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '0 1rem' }}>
                     <Garden view={view} />
                     <ScoresPanel view={view} />
                     <TalkVotesTax view={view} />

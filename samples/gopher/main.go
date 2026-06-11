@@ -220,7 +220,7 @@ func init() {
 			Repo:    playerRepo,
 			Lore:    playerLore,
 			Glyph:   playerGlyph,
-			Icon:    cm.None[string](),
+			Icon:    cm.Some("https://pavelsavara.github.io/better-together/icons/7239b496%23together.Gopher.png"),
 		}
 		return cm.OK[cm.Result[player.Metadata, player.Metadata, struct{}]](md)
 	}

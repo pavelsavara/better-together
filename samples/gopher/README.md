@@ -1,5 +1,7 @@
 # 🐹 Gopher — the win-stay, lose-shift forager
 
+<img src="gopher.png" alt="Gopher" width="200" align="right" />
+
 > Gopher is the garden's tireless forager — a creature of pure habit who keeps
 > digging wherever the last dig paid off, and abandons any hole that came up
 > empty. He doesn't hold grudges and he doesn't read minds; he simply repeats

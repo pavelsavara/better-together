@@ -1,0 +1,193 @@
+/* Ornamental botanical-terminal frame panel.
+   9-slice assembly of the PNG pieces produced by scripts/slice-frame.mjs
+   (see web/public/frame/). Edges tile via background-repeat so the panel is
+   responsive; corners and the bottom-center button box are fixed.
+   Background-image url()s are set inline in Panel.tsx using import.meta.env.
+   BASE_URL so the assets resolve under the GitHub Pages subpath. */
+
+.pf-frame {
+    /* Native slice dimensions (px); see web/public/frame/frame-manifest.json. */
+    --pf-lw: 290px;
+    /* left corners / left rail strip width  */
+    --pf-rw: 290px;
+    /* right corners / right rail strip width */
+    --pf-th: 290px;
+    /* top corners height                    */
+    --pf-bh: 235px;
+    /* bottom corners height                 */
+    --pf-bcw: 250px;
+    /* bottom corners width (vine-only, narrower than top/side) */
+    --pf-top-h: 115px;
+    /* top rail strip height (outer + inner rail) */
+    --pf-btn-w: 292px;
+    /* bottom-center button width (forks included, fixed) */
+    --pf-tile-x: 16px;
+    /* horizontal tile period (top & bottom) */
+    --pf-tile-y: 28px;
+    /* vertical tile period (left & right)   */
+
+    /* Whole-frame scale. Lower it for thinner chrome on smaller panels. */
+    --pf-s: 0.25;
+
+    position: relative;
+    min-width: calc((var(--pf-bcw) + var(--pf-bcw) + var(--pf-btn-w)) * var(--pf-s));
+    min-height: calc((var(--pf-th) + var(--pf-bh)) * var(--pf-s));
+    margin: 0 0 1.25rem;
+    background: var(--bg-panel);
+}
+
+.pf-frame>*:not(.pf-content) {
+    position: absolute;
+}
+
+/* ---- edges (drawn first, corners overlap them) ---- */
+.pf-edge-top {
+    top: 0;
+    left: calc(var(--pf-lw) * var(--pf-s));
+    right: calc(var(--pf-rw) * var(--pf-s));
+    height: calc(var(--pf-top-h) * var(--pf-s));
+    background-repeat: repeat-x;
+    background-size: calc(var(--pf-tile-x) * var(--pf-s)) calc(var(--pf-top-h) * var(--pf-s));
+}
+
+.pf-edge-left,
+.pf-edge-right {
+    top: calc(var(--pf-th) * var(--pf-s));
+    bottom: calc(var(--pf-bh) * var(--pf-s));
+    background-repeat: repeat-y;
+}
+
+.pf-edge-left {
+    left: 0;
+    width: calc(var(--pf-lw) * var(--pf-s));
+    background-size: calc(var(--pf-lw) * var(--pf-s)) calc(var(--pf-tile-y) * var(--pf-s));
+}
+
+.pf-edge-right {
+    right: 0;
+    width: calc(var(--pf-rw) * var(--pf-s));
+    background-size: calc(var(--pf-rw) * var(--pf-s)) calc(var(--pf-tile-y) * var(--pf-s));
+}
+
+/* bottom rail tiles on either side of the centered button box */
+.pf-edge-bottom-l,
+.pf-edge-bottom-r {
+    bottom: 0;
+    height: calc(var(--pf-bh) * var(--pf-s));
+    background-repeat: repeat-x;
+    background-size: calc(var(--pf-tile-x) * var(--pf-s)) calc(var(--pf-bh) * var(--pf-s));
+}
+
+.pf-edge-bottom-l {
+    left: calc(var(--pf-bcw) * var(--pf-s));
+    right: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
+}
+
+.pf-edge-bottom-r {
+    left: calc(50% + (var(--pf-btn-w) * var(--pf-s)) / 2);
+    right: calc(var(--pf-bcw) * var(--pf-s));
+}
+
+/* ---- bottom-center button box (fixed, centered) ---- */
+.pf-center-bottom {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(var(--pf-btn-w) * var(--pf-s));
+    height: calc(var(--pf-bh) * var(--pf-s));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Title sits in the empty slot between the button rails (rails are at ~51% and
+   ~74% of the slice height). Font scales with the frame so it always fits the
+   box — matches web/public/frame/frame-demo.html. */
+.pf-label {
+    position: absolute;
+    top: 62%;
+    transform: translateY(-50%);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-glow, #d4bdf2);
+    font-family: var(--font-mono);
+    font-size: calc(15px * var(--pf-s));
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+    text-shadow: var(--glow-soft, 0 1px 6px rgba(178, 146, 230, 0.28));
+    cursor: inherit;
+}
+
+button.pf-label {
+    cursor: pointer;
+}
+
+button.pf-label:hover {
+    color: #fff;
+    text-shadow: var(--glow-soft, 0 1px 6px rgba(178, 146, 230, 0.28));
+}
+
+/* ---- corners (on top) ---- */
+.pf-corner {
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    z-index: 2;
+}
+
+.pf-corner-tl {
+    top: 0;
+    left: 0;
+    width: calc(var(--pf-lw) * var(--pf-s));
+    height: calc(var(--pf-th) * var(--pf-s));
+}
+
+.pf-corner-tr {
+    top: 0;
+    right: 0;
+    width: calc(var(--pf-rw) * var(--pf-s));
+    height: calc(var(--pf-th) * var(--pf-s));
+}
+
+.pf-corner-bl {
+    bottom: 0;
+    left: 0;
+    width: calc(var(--pf-bcw) * var(--pf-s));
+    height: calc(var(--pf-bh) * var(--pf-s));
+}
+
+.pf-corner-br {
+    bottom: 0;
+    right: 0;
+    width: calc(var(--pf-bcw) * var(--pf-s));
+    height: calc(var(--pf-bh) * var(--pf-s));
+}
+
+/* ---- inner content area (in-flow; drives the panel height) ----
+   Padding insets the content past the ornamental chrome. The 0.55 factor lets
+   text tuck under the sparse outer reaches of the corner vines (matches the
+   slice demo). The panel grows with its content; min-height on .pf-frame keeps
+   the top and bottom chrome from overlapping when content is short. */
+.pf-content {
+    position: relative;
+    z-index: 1;
+    padding: calc(var(--pf-th) * var(--pf-s) * 0.55) calc(var(--pf-rw) * var(--pf-s) * 0.55) calc(var(--pf-bh) * var(--pf-s) * 0.55) calc(var(--pf-lw) * var(--pf-s) * 0.55);
+}
+
+/* When a title is present in the bottom box, clear the content above it. */
+.pf-has-header .pf-content {
+    padding-bottom: calc(var(--pf-bh) * var(--pf-s) + 0.85rem);
+}
+
+.pf-content>h2:first-child {
+    margin-top: 0;
+}
+
+.pf-content>h2 {
+    border-bottom: 1px dashed var(--accent-dim);
+    padding-bottom: 0.4rem;
+}

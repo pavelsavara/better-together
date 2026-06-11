@@ -1,5 +1,7 @@
 # 🦀 Ferris — the eternal optimist
 
+<img src="ferris.png" alt="Ferris" width="200" align="right" />
+
 > Ferris is the garden's eternal optimist — a crab who believes every plot can
 > bloom if everyone just chips in. He keeps a little notebook of everyone he's
 > ever played with, forgives slowly, and trusts again gladly. He'd rather lose a

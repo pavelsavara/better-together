@@ -2,16 +2,22 @@
    Palette + conventions from docs/UI-sketches.md §8. Hand-rolled (no UI kit). */
 
 :root {
-    --bg-void: #0a0a0f;
-    --bg-panel: #12101a;
-    --border-frame: #3a2f5c;
-    --accent-bloom: #b98cff;
-    --accent-glow: #d9b8ff;
-    --accent-dim: #6d5a99;
-    --text-primary: #e8e2f5;
+    /* "Cyber-Botanical Noir" — ultra-dark charcoal ground, deep velvet plum
+       chrome, muted lavender accents (a shadow, not a neon glow), chalk-white
+       foreground. See docs/visual-style.md. */
+    --bg-void: #08070c;
+    --bg-panel: #120f14;
+    --border-frame: #352a50;
+    --accent-bloom: #b292e6;
+    --accent-glow: #d4bdf2;
+    --accent-dim: #6a578f;
+    --text-primary: #ece9f1;
     --text-muted: #8a82a6;
     --state-positive: #7ee0c8;
     --state-warn: #ffb37e;
+
+    /* Muted lavender "shadow" — a soft cast, deliberately not a neon bloom. */
+    --glow-soft: 0 1px 6px rgba(178, 146, 230, 0.28);
 
     --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, 'Cascadia Code', 'Courier New', monospace;
 }
@@ -29,7 +35,13 @@ body,
     color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 15px;
+    font-weight: 300;
     line-height: 1.5;
+    /* Dark native form controls: unchecked radios/checkboxes render in the same
+       gray as the unfilled slider track instead of bright white. */
+    color-scheme: dark;
+    /* Plum form-control highlight (slider, radio, checkbox) — never OS blue. */
+    accent-color: var(--accent-bloom);
 }
 
 a {
@@ -39,7 +51,7 @@ a {
 
 a:hover {
     color: var(--accent-glow);
-    text-shadow: 0 0 6px var(--accent-glow);
+    text-shadow: var(--glow-soft);
 }
 
 h1,
@@ -48,7 +60,7 @@ h3,
 h4 {
     font-family: var(--font-mono);
     color: var(--accent-bloom);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 /* App shell */
@@ -74,8 +86,8 @@ h4 {
 .brand {
     color: var(--accent-bloom);
     font-size: 1.2rem;
-    font-weight: 700;
-    text-shadow: 0 0 8px rgba(185, 140, 255, 0.4);
+    font-weight: 500;
+    text-shadow: var(--glow-soft);
 }
 
 .nav {
@@ -90,7 +102,7 @@ h4 {
 
 .nav a.active {
     color: var(--accent-glow);
-    text-shadow: 0 0 6px var(--accent-glow);
+    text-shadow: var(--glow-soft);
 }
 
 .content {
@@ -138,7 +150,7 @@ td {
 
 th {
     color: var(--accent-dim);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 tbody tr:hover {
@@ -163,7 +175,7 @@ tbody tr:hover {
 .tab.active {
     color: var(--accent-glow);
     border-color: var(--accent-bloom);
-    text-shadow: 0 0 6px var(--accent-glow);
+    text-shadow: var(--glow-soft);
 }
 
 .positive {
@@ -235,6 +247,7 @@ select {
     color: var(--text-primary);
     border: 1px solid var(--border-frame);
     font-family: var(--font-mono);
+    font-weight: inherit;
     padding: 0.4rem 0.6rem;
     width: 100%;
 }
@@ -252,7 +265,7 @@ select {
 .btn:hover {
     color: var(--accent-glow);
     border-color: var(--accent-glow);
-    text-shadow: 0 0 6px var(--accent-glow);
+    text-shadow: var(--glow-soft);
 }
 
 .field {

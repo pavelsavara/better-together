@@ -1,7 +1,5 @@
 # Player Rules
 
-[← Back to README](../README.md) · See also: [Engine Rules](engine-rules.md)
-
 *This is everything a bot author needs to know to submit a strategy.*
 
 ### 1. Match Setup

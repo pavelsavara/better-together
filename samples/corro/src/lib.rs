@@ -1,27 +1,27 @@
 //! Corro — the enemy of Ferris.
 //!
 //! Where Ferris is a naive collaborator that rewards cooperation, Corro is a
-//! **deceptive, adaptive predator**. He is not random and not impulsive: he is
-//! patient, manipulative, and data-driven. Every round he *talks* a beautiful
-//! game — he ALWAYS signals `BLOOM`, promising generosity — and then plants
+//! **deceptive, adaptive predator**. She is not random and not impulsive: she is
+//! patient, manipulative, and data-driven. Every round she *talks* a beautiful
+//! game — she ALWAYS signals `BLOOM`, promising generosity — and then plants
 //! almost nothing, feasting on whatever the honest gardeners put in.
 //!
 //! # Strategy (deterministic; adapts to the table from match history)
 //!
-//! * **Always promise.** Corro's `talk` is always `BLOOM`. Cheap talk he never
+//! * **Always promise.** Corro's `talk` is always `BLOOM`. Cheap talk she never
 //!   honours — the lie is the point.
-//! * **Find the mark.** From the round history he tracks who plants the most and
-//!   fixes on the single most generous gardener as his "mark", taunting them by
+//! * **Find the mark.** From the round history she tracks who plants the most and
+//!   fixes on the single most generous gardener as her "mark", taunting them by
 //!   name.
 //! * **Feast (plant 0).** Whenever the garden is alive — i.e. some honest player
 //!   planted a real stake (≥ 3) last round — Corro plants nothing and lives off
 //!   the doubled garden everyone else paid for.
 //! * **Prime the pump (bait).** When the garden is barren (round 1, or nobody
-//!   planted a real stake last round) he plants a small bait so cooperation
+//!   planted a real stake last round) she plants a small bait so cooperation
 //!   restarts — purely so there's a harvest to steal next round.
 //!
-//! He gloats on **stdout** the whole time (pure flavor, never a game channel).
-//! Corro keeps **no cross-match memory** and imports no `wasi:random`: his play
+//! She gloats on **stdout** the whole time (pure flavor, never a game channel).
+//! Corro keeps **no cross-match memory** and imports no `wasi:random`: her play
 //! is a deterministic function of the visible match history.
 //!
 //! # Build (cargo-component)
@@ -45,16 +45,16 @@ use bindings::exports::better_together::gardener::player::{
 // ──────────────────────────── Identity ────────────────────────────
 
 const PLAYER_NAME: &str = "together.Corro";
-const PLAYER_GLYPH: &str = "🥀";
+const PLAYER_GLYPH: &str = "🐙";
 const PLAYER_VERSION: &str = "0.1.0";
 const PLAYER_AUTHOR: &str = "Better Together samples";
 const PLAYER_REPO: &str = "https://github.com/pavelsavara/better-together";
 const PLAYER_LORE: &str = "Corro is the rot beneath the petals — Ferris's mirror \
- and nemesis. He smiles in BLOOM and harvests in silence, certain that every \
- generous gardener is simply a meal that hasn't noticed yet. He plants only to \
- bait, and remembers only who is worth deceiving. He tips his claw to Reynard \
+ and nemesis. She smiles in BLOOM and harvests in silence, certain that every \
+ generous gardener is simply a meal that hasn't noticed yet. She plants only to \
+ bait, and remembers only who is worth deceiving. She tips a tentacle to Reynard \
  the fox — a fellow diner with better table manners — and spits at Bram the \
- beaver, whose guild dams the stream and taxes parasites like him.";
+ beaver, whose guild dams the stream and taxes parasites like her.";
 
 // ─────────────────────────── Strategy knobs ───────────────────────
 
@@ -104,21 +104,21 @@ fn garden_alive_last_round(history: &[RoundResult], self_id: &str) -> bool {
 // in the plant phase, often naming his current mark. The engine never reads it.
 
 fn say(line: &str) {
-    println!("🦀 corro: {line}");
+    println!("🐙 corro: {line}");
 }
 
 fn talk_banter(mark: Option<&str>, round: u8) {
     let i = round as usize;
     if let Some(mark) = mark {
         let pool = [
-            format!("{mark}, you sweet, generous fool. Keep it coming. 🌚"),
-            format!("Your garden looks lovely, {mark}. I'll be… *tending* it. 😈"),
+            format!("{mark}, you sweet, generous fool. Keep it coming. 🐙"),
+            format!("Your garden looks lovely, {mark}. I'll be… *tending* it. 🐙"),
             format!("Round {round} and you STILL trust me, {mark}? Exquisite."),
         ];
         say(&pool[i % pool.len()]);
     } else {
         let pool = [
-            "BLOOM, of course. 🌚 (I always say that.)".to_string(),
+            "BLOOM, of course. 🐙 (I always say that.)".to_string(),
             "I promise to plant. I promise so beautifully.".to_string(),
             "Trust me. Everyone does. Once.".to_string(),
         ];
@@ -130,19 +130,19 @@ fn plant_banter(baiting: bool, mark: Option<&str>, round: u8) {
     let i = round as usize;
     if baiting {
         let pool = [
-            "A dead garden feeds no one. Let me… *prime the pump*. 😈".to_string(),
+            "A dead garden feeds no one. Let me… *prime the pump*. 🐙".to_string(),
             "Fine — a *taste* of generosity. Get used to it. Then I take it all back."
                 .to_string(),
         ];
         say(&pool[i % pool.len()]);
     } else if let Some(mark) = mark {
         say(&format!(
-            "Another harvest straight into my pot, courtesy of {mark}. 🦀"
+            "Another harvest straight into my pot, courtesy of {mark}. 🐙"
         ));
     } else {
         let pool = [
-            "Mmm. Free harvest. Thanks for the seeds, suckers. 🦀".to_string(),
-            "Why plant when the garden plants itself? 🌚".to_string(),
+            "Mmm. Free harvest. Thanks for the seeds, suckers. 🐙".to_string(),
+            "Why plant when the garden plants itself? 🐙".to_string(),
             "I signalled BLOOM and planted nothing. As nature intended.".to_string(),
         ];
         say(&pool[i % pool.len()]);
@@ -190,7 +190,7 @@ impl GuestGardener for CorroGardener {
             repo: PLAYER_REPO.to_string(),
             lore: PLAYER_LORE.to_string(),
             glyph: PLAYER_GLYPH.to_string(),
-            icon: None,
+            icon: Some("https://pavelsavara.github.io/better-together/icons/90ec0fe4%23together.Corro.png".to_string()),
         })
     }
 
@@ -209,7 +209,7 @@ impl GuestGardener for CorroGardener {
             .iter()
             .any(|id| id.eq_ignore_ascii_case("ferris"))
         {
-            say("Ferris. We meet again. Smile while you can. 🦀");
+            say("Ferris. We meet again. Smile while you can. 🐙");
         }
         eprintln!(
             "[corro] match {} starting: K={}, prey={:?}",
@@ -263,7 +263,7 @@ impl GuestGardener for CorroGardener {
 
     fn match_end(&self, summary: MatchSummary) -> Result<(), ()> {
         if summary.your_score > 0.0 {
-            say("A fine harvest. Same time next match? 🦀");
+            say("A fine harvest. Same time next match? 🐙");
         }
         eprintln!(
             "[corro] match ended after {} round(s); my score {:.2}",

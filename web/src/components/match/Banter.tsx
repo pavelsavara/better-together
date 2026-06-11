@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { MatchView } from '../../engine/controller.ts';
+import { Panel } from '../Panel.tsx';
 
 /** Streams each seat's captured stdout as in-character banter (stderr hidden). */
 export function Banter({ view }: { view: MatchView }) {
@@ -12,8 +13,7 @@ export function Banter({ view }: { view: MatchView }) {
     }, [view.banter.length]);
 
     return (
-        <div className="panel">
-            <h2>═══| BANTER |═══</h2>
+        <Panel label="BANTER">
             <div ref={ref} style={{ maxHeight: '12rem', overflowY: 'auto' }}>
                 {view.banter.length === 0 ? (
                     <p className="muted">…stdout per seat…</p>
@@ -27,6 +27,6 @@ export function Banter({ view }: { view: MatchView }) {
                     ))
                 )}
             </div>
-        </div>
+        </Panel>
     );
 }

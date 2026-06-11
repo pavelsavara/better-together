@@ -178,7 +178,7 @@ std::expected<bt::Metadata, wit::Void> ex::Gardener::Metadata() {
           "with Bram the beaver's guild, and his book is the one place Reynard "
           "the fox's careful skim still shows up in red."),
       wit::string::from_view("\xF0\x9F\x90\x80"),
-      std::optional<wit::string>{},
+      std::optional<wit::string>{wit::string::from_view("https://pavelsavara.github.io/better-together/icons/1fe77c84%23together.Keith.png")},
   };
 }
 

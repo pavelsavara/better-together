@@ -1,4 +1,5 @@
 import type { MatchView } from '../../engine/controller.ts';
+import { Panel } from '../Panel.tsx';
 
 /** Per-seat round + running score, sorted by running total descending. */
 export function ScoresPanel({ view }: { view: MatchView }) {
@@ -10,8 +11,7 @@ export function ScoresPanel({ view }: { view: MatchView }) {
     }));
     rows.sort((a, b) => b.total - a.total);
     return (
-        <div className="panel">
-            <h2>═══| SCORES |═══</h2>
+        <Panel label="SCORES">
             <table>
                 <thead>
                     <tr>
@@ -37,6 +37,6 @@ export function ScoresPanel({ view }: { view: MatchView }) {
                     garden total: {o.garden.gardenTotal} · payout/player: {o.garden.gardenPayout.toFixed(1)}
                 </p>
             )}
-        </div>
+        </Panel>
     );
 }

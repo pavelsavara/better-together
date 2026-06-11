@@ -33,7 +33,7 @@ public sealed class PlayerImpl : IPlayer
                 + "He warms to Bram the beaver's honest guild and keeps his spines half-up "
                 + "around Reynard the fox, whose smile never quite reaches his ledger.",
             glyph: "🦔",
-            icon: null);
+            icon: "https://pavelsavara.github.io/better-together/icons/5efad061%23together.Andy.png");
 
         public void MatchStart(Wit.MatchContext context) =>
             _brain.MatchStart(context.selfId);

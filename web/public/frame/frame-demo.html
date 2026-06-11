@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Better Together — frame slices demo</title>
+    <style>
+        :root {
+            /* Native slice dimensions (px), see frame-manifest.json. */
+            --lw: 290px;
+            /* left corners / left rail strip width  */
+            --rw: 290px;
+            /* right corners / right rail strip width */
+            --th: 290px;
+            /* top corners height                    */
+            --bh: 235px;
+            /* bottom corners height                 */
+            --bcw: 250px;
+            /* bottom corners width (vine-only, narrower than top/side) */
+            --top-h: 115px;
+            /* top rail strip height (outer + inner rail) */
+            --btn-w: 292px;
+            /* bottom-center button width (forks included, fixed) */
+            --tile-x: 16px;
+            /* horizontal tile period (top & bottom) */
+            --tile-y: 28px;
+            /* vertical tile period (left & right)   */
+
+            /* Whole-frame scale. Lower it for smaller panels. */
+            --s: 1;
+
+            --bg-panel: #0a0a0f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px;
+            background: #050507;
+            color: #e8e2f5;
+            font-family: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .controls label {
+            margin-right: 16px;
+        }
+
+        /* The framed panel. Resize it from the bottom-right handle. */
+        .frame {
+            position: relative;
+            width: 900px;
+            height: 620px;
+            min-width: calc((var(--bcw) + var(--bcw) + var(--btn-w)) * var(--s));
+            min-height: calc((var(--th) + var(--bh)) * var(--s));
+            background: var(--bg-panel);
+            resize: both;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .frame>* {
+            position: absolute;
+            background-repeat: no-repeat;
+        }
+
+        /* ---- edges (drawn first, corners overlap them) ---- */
+        .edge-top {
+            top: 0;
+            left: calc(var(--lw) * var(--s));
+            right: calc(var(--rw) * var(--s));
+            height: calc(var(--top-h) * var(--s));
+            background-image: url(./edge-top.png);
+            background-repeat: repeat-x;
+            background-size: calc(var(--tile-x) * var(--s)) calc(var(--top-h) * var(--s));
+        }
+
+        .edge-left,
+        .edge-right {
+            top: calc(var(--th) * var(--s));
+            bottom: calc(var(--bh) * var(--s));
+            background-repeat: repeat-y;
+        }
+
+        .edge-left {
+            left: 0;
+            width: calc(var(--lw) * var(--s));
+            background-image: url(./edge-left.png);
+            background-size: calc(var(--lw) * var(--s)) calc(var(--tile-y) * var(--s));
+        }
+
+        .edge-right {
+            right: 0;
+            width: calc(var(--rw) * var(--s));
+            background-image: url(./edge-right.png);
+            background-size: calc(var(--rw) * var(--s)) calc(var(--tile-y) * var(--s));
+        }
+
+        /* bottom rail tiles on either side of the centered button */
+        .edge-bottom-l,
+        .edge-bottom-r {
+            bottom: 0;
+            height: calc(var(--bh) * var(--s));
+            background-image: url(./edge-bottom.png);
+            background-repeat: repeat-x;
+            background-size: calc(var(--tile-x) * var(--s)) calc(var(--bh) * var(--s));
+        }
+
+        .edge-bottom-l {
+            left: calc(var(--bcw) * var(--s));
+            right: calc(50% + (var(--btn-w) * var(--s)) / 2);
+        }
+
+        .edge-bottom-r {
+            left: calc(50% + (var(--btn-w) * var(--s)) / 2);
+            right: calc(var(--bcw) * var(--s));
+        }
+
+        /* ---- bottom-center button (fixed, centered) ---- */
+        .center-bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(var(--btn-w) * var(--s));
+            height: calc(var(--bh) * var(--s));
+            background-image: url(./center-bottom.png);
+            background-size: 100% 100%;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* HTML label sits in the empty slot between the button rails
+           (rails are at ~51% and ~74% of the slice height). */
+        .center-bottom .label {
+            position: absolute;
+            top: 62%;
+            transform: translateY(-50%);
+            color: var(--accent-bloom, #b98cff);
+            font-size: calc(15px * var(--s));
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+            text-shadow: 0 0 6px rgba(217, 184, 255, 0.5);
+        }
+
+        /* ---- corners (on top) ---- */
+        .corner {
+            background-size: 100% 100%;
+            z-index: 2;
+        }
+
+        .corner-tl {
+            top: 0;
+            left: 0;
+            width: calc(var(--lw) * var(--s));
+            height: calc(var(--th) * var(--s));
+            background-image: url(./corner-tl.png);
+        }
+
+        .corner-tr {
+            top: 0;
+            right: 0;
+            width: calc(var(--rw) * var(--s));
+            height: calc(var(--th) * var(--s));
+            background-image: url(./corner-tr.png);
+        }
+
+        .corner-bl {
+            bottom: 0;
+            left: 0;
+            width: calc(var(--bcw) * var(--s));
+            height: calc(var(--bh) * var(--s));
+            background-image: url(./corner-bl.png);
+        }
+
+        .corner-br {
+            bottom: 0;
+            right: 0;
+            width: calc(var(--bcw) * var(--s));
+            height: calc(var(--bh) * var(--s));
+            background-image: url(./corner-br.png);
+        }
+
+        /* ---- inner content area ---- */
+        .content {
+            position: absolute;
+            z-index: 1;
+            top: calc(var(--th) * var(--s) * 0.55);
+            left: calc(var(--lw) * var(--s) * 0.55);
+            right: calc(var(--rw) * var(--s) * 0.55);
+            bottom: calc(var(--bh) * var(--s) * 0.55);
+            padding: 16px;
+            color: #8a82a6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <label>scale
+            <input id="scale" type="range" min="0.4" max="1.2" step="0.05" value="1" />
+            <span id="scaleVal">1.00</span>
+        </label>
+        <span>Drag the panel's bottom-right corner to resize.</span>
+    </div>
+
+    <div class="frame" id="frame">
+        <div class="edge-top"></div>
+        <div class="edge-left"></div>
+        <div class="edge-right"></div>
+        <div class="edge-bottom-l"></div>
+        <div class="edge-bottom-r"></div>
+        <div class="center-bottom"><span class="label">[P]LANT [W]ATER</span></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+        <div class="content">« panel content »</div>
+    </div>
+
+    <script>
+        const scale = document.getElementById('scale');
+        const out = document.getElementById('scaleVal');
+        const frame = document.getElementById('frame');
+        scale.addEventListener('input', () => {
+            frame.style.setProperty('--s', scale.value);
+            out.textContent = (+scale.value).toFixed(2);
+        });
+    </script>
+</body>
+
+</html>

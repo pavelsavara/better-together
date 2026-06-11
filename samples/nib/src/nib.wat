@@ -41,6 +41,7 @@
 ;;  1184  lore                                      (len 185)
 ;;  1408  glyph "🖋️"                                 (len 4)
 ;;  1600  banter line (ends with \n)                (len 59)
+;;  1664  icon url                                   (len 79)
 ;; ---------------------------------------------------------------------------
 
 (component $nib
@@ -160,6 +161,7 @@
     (data (i32.const 1184) "Nib is the smallest gardener: a single seed, hand-written in raw wasm text. It keeps no memory and bears no grudge - each round it matches the table's promises and adds a little more.")
     (data (i32.const 1408) "\f0\9f\8c\b1")
     (data (i32.const 1600) "nib: i match what you pledge, then plant a little extra.\n")
+    (data (i32.const 1664) "https://pavelsavara.github.io/better-together/icons/0744dd6e%23together.Nib.png")
   )
   (core instance $mem-inst (instantiate $mem-module))
   (alias core export $mem-inst "memory" (core memory $mem))
@@ -238,7 +240,8 @@
       (i32.store (i32.const 572) (i32.const 1120)) (i32.store (i32.const 576) (i32.const 46))  ;; repo
       (i32.store (i32.const 580) (i32.const 1184)) (i32.store (i32.const 584) (i32.const 185)) ;; lore
       (i32.store (i32.const 588) (i32.const 1408)) (i32.store (i32.const 592) (i32.const 4))   ;; glyph
-      (i32.store8 (i32.const 596) (i32.const 0))                                              ;; icon = none
+      (i32.store8 (i32.const 596) (i32.const 1))                                              ;; icon = some
+      (i32.store (i32.const 600) (i32.const 1664)) (i32.store (i32.const 604) (i32.const 79))  ;; icon url
       (i32.const 544))
 
     ;; ---- match-start(context) -> result -------------------------------

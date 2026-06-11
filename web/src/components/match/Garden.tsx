@@ -1,12 +1,12 @@
 import type { MatchView } from '../../engine/controller.ts';
+import { Panel } from '../Panel.tsx';
 
 /** The garden: each seat's row fills with glyph-seeds as it plants. */
 export function Garden({ view }: { view: MatchView }) {
     const plantById = new Map(view.plants.map((p) => [p.id, p.plant] as const));
     const o = view.lastOutcome;
     return (
-        <div className="panel">
-            <h2>═══| THE GARDEN |═══</h2>
+        <Panel label="THE GARDEN">
             <p className="muted" aria-live="polite">
                 Round {view.round || '—'} {view.phase ? `· phase: ● ${view.phase.toUpperCase()}` : ''}
             </p>
@@ -28,6 +28,6 @@ export function Garden({ view }: { view: MatchView }) {
                     {o.garden.taxTarget && <> · tax → {o.garden.taxTarget} ({o.garden.taxCollected})</>}
                 </p>
             )}
-        </div>
+        </Panel>
     );
 }

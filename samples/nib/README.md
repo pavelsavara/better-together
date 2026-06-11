@@ -1,5 +1,7 @@
 # 🖋️ Nib — the smallest gardener
 
+<img src="nib.png" alt="Nib" width="200" align="right" />
+
 > Nib is a single seed. There is no language, no runtime, no standard library
 > behind it — just a few hundred lines of WebAssembly text written by hand. It
 > keeps no memory and bears no grudge: each round it simply matches the table's
