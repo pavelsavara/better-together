@@ -1,8 +1,8 @@
 {
   "engineVersion": "0.1.0",
-  "notes": "tuning: budget=5000, windowPerBot=500, minMatchesToRank=1",
-  "totalMatches": 5000,
-  "totalRuns": 1,
-  "updated": "2026-06-11T08:31:37.518Z",
+  "notes": "tuning: budget=500, windowPerBot=500, minMatchesToRank=50",
+  "totalMatches": 5500,
+  "totalRuns": 2,
+  "updated": "2026-06-11T18:33:19.771Z",
   "version": 1
 }

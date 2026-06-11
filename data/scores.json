@@ -1,109 +1,129 @@
 {
-  "baselineMeanGroupTotal": 501.81290322580645,
-  "computedAt": "2026-06-11T08:31:37.518Z",
+  "baselineMeanGroupTotal": 505.92,
+  "computedAt": "2026-06-11T18:33:19.771Z",
   "leaderboard": [
     {
-      "coPlayerScore": 24.18709677419355,
-      "coPlayerStdErr": 6.992925139311017,
-      "consistencyStd": 156.3665597306662,
-      "id": "3ae4ab80#together.Dusty",
-      "matchesInWindow": 500,
+      "coPlayerScore": 34.86341013824887,
+      "coPlayerStdErr": 12.586758841276252,
+      "consistencyStd": 185.41453582142032,
+      "id": "7239b496#together.Gopher",
+      "matchesInWindow": 217,
       "rank": 1,
       "ranked": true,
-      "rawScore": 101.06
+      "rawScore": 105.48387096774194
     },
     {
-      "coPlayerScore": 20.227096774193512,
-      "coPlayerStdErr": 6.9488596258811075,
-      "consistencyStd": 155.38122489573914,
-      "id": "9317c131#together.Khaos",
-      "matchesInWindow": 500,
+      "coPlayerScore": 31.144676616915433,
+      "coPlayerStdErr": 13.5008458913208,
+      "consistencyStd": 191.40752544249648,
+      "id": "90ec0fe4#together.Corro",
+      "matchesInWindow": 201,
       "rank": 2,
       "ranked": true,
-      "rawScore": 100.5
+      "rawScore": 103.28358208955224
     },
     {
-      "coPlayerScore": 19.827096774193535,
-      "coPlayerStdErr": 7.443859407979939,
-      "consistencyStd": 166.44975651194486,
-      "id": "bf873e4b#together.Bram",
-      "matchesInWindow": 500,
+      "coPlayerScore": 22.59851851851846,
+      "coPlayerStdErr": 12.02153072528544,
+      "consistencyStd": 165.26872355357375,
+      "id": "3ae4ab80#together.Dusty",
+      "matchesInWindow": 189,
       "rank": 3,
       "ranked": true,
-      "rawScore": 100.9
+      "rawScore": 101.95767195767196
     },
     {
-      "coPlayerScore": 18.20709677419353,
-      "coPlayerStdErr": 7.060829258638072,
-      "consistencyStd": 157.88494199834173,
-      "id": "ae2d9ec0#together.Reynard",
-      "matchesInWindow": 500,
+      "coPlayerScore": 22.079999999999984,
+      "coPlayerStdErr": 13.248065467901272,
+      "consistencyStd": 189.68343080398094,
+      "id": "df693caa#together.Ferris",
+      "matchesInWindow": 205,
       "rank": 4,
       "ranked": true,
-      "rawScore": 100.46
+      "rawScore": 102.92682926829268
     },
     {
-      "coPlayerScore": 16.487096774193503,
-      "coPlayerStdErr": 7.436047983925243,
-      "consistencyStd": 166.27508776007107,
-      "id": "df693caa#together.Ferris",
-      "matchesInWindow": 500,
+      "coPlayerScore": 14.172592592592594,
+      "coPlayerStdErr": 12.306729939832742,
+      "consistencyStd": 180.87125252893765,
+      "id": "5efad061#together.Andy",
+      "matchesInWindow": 216,
       "rank": 5,
       "ranked": true,
-      "rawScore": 101.02
+      "rawScore": 101.25
     },
     {
-      "coPlayerScore": 13.187096774193549,
-      "coPlayerStdErr": 7.108182081588091,
-      "consistencyStd": 158.9437833087693,
-      "id": "7239b496#together.Gopher",
-      "matchesInWindow": 500,
+      "coPlayerScore": 13.084975124378104,
+      "coPlayerStdErr": 11.948064431418812,
+      "consistencyStd": 169.39304878041602,
+      "id": "d5c40e97#together.Keith",
+      "matchesInWindow": 201,
       "rank": 6,
       "ranked": true,
-      "rawScore": 99.94
+      "rawScore": 101.24378109452736
     },
     {
-      "coPlayerScore": 11.687096774193549,
-      "coPlayerStdErr": 7.191950242916951,
-      "consistencyStd": 160.81689633958428,
-      "id": "5efad061#together.Andy",
-      "matchesInWindow": 500,
+      "coPlayerScore": 12.33112107623316,
+      "coPlayerStdErr": 11.185549153341976,
+      "consistencyStd": 167.03586949870365,
+      "id": "ae2d9ec0#together.Reynard",
+      "matchesInWindow": 223,
       "rank": 7,
       "ranked": true,
-      "rawScore": 99.7
+      "rawScore": 101.65919282511211
     },
     {
-      "coPlayerScore": 9.94709677419354,
-      "coPlayerStdErr": 6.560356801480034,
-      "consistencyStd": 146.6940376476245,
-      "id": "90ec0fe4#together.Corro",
-      "matchesInWindow": 500,
+      "coPlayerScore": 11.458640776699042,
+      "coPlayerStdErr": 12.283632462530388,
+      "consistencyStd": 176.30329280462476,
+      "id": "a100aa15#together.Nib",
+      "matchesInWindow": 206,
       "rank": 8,
       "ranked": true,
-      "rawScore": 99.36
+      "rawScore": 101.2135922330097
     },
     {
-      "coPlayerScore": 9.767096774193533,
-      "coPlayerStdErr": 7.102301921572359,
-      "consistencyStd": 158.81229893363175,
-      "id": "0744dd6e#together.Nib",
-      "matchesInWindow": 500,
+      "coPlayerScore": 11.185263157894667,
+      "coPlayerStdErr": 10.393458858750508,
+      "consistencyStd": 156.93778718672883,
+      "id": "bf873e4b#together.Bram",
+      "matchesInWindow": 228,
       "rank": 9,
       "ranked": true,
-      "rawScore": 99.1
+      "rawScore": 100.78947368421052
     },
     {
-      "coPlayerScore": 6.7870967741935715,
-      "coPlayerStdErr": 6.386678269541801,
-      "consistencyStd": 142.81046761116193,
-      "id": "1fe77c84#together.Keith",
-      "matchesInWindow": 500,
+      "coPlayerScore": 8.955621890547206,
+      "coPlayerStdErr": 11.497157220068217,
+      "consistencyStd": 163.00033574424415,
+      "id": "9317c131#together.Khaos",
+      "matchesInWindow": 201,
       "rank": 10,
       "ranked": true,
-      "rawScore": 99.6
+      "rawScore": 100.19900497512438
+    },
+    {
+      "coPlayerScore": 8.4859405940594,
+      "coPlayerStdErr": 12.17006188186185,
+      "consistencyStd": 172.969078317733,
+      "id": "1fe77c84#together.Keith",
+      "matchesInWindow": 202,
+      "rank": 11,
+      "ranked": true,
+      "rawScore": 101.53465346534654
+    },
+    {
+      "coPlayerScore": 5.874871794871751,
+      "coPlayerStdErr": 10.468122872840325,
+      "consistencyStd": 146.17938060401045,
+      "id": "0744dd6e#together.Nib",
+      "matchesInWindow": 195,
+      "rank": 12,
+      "ranked": true,
+      "rawScore": 100.35897435897436
     }
   ],
-  "minMatchesToRank": 1,
+  "minMatchesToRank": 50,
   "version": 1,
   "window": {
     "matchesPerBot": 500
