@@ -37,10 +37,17 @@ wit-bindgen cpp "${HERE}/wit" --world keith --out-dir "${BUILD}"
 # keeps the standard library's iostream/filesystem code from pulling in the
 # C++ exception runtime (Keith never throws); -std=c++23 is required for
 # std::expected used across the generated boundary.
-"${CLANGXX}" --target=wasm32-wasip2 -mexec-model=reactor -std=c++23 -O2 \
+#
+# Size optimization: -Oz favours size over speed, -flto enables link-time
+# optimization across the strategy + generated glue, and the linker flags drop
+# unused sections and strip all symbols. Keith's logic is small, so these
+# noticeably shrink the component.
+"${CLANGXX}" --target=wasm32-wasip2 -mexec-model=reactor -std=c++23 -Oz -flto \
   -fno-exceptions \
+  -ffunction-sections -fdata-sections \
   -I "${BUILD}" \
   "${BUILD}/keith.cpp" "${HERE}/src/keith.cpp" "${BUILD}/keith_component_type.o" \
+  -Wl,--gc-sections -Wl,--strip-all \
   -o "${HERE}/keith.wasm"
 
 wasm-tools validate "${HERE}/keith.wasm"

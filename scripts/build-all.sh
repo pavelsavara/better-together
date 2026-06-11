@@ -53,7 +53,9 @@ echo "==> gopher  (Go / TinyGo / wit-bindgen-go)"
   export GOFLAGS="-buildvcs=false"
   go mod download
   wit-bindgen-go generate --world gopher --out internal ./wit
-  tinygo build -target=wasip2 --wit-package ./wit --wit-world gopher -o gopher.wasm .
+  # -opt=z optimizes for size; -no-debug drops DWARF debug info (which TinyGo
+  # otherwise embeds), both of which noticeably shrink the component.
+  tinygo build -target=wasip2 -opt=z -no-debug --wit-package ./wit --wit-world gopher -o gopher.wasm .
 )
 cp "${ROOT}/samples/gopher/gopher.wasm" "${DIST}/gopher.wasm"
 

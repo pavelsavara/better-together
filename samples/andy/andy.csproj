@@ -32,6 +32,24 @@
     <!-- Required so wit-bindgen's string marshalling can export cabi_realloc. -->
     <IlcExportUnmanagedEntrypoints>true</IlcExportUnmanagedEntrypoints>
 
+    <!--
+      Size optimization for the NativeAOT-LLVM (ilc) compile. The strategy code
+      is tiny, so the binary is almost all runtime; tell ilc to optimize for
+      size and strip out framework features the gardener never uses (stack
+      traces, the debugger contract, EventSource, reflection-driven metadata,
+      hot reload, nullability info). Together these cut the component roughly
+      in half versus the default blended/speed preference.
+    -->
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <StackTraceSupport>false</StackTraceSupport>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <NullabilityInfoContextSupport>false</NullabilityInfoContextSupport>
+
     <!-- Emit the generated wit-bindgen C# sources somewhere we can read them. -->
     <WitGeneratedFilesRoot>generated/wit</WitGeneratedFilesRoot>
   </PropertyGroup>

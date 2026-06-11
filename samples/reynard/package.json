@@ -6,7 +6,7 @@
     "description": "Reynard — a JavaScript Better Together gardener built with jco / ComponentizeJS.",
     "scripts": {
         "fetch-wit": "wkg get wasi:filesystem@0.2.3 --format wit -o wit/deps/ --overwrite && wkg get wasi:io@0.2.3 --format wit -o wit/deps/ --overwrite && wkg get wasi:clocks@0.2.3 --format wit -o wit/deps/ --overwrite",
-        "build": "jco componentize component.js --wit wit --world-name reynard --disable http --disable fetch-event --out reynard.wasm",
+        "build": "jco componentize component.js --wit wit --world-name reynard --disable http --disable fetch-event --out reynard.wasm && jco opt reynard.wasm -o reynard.wasm -- -Oz --all-features",
         "inspect": "wasm-tools component wit reynard.wasm"
     },
     "devDependencies": {
