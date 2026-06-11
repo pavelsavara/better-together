@@ -40,7 +40,7 @@ jobs:
           path: store
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Comment outcome on the issue
         if: ${{ always() && github.event_name == 'issues' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
