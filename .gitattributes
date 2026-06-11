@@ -1,1 +1,2 @@
 *.* binary
+data/** text diff merge

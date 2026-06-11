@@ -1,0 +1,56 @@
+{
+  "bots": {
+    "1ed82871#together.Dusty": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/dusty:dev"
+    },
+    "5020cbad#together.Gopher": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/gopher:dev"
+    },
+    "59cbb443#together.Nib": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/nib:dev"
+    },
+    "5fb132ea#together.Bram": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/bram:dev"
+    },
+    "6a574c6d#together.Ferris": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/ferris:dev"
+    },
+    "6db6ef11#together.Reynard": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/reynard:dev"
+    },
+    "7e91b7d6#together.Khaos": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/khaos:dev"
+    },
+    "9dbf8705#together.Keith": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/keith:dev"
+    },
+    "b6200cec#together.Andy": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/andy:dev"
+    },
+    "e27c86dd#together.Corro": {
+      "digest": "sha256:local",
+      "etag": null,
+      "oci": "local/corro:dev"
+    }
+  },
+  "checkedAt": "2026-06-11T08:31:37.518Z",
+  "version": 1
+}
