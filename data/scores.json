@@ -53,16 +53,6 @@
       "rawScore": 101.25
     },
     {
-      "coPlayerScore": 13.084975124378104,
-      "coPlayerStdErr": 11.948064431418812,
-      "consistencyStd": 169.39304878041602,
-      "id": "d5c40e97#together.Keith",
-      "matchesInWindow": 201,
-      "rank": 6,
-      "ranked": true,
-      "rawScore": 101.24378109452736
-    },
-    {
       "coPlayerScore": 12.33112107623316,
       "coPlayerStdErr": 11.185549153341976,
       "consistencyStd": 167.03586949870365,
@@ -71,16 +61,6 @@
       "rank": 7,
       "ranked": true,
       "rawScore": 101.65919282511211
-    },
-    {
-      "coPlayerScore": 11.458640776699042,
-      "coPlayerStdErr": 12.283632462530388,
-      "consistencyStd": 176.30329280462476,
-      "id": "a100aa15#together.Nib",
-      "matchesInWindow": 206,
-      "rank": 8,
-      "ranked": true,
-      "rawScore": 101.2135922330097
     },
     {
       "coPlayerScore": 11.185263157894667,

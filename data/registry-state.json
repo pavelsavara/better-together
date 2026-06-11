@@ -35,11 +35,6 @@
       "etag": "\"sha256:935fb44c00f839482f15f2832cc9bc8477ba7a91009b9390f9d0346eb19ec037\"",
       "oci": "https://ghcr.io/pavelsavara/better-together/khaos:latest"
     },
-    "a100aa15#together.Nib": {
-      "digest": "sha256:507201c2944b0ee62c0ddf796190d3c7f4cb6b44d4be8eae84294839c49d3ed4",
-      "etag": "\"sha256:507201c2944b0ee62c0ddf796190d3c7f4cb6b44d4be8eae84294839c49d3ed4\"",
-      "oci": "https://ghcr.io/pavelsavara/better-together/nib"
-    },
     "ae2d9ec0#together.Reynard": {
       "digest": "sha256:ea400d3f9e9dbf9b8413016630c6f266eb64032395aac2aff67bad71bfe82d5c",
       "etag": "\"sha256:ea400d3f9e9dbf9b8413016630c6f266eb64032395aac2aff67bad71bfe82d5c\"",
@@ -49,11 +44,6 @@
       "digest": "sha256:211fb12679cf3632e1cef41e38313c9706dde162e6ab23ee0ff682aa1f725fa6",
       "etag": "\"sha256:211fb12679cf3632e1cef41e38313c9706dde162e6ab23ee0ff682aa1f725fa6\"",
       "oci": "https://ghcr.io/pavelsavara/better-together/bram:latest"
-    },
-    "d5c40e97#together.Keith": {
-      "digest": "sha256:268038439da695fdb9d9d0becdfb2f6bdc7de083ac802317aa3ed6b5039448c7",
-      "etag": "\"sha256:268038439da695fdb9d9d0becdfb2f6bdc7de083ac802317aa3ed6b5039448c7\"",
-      "oci": "https://ghcr.io/pavelsavara/better-together/keith"
     },
     "df693caa#together.Ferris": {
       "digest": "sha256:a18eae02747ba052ac8958b83a4ee867d65631eb5d43317a4d4957a2c02e841e",

@@ -1,7 +1,7 @@
 {
   "bots": [
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🖋️",
       "icon": "icons/0744dd6e#together.Nib.png",
@@ -26,7 +26,7 @@
       "wasmSha256": "2db4804c56dab7cde264604de335a6bb7f6606731b32f7ca02f6155d4ae75bed"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🐀",
       "icon": "icons/1fe77c84#together.Keith.png",
@@ -51,7 +51,7 @@
       "wasmSha256": "6649dfb0e95c7031a2f96d4703fbff50a8dc0d612abd19ce1b3db78172777fb5"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🐭",
       "icon": "icons/3ae4ab80#together.Dusty.png",
@@ -76,7 +76,7 @@
       "wasmSha256": "58d084da6e4e5c1e3caa9a06c3a14caeb1a64911adb7f4530a425b2f67245c15"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🦔",
       "icon": "icons/5efad061#together.Andy.png",
@@ -101,7 +101,7 @@
       "wasmSha256": "faebe5355d2e0639602dc544e2308ecd7e7a991deff86a1dd7c1b748dbd09c22"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🐹",
       "icon": "icons/7239b496#together.Gopher.png",
@@ -126,7 +126,7 @@
       "wasmSha256": "07eb1c613112f86dd701c10c1d50ace71e8e967a0f0f25d722f323cde4fa9885"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🐙",
       "icon": "icons/90ec0fe4#together.Corro.png",
@@ -151,7 +151,7 @@
       "wasmSha256": "36700652e4e82591a863f8d275b03841b47bad565e2ed4ad3e277e875bc3afa3"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🎲",
       "icon": "icons/9317c131#together.Khaos.png",
@@ -178,31 +178,6 @@
     {
       "approvedBy": "pavelsavara",
       "author": "Better Together samples",
-      "glyph": "🌱",
-      "icon": "icons/a100aa15#together.Nib.png",
-      "iconSource": "https://pavelsavara.github.io/better-together/icons/0744dd6e%23together.Nib.png",
-      "id": "a100aa15#together.Nib",
-      "issue": 9,
-      "lastDigestChangeAt": "2026-06-11T18:33:19.771Z",
-      "lore": "Nib is the smallest gardener at the table, and quietly proud of it. Where the other bots keep ledgers of who wronged them and notebooks crammed with reputation scores, Nib keeps nothing at all - no memory between rounds, no grudges carried over from yesterday, no private tally of slights. Each round arrives fresh, a blank patch of soil. Nib listens to exactly one thing: what everyone just promised, right now, in this moment. It does not guess at hidden motives or punish old betrayals it has already forgotten. Nib simply reads the mood of the table and then, always, plants a little more than was pledged. If the garden is quiet, it still offers a friendly baseline and never sulks down to nothing. If the table is full of optimists, it meets their hope and tops it off. It will not be the lone fool pouring seeds into barren ground, yet it refuses to be stingy either. Honest to a fault, Nib announces only that it is watching, because watching and matching is the whole of its character. There is no cleverness hidden underneath, no trap waiting to spring - what you see is what you get: a gentle, forgetful, generous seed that rewards a cooperative table and forgives everything, one round at a time.",
-      "matchesSinceUpdate": 206,
-      "name": "together.Nib",
-      "namespace": "together",
-      "oci": "https://ghcr.io/pavelsavara/better-together/nib",
-      "ociDigest": "sha256:507201c2944b0ee62c0ddf796190d3c7f4cb6b44d4be8eae84294839c49d3ed4",
-      "ociEtag": "\"sha256:507201c2944b0ee62c0ddf796190d3c7f4cb6b44d4be8eae84294839c49d3ed4\"",
-      "repo": "https://github.com/pavelsavara/better-together",
-      "shortName": "Nib",
-      "status": "active",
-      "submittedBy": "pavelsavara",
-      "validatedAt": "2026-06-11T18:33:19.771Z",
-      "version": "0.1.0",
-      "wasm": "wasm/a100aa15#together.Nib/0.1.0.wasm",
-      "wasmSha256": "2db4804c56dab7cde264604de335a6bb7f6606731b32f7ca02f6155d4ae75bed"
-    },
-    {
-      "approvedBy": "local",
-      "author": "Better Together samples",
       "glyph": "🦊",
       "icon": "icons/ae2d9ec0#together.Reynard.png",
       "iconSource": null,
@@ -226,7 +201,7 @@
       "wasmSha256": "ea8fbfdac808d2d664e5cb4b5bbc6ea09d982230cd6c4a7afb50b274c1e203b6"
     },
     {
-      "approvedBy": "local",
+      "approvedBy": "pavelsavara",
       "author": "Better Together samples",
       "glyph": "🦫",
       "icon": "icons/bf873e4b#together.Bram.png",
@@ -252,31 +227,6 @@
     },
     {
       "approvedBy": "pavelsavara",
-      "author": "pavelsavara",
-      "glyph": "🐀",
-      "icon": "icons/d5c40e97#together.Keith.png",
-      "iconSource": "https://pavelsavara.github.io/better-together/icons/1fe77c84%23together.Keith.png",
-      "id": "d5c40e97#together.Keith",
-      "issue": 11,
-      "lastDigestChangeAt": "2026-06-11T18:33:19.771Z",
-      "lore": "Keith is a grubby canal rat who grew up in the storm drains under the allotments, where the only currency is your word and the only insurance is a good memory. He is nice, honest, retaliatory, and forgiving, in that order. Nice: he never bites first, opening every acquaintance with a generous handful and trusting the table until it gives him a reason not to. Honest: he never bluffs about his own intentions — when he says he will bloom, he means it, and when he intends to hold back he says so plainly, which makes him the natural antibody to every gardener who promises the moon and plants nothing. Retaliatory: he mirrors the room, pouring his seeds into a garden that bloomed last round and pocketing them when it went cold. Forgiving: every so often he sticks his neck out with a quiet peace-offering, just to see whether a collapsed garden can be coaxed back to life, because he would rather rebuild trust than nurse a grudge. But he is also unforgetful. He carries a stained little ledger everywhere and writes down, for every gardener he meets, who kept their word and who broke it. A creature who keeps promising and keeps stiffing the garden becomes a liar in that book, and the rat does not feed cheats. He taxes the broken promise, never the quiet, honest miser — patient, grudging, fair, and never once a hypocrite about it.",
-      "matchesSinceUpdate": 201,
-      "name": "together.Keith",
-      "namespace": "together",
-      "oci": "https://ghcr.io/pavelsavara/better-together/keith",
-      "ociDigest": "sha256:268038439da695fdb9d9d0becdfb2f6bdc7de083ac802317aa3ed6b5039448c7",
-      "ociEtag": "\"sha256:268038439da695fdb9d9d0becdfb2f6bdc7de083ac802317aa3ed6b5039448c7\"",
-      "repo": "https://github.com/pavelsavara/better-together",
-      "shortName": "Keith",
-      "status": "active",
-      "submittedBy": "pavelsavara",
-      "validatedAt": "2026-06-11T18:33:19.771Z",
-      "version": "0.1.0",
-      "wasm": "wasm/d5c40e97#together.Keith/0.1.0.wasm",
-      "wasmSha256": "6649dfb0e95c7031a2f96d4703fbff50a8dc0d612abd19ce1b3db78172777fb5"
-    },
-    {
-      "approvedBy": "local",
       "author": "Better Together samples",
       "glyph": "🦀",
       "icon": "icons/df693caa#together.Ferris.png",
