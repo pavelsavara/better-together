@@ -1,0 +1,6 @@
+artifacts
+bin
+obj
+dist
+*.log
+node_modules
